@@ -6,7 +6,7 @@
   - Class diagram
    ```mermaid
    classDiagram
-       class Duck{
+       class Colunas{
         -Title
         -Description
         -Issue ID
@@ -19,9 +19,9 @@
         -Confidential
         -Locked
         -Due Date
-        -CrDated At (UTC)
-        -Updated At (UTC)
-        -Closed At (UTC)
+        -CrDated At
+        -Updated At
+        -Closed At
         -Milestone
         -Weight
         -Labels
