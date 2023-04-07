@@ -1,6 +1,9 @@
 # Autor: Giseldo da Silva Neo
 # Dataset contendo projetos extraídos do gitlab que funcionam com SCRUM
 
+"weight" é a coluna que guarda o SP estimado pelo time
+"description" é a coluna que guarda a descrição da issue
+
 ## Colunas do Dataset
  
    ```mermaid
