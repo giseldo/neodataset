@@ -1,9 +1,8 @@
 # Autor: Giseldo da Silva Neo
-# Projeto com o dataset extraído do gitlab que funcionam com SCRUM
+# Dataset contendo projetos extraídos do gitlab que funcionam com SCRUM
 
-## Colunas
-
-  - Class diagram
+## Colunas do Dataset
+ 
    ```mermaid
    classDiagram
        class Colunas{
