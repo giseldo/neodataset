@@ -26,7 +26,6 @@ Epic Title
 
 ## 
 O projeto gitlab-org-gitlab_issues_2023-01-15.csv tem 7.773 issues
-* In markdown file on Github, with code block syntax and Mermaid language specifed, we can draw many kinds of diagram. More syntax and sample diagrams [here](https://mermaid-js.github.io/)
 
   - Class diagram
    ```mermaid
