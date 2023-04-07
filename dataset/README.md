@@ -172,27 +172,34 @@ would otherwise have special meaning in Markdown’s formatting syntax. One comm
    ```mermaid
    classDiagram
        class Duck{
+        -Title
+        -Description
+        -Issue ID
+        -URL
+        -State
+        -Author
+        -Author Username
+        -Assignee
+        -Assignee Username
+        -Confidential
+        -Locked
+        -Due Date
+        -CrDated At (UTC)
+        -Updated At (UTC)
+        -Closed At (UTC)
+        -Milestone
+        -Weight
+        -Labels
+        -Time Estimate
+        -Time Spent
+        -Epic ID
+        -Epic Title
         -weight
-         +swim()
-         +quack()
-       }
+        }
    ```
-  - Sequence diagram
-   ```mermaid
-   sequenceDiagram
-       participant dotcom
-       participant iframe
-       dotcom->>iframe: loads html w/ iframe url
-   ```
-  - Flowchart
-   ```mermaid
-     graph TD;
-         A-->B;
-         A-->C;
-         B-->D;
-         C-->D;
-   ```
+ 
 
-###### Author: *Vo Tran Thanh Luong*. Also, I would like to thank all the contributors/translators for your work making this greater.
+
+
    
 
