@@ -1,10 +1,14 @@
-# Autor: Giseldo da Silva Neo
-# Dataset contendo projetos extraídos do gitlab que funcionam com SCRUM
 
-"weight" é a coluna que guarda o SP estimado pelo time
-"description" é a coluna que guarda a descrição da issue
+# DATASET GIGI
+## O Dataset GIGI é um conjunto de dados contendo projetos extraídos do gitlab que funcionam com SCRUM
+## Autor: Giseldo da Silva Neo
 
-## Colunas do Dataset
+# Descrição das colunas
+
+- "weight" é a coluna que guarda o SP estimado pelo time
+- "description" é a coluna que guarda a descrição da issue
+
+## Todas as colunas do dataset
  
    ```mermaid
    classDiagram
