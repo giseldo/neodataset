@@ -35,7 +35,6 @@
         -Time Spent
         -Epic ID
         -Epic Title
-        -weight
         }
    ```
  
