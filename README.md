@@ -1,7 +1,7 @@
 
-# DATASET GIGI
-## O Dataset GIGI é um conjunto de dados contendo projetos extraídos do gitlab que funcionam com SCRUM
-## Autor: Giseldo da Silva Neo
+# NEO Dataset
+## O NEO Dataset  é um conjunto de dados contendo projetos extraídos do gitlab que funcionam com SCRUM
+### Autor: Giseldo da Silva Neo
 
 # Descrição das colunas
 
