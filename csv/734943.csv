@@ -1,0 +1,2440 @@
+issuekey,created,title,description,storypoints
+33999404,2020-04-30 13:17:18.566,Remove support for disk configuration source,"In https://gitlab.com/gitlab-org/gitlab/-/issues/217912 we introduced `domain-config-source` configuration flag to allow users to choose which domain source to use between `disk` and `api`.
+
+In %""14.0"" we plan to remove support for old disk configuration source.
+
+The purpose of this issue is to remove `domain-source`, some code may be hard to remove in one MR, so this can be extracted to follow-up issues.
+
+Omnibus will need to be updated to remove this flag
+
+If users can't use the disk config source, we can gradually get rid of old code supporting it.",2
+33344838,2020-04-15 23:30:45.118,Tech evaluation: Object storage using presigned URLs,"This is a follow-up tech evaluation from #355 
+
+@ayufan thanks for your [input on slack](https://gitlab.slack.com/archives/C1BSEQ138/p1585668949053900)!(copying here)
+
+- We need to use pre-signed URLs from GitLab, that way we don’t need any credentials on Pages, and whether the .zip is used can be controlled by Rails exclusively, the link would have an encoded and Rails controlled expiry date
+- If serving from .zip I think we need to likely define the maximum archive size that we can support, likely filtering the relevant files (public/ only folder), and holding that somewhere in memory. I would assume that we could likely configure how many files-in-archives/archives we cache and allow this to be configured and optimised towards cache-hit-ratio, likely GitLab.com would allow to use a ton of memory if needed
+- I would likely break the support for Content-Range if serving files as I don’t think that this is cheaply possible with .zip
+- GitLab Workhorse does have OpenArchive that supports local and remote archive just it is not performance optimised: the HTTP requests are badly aligned and this will likely need to be somehow improved, so just copy-pasting will not give a great performance yet
+
+---
+- [ ] @vshushlin started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/258#note_309921953):  (+7 comments)
+
+    > Oh, I thought that https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/136/ has some object storage implementation while it only has serving from zip files from disc :see_no_evil: 
+    > 
+    > I have a very simple idea for alternative PoC:
+    > 
+    > 1. We can copy(and maybe slightly modify) https://gitlab.com/gitlab-org/gitlab/-/blob/84c0ffe12646b9bae1fdf2e576cde7f01f8ded73/lib/api/job_artifacts.rb#L75-94 to pages API https://gitlab.com/gitlab-org/gitlab/-/blob/75f8d42bb443d0a6101a9c2f6b65c607cd95efd4/lib/api/internal/pages.rb#L19
+    > 1. Then we can return the `job_id` in the API
+    > 1. Pages will get specific file and proxy it to user.
+    > 1. Later we can add cache for it.
+    > 
+    > Alternatively, we can get the whole artifacts zip archive and use the current zip reading code, then we'll need to cache those files.
+    > 
+    > I don't think that adding some object-storage specific code to pages is a good idea. We already have it in the workhorse, we can just use the API. It's slower, but much simplier.
+
+### Diagram/proposal 
+
+![Screen_Shot_2020-06-26_at_5.09.00_pm](/uploads/6c277237392a3ce3844fe3e1551f980f/Screen_Shot_2020-06-26_at_5.09.00_pm.png)
+
+```
+sequenceDiagram
+  participant U as User
+  participant P as gitlab-pages
+  participant G as gitlab-workhorse and rails
+  participant OS as Object Storage
+  U->>P: 1. username.gitlab.io/index.html
+  P->>G: 2. GET /api/v4/internal/pages?host=username.gitlab.io
+  G->>P: 3. {... lookup_paths: [{source: {type: ""zip"", path: ""presignedURL""}],...}
+  loop zipartifacts
+    P->>P: 4. reader:= OpenArchive(presignedURL)
+    P->>OS: 5. GET presignedURL
+    OS->>P: 6. .zip file
+    P->>P: 7. reader.find(public/index.html)
+    P->>P: 8. go func(){ cache({host,reader}) } ()
+  end
+  P->>U: 9. username.gitlab.io/index.html
+```
+
+### Proposal 
+
+In this PoC we will hardcode the returning value from `/api/v4/internal/pages` to reduce the scope. I will use minio which is already supported in the GDK. I'll also shamelessly steal and slightly modify the `zipartifacts` package from workhorse.
+
+To address https://gitlab.com/gitlab-org/gitlab-pages/-/issues/377#note_367358348 the source type should be `""zip""` so that Pages can serve from `.zip` regardless of the path (pre-signed URL or disk path).
+
+### Outcomes
+
+We have now https://gitlab.com/groups/gitlab-org/-/epics/3901 and https://gitlab.com/groups/gitlab-org/-/epics/3902 with parent https://gitlab.com/groups/gitlab-org/-/epics/1316 to track all future efforts.
+
+#### Rails
+
+1. Allow deploying Pages as `.zip` archives with a `max_archive_size`. https://gitlab.com/gitlab-org/gitlab/-/issues/208135
+1. On deploy ->check size -> store `public.zip` either on disk or in object storage depending on the features enabled. also tracked in https://gitlab.com/gitlab-org/gitlab/-/issues/208135
+1. Update `/api/v4/internal/pages` -> return a ""source"".""type"":“zip” with a path https://gitlab.com/gitlab-org/gitlab/-/issues/225840 e.g.
+```json
+{
+	""lookup_paths"" : [
+	{
+		""source"": {
+			""type"": ""zip"",
+			""path"": ""https://presigned.url/public.zip"",
+			""_"":""or from disk path""
+			""path"": ""/shared/pages/domain/project/public.zip""
+	}
+]
+```
+
+#### Pages (Go)
+
+0. extract the `resolvePath` logic from disk serving into its own package so it can be shared. https://gitlab.com/gitlab-org/gitlab-pages/-/issues/421
+1. Add package `zip` with `zip/reader` https://gitlab.com/gitlab-org/gitlab/-/issues/28784
+2. Add `zip` serving to Pages - this allows serving from disk or pre-signed URLs from object storage https://gitlab.com/gitlab-org/gitlab/-/issues/28784
+3. Implement a zip reader caching mechanism https://gitlab.com/gitlab-org/gitlab-pages/-/issues/422
+4. Add metrics for zip serving https://gitlab.com/gitlab-org/gitlab-pages/-/issues/423
+
+* while testing I hit https://gitlab.com/gitlab-org/gitlab-pages/-/issues/371 so I think it would be valuable to work on that issue first.",1
+32478519,2020-03-26 08:29:40.970,Add metrics for disk serving,"As part of the work done for #355 we need to add some metrics to measure loading times of serving from disk.
+
+- file size
+- time taken to serve
+
+This will give us some visibility on serving files and will allow us to compare serving times when we implement object storage #377 ",1
+31331442,2020-02-27 09:32:07.557,Fix data race in gitlab source cache package,"The following discussion from !246 should be addressed:
+
+- [ ] @nolith started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/246#note_294638273):  (+1 comment)
+
+    > Here the race is deep inside the package
+    > 
+    > we make use of global variables and this test will alter `retrievalTimeout` when a goroutine from the previous one is still running.
+    > 
+    > This will require extra effort to fix, but I think we should add the race detector now.
+    > 
+    > ```
+    >  ==================
+    >  WARNING: DATA RACE
+    >  Write at 0x000000e0d4f0 by goroutine 46:
+    >    gitlab.com/gitlab-org/gitlab-pages/internal/source/gitlab/cache.TestResolve.func9()
+    >        /builds/nolith/gitlab-pages/internal/source/gitlab/cache/cache_test.go:247 +0x3e
+    >    testing.tRunner()
+    >        /usr/local/go/src/testing/testing.go:827 +0x162
+    >  Previous read at 0x000000e0d4f0 by goroutine 44:
+    >    gitlab.com/gitlab-org/gitlab-pages/internal/source/gitlab/cache.(*Retriever).Retrieve()
+    >        /builds/nolith/gitlab-pages/internal/source/gitlab/cache/retriever.go:22 +0x8d
+    >    gitlab.com/gitlab-org/gitlab-pages/internal/source/gitlab/cache.(*Entry).retrieveWithClient()
+    >        /builds/nolith/gitlab-pages/internal/source/gitlab/cache/entry.go:92 +0xc5
+    >  Goroutine 46 (running) created at:
+    >    testing.(*T).Run()
+    >        /usr/local/go/src/testing/testing.go:878 +0x659
+    >    gitlab.com/gitlab-org/gitlab-pages/internal/source/gitlab/cache.TestResolve()
+    >        /builds/nolith/gitlab-pages/internal/source/gitlab/cache/cache_test.go:246 +0x1d5
+    >    testing.tRunner()
+    >        /usr/local/go/src/testing/testing.go:827 +0x162
+    >  Goroutine 44 (running) created at:
+    >    gitlab.com/gitlab-org/gitlab-pages/internal/source/gitlab/cache.(*Entry).Retrieve.func1()
+    >        /builds/nolith/gitlab-pages/internal/source/gitlab/cache/entry.go:64 +0x67
+    >    sync.(*Once).Do()
+    >        /usr/local/go/src/sync/once.go:44 +0xde
+    >    gitlab.com/gitlab-org/gitlab-pages/internal/source/gitlab/cache.(*Entry).Retrieve()
+    >        /builds/nolith/gitlab-pages/internal/source/gitlab/cache/entry.go:64 +0xad
+    >    gitlab.com/gitlab-org/gitlab-pages/internal/source/gitlab/cache.(*Cache).Resolve()
+    >        /builds/nolith/gitlab-pages/internal/source/gitlab/cache/cache.go:89 +0x1ea
+    >    gitlab.com/gitlab-org/gitlab-pages/internal/source/gitlab/cache.TestResolve.func8.1()
+    >        /builds/nolith/gitlab-pages/internal/source/gitlab/cache/cache_test.go:239 +0x76
+    >    gitlab.com/gitlab-org/gitlab-pages/internal/source/gitlab/cache.withTestCache()
+    >        /builds/nolith/gitlab-pages/internal/source/gitlab/cache/cache_test.go:89 +0x185
+    >    gitlab.com/gitlab-org/gitlab-pages/internal/source/gitlab/cache.TestResolve.func8()
+    >        /builds/nolith/gitlab-pages/internal/source/gitlab/cache/cache_test.go:238 +0xc7
+    >    testing.tRunner()
+    >        /usr/local/go/src/testing/testing.go:827 +0x162
+    >  ==================
+    > ```",1
+31320489,2020-02-27 01:21:02.720,Tech evaluation: Serve pages from object storage,"From https://gitlab.com/gitlab-org/gitlab/issues/208135
+
+The idea is to create proof of concept for pages to be able to serve content from object storage. This will hopefully help identify some of the unknowns to enable this functionality!
+
+Will use [GitLab's object storage](https://docs.gitlab.com/charts/advanced/external-object-storage/) with the [GDK config](https://gitlab.com/gitlab-org/gitlab-development-kit/-/blob/master/doc/howto/object_storage.md) to explore a possible solution for this.
+
+## Results
+
+What we've discovered from !258
+
+* Adding specific code to handle objects from AWS S3 or GCS may not be scalable and would be harder to maintain.
+* Implementing [this diagram](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/258#note_310076437) it will be super slow, as Rails and Workhorse validate metadata multiple times, and is not very efficient if we want to random access the file (it does not cache anything).
+* We should explore using presigned URLs #377",1
+29164214,2019-12-28 16:37:21.739,Content-length header is not provided when content-encoding is used,"GitLab pages [support serving statically compressed files](https://docs.gitlab.com/ee/user/project/pages/introduction.html#serving-compressed-assets). But it looks like when this is done, the response headers are missing `Content-Length` header, when response headers include `Content-Encoding: gzip`.",1
+29009434,2019-12-23 15:50:14.281,Tech Evaluation: Support HSTS on GitLab Pages,"## Problem to solve 
+We need to research the technical implementation details to solve https://gitlab.com/gitlab-org/gitlab-pages/issues/28
+
+## Proposal 
+Spend 2-3 days assessing sorting capabilities and breakdown issue into smaller components if larger than 2 MRs: 
+Some users want to enforce no access to their web content without HTTPS/certificates. This can be done with [HTTP Strict Transport Security (HSTS) policy](https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security), but we do not currently support enabling this for GitLab Pages sites.",1
+27985016,2019-12-05 15:29:14.918,GitLab Pages depends on the availability of GitLab API,"If gitlab API is not available for some reason(e.g. https://gitlab.com/gitlab-com/gl-infra/production/-/issues/1936) GitLab Pages currently will become unavailable too(we clear cache in case of any API lookup problem).
+
+If we not clear cache in these cases, GitLab Pages will be more independent and won't produce spikes of errors like https://dashboards.gitlab.net/d/web-pages-main/web-pages-overview?orgId=1&from=1586889900000&to=1586891700000&var-PROMETHEUS_DS=Global&var-environment=gprd&var-stage=main&var-sigma=2
+
+The following discussion from !194 should be addressed:
+
+- [ ] @ayufan started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/merge_requests/194#note_255169959):  (+1 comment)
+
+    > Should we consider replacing entry only if the new received one does not have `entry.lookup.Error` to solve intermediate errors of processing lookups?
+    > 
+    > I consider the today it can happen that we store the lookup of success request, but after refresh we receive error, like 500 from GitLab. It would help if we could catch with this mechanism a short living errors of GitLab API, and try to re-use success requests for as long as long interval. This reduces Pages dependence on API being super stable, and we anticipate that upstream API is flaky to some extent.
+    > 
+    > Or maybe better is in such case, is to re-use current lookup and extend the lease on the lookup to allow another refresh?
+    > 
+    > ```golang
+    > if entry.response != nil && entry.response.Error != nil {
+    >   entry.response = e.response
+    > }
+    > ```
+    > 
+    > > Note: I'm fine following that in next MR as an stability improvement.",2
+27741902,2019-11-29 10:57:29.701,Make GitLab client timeout / JTW token expiry configurable,"The following discussion from !201 should be addressed:
+
+- [ ] @ayufan started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/merge_requests/201#note_251814520):  (+3 comments)
+
+    > Is this timeout too small?
+    > 
+    > Can we make it larger, or at least configurable?",2
+26998252,2019-11-13 02:35:41.940,Provide a way to track and measure API calls,We need the way to track the requests made from the `gitlab` config source (https://gitlab.com/gitlab-org/gitlab-pages/merge_requests/194) to the internal API.,1
+26188901,2019-10-22 10:20:27.813,XSSI in Gitlab Pages *.gitlab.io,"**[HackerOne report #719770](https://hackerone.com/reports/719770)** by `ngalog` on 2019-10-22, assigned to @jeremymatos:
+
+Security workflow issue: https://dev.gitlab.org/gitlab/gitlabhq/issues/2967.
+
+### Summary  
+Since now gitlab.io has implemented access control for all private pages, all pages should be limited to authorized user, however I found there is a way to steal content of JS files of victim using the XSSI(Cross Site Scripting Inclusion) technique in certain conditions.
+
+### Steps to reproduce  
+- Use Gitlab CI/CD to build a page, and limit access to project member only  
+- In the gitlab page folder, upload a JS file, something like below
+
+`secret.js`
+
+```  
+aws_key='AKIARONCHAN';  
+aws_secret='RONCHANAGAIN'  
+```  
+- Then, as the victim, login to gitlab  
+- As the attacker, in a domain that you control, prepare below html file and make victim to visit the page
+
+https://attacker.com/attackpage
+
+```  
+<script src=""https://GROUPID.gitlab.io/PROJECTID/secret.js""></script>  
+<script>alert(aws_key);</script>  
+```
+
+- Then you should see a pop up containing the JS secrets of the gitlab page.
+
+
+### Impact  
+XSSI to steal user's gitlab page's JS file content
+
+### Examples  
+Given above
+
+### What is the current *bug* behavior?  
+Didn't block invalid refer
+
+### What is the expected *correct* behavior?  
+Should not be able to allow attacker to carry out XSSI attacker
+
+### Relevant logs and/or screenshots  
+![Screenshot_2019-10-22_at_9.46.24_PM.png](https://h1.sec.gitlab.net/a/bb6765a1-a5b7-4bff-b992-6a6e84553263/Screenshot_2019-10-22_at_9.46.24_PM.png)  
+![Screenshot_2019-10-22_at_9.46.36_PM.png](https://h1.sec.gitlab.net/a/c7948fcf-c65c-449d-8f23-58add7b4b289/Screenshot_2019-10-22_at_9.46.36_PM.png)  
+![Screenshot_2019-10-22_at_9.46.42_PM.png](https://h1.sec.gitlab.net/a/08c44e4a-8ac2-47ab-b817-71f750589783/Screenshot_2019-10-22_at_9.46.42_PM.png)
+
+### Output of checks  
+gitlab.com
+
+## Impact
+
+XSSI
+
+## Attachments
+
+**Warning:** Attachments received through HackerOne, please exercise caution!
+
+* [Screenshot_2019-10-22_at_9.46.24_PM.png](https://h1.sec.gitlab.net/a/bb6765a1-a5b7-4bff-b992-6a6e84553263/Screenshot_2019-10-22_at_9.46.24_PM.png)
+* [Screenshot_2019-10-22_at_9.46.36_PM.png](https://h1.sec.gitlab.net/a/c7948fcf-c65c-449d-8f23-58add7b4b289/Screenshot_2019-10-22_at_9.46.36_PM.png)
+* [Screenshot_2019-10-22_at_9.46.42_PM.png](https://h1.sec.gitlab.net/a/08c44e4a-8ac2-47ab-b817-71f750589783/Screenshot_2019-10-22_at_9.46.42_PM.png)",4
+26150199,2019-10-21 09:46:58.732,[Gitlab Pages Auth Bypass] Able to steal a user's Authentication Code For Gitlab Pages,"**[HackerOne report #718460](https://hackerone.com/reports/718460)** by `ngalog` on 2019-10-21, assigned to @jeremymatos:
+
+### Summary
+
+I bypassed the regex for the gitlab pages authentication in gitlab.com
+
+### Steps to reproduce  
+- Login to gitlab and then visit https://projects.gitlab.io/auth?domain=https://ronchangitlab.io&state=xdgnwM0hmRQ7g5xoevNV6g==  
+- Then attacker can get the access authorization code in ronchangitlab.io, then they can use it to exchange for victim's gitlab pages cookies
+
+## Impact
+
+Gitlab Pages authentication bypass
+
+## Issue on dev
+
+https://dev.gitlab.org/gitlab/gitlabhq/issues/2938
+
+https://gitlab.com/gitlab-org/security/gitlab/-/issues/102
+
+---
+
+## Solution
+
+### Proposals
+
+- Proposal 1 - https://gitlab.com/gitlab-org/gitlab-pages/-/issues/262#note_255332604 and WIP PoC https://dev.gitlab.org/gitlab/gitlab-pages/-/merge_requests/21
+- Proposal 2 - https://gitlab.com/gitlab-org/gitlab-pages/-/issues/262#note_341774099
+
+### Proposal 2
+
+~~Going ahead with proposal 2~~
+
+1. Generate a JWT signing key based on the `auth-secret` on Pages startup
+1. When we initiate the authentication flow, generate a JWT token with claims, set it as the state and save to the encrypted cookie
+  ```go
+    state := jwt(domain, randomNewState, jwtSigningKey)
+  ```
+3. Redirect to `projects.gitlab.io?state=state` and validate the state's JWT signature
+4. Extract the domain from the JWT claims and continue OAuth flow.
+5. When we receive `mydomain.gitlab.io?stat=state&code=code` we verify the state's JWT signature again.
+6. Continue as usual
+
+---
+## Implemented solution
+
+It was later discovered that the problem lies in someone being able to steal an OAuth `code` as part of the authentication flow. To mitigate this, the process is to encrypt the code and add it to a JWT which is then signed.
+The flow is
+
+1. Generate a JWT signing key based on the `auth-secret` on Pages startup.
+1. On redirection from GitLab to https://gitlab.io/auth?code=plaintext&state=random, encrypt and sign the code
+1. Encrypt code `encryptedCode=AES-GCM(code, domain (as salt), hkdfKey(auth-secret)`
+1. Use the JWT as new code `code=JWT(encryptedCode, nonce, signingKey)`
+1. Redirect to `mydomain.com/auth?code=JWT(encryptedCode, nonce, signingKey)&state=random` and strip the `token` from the query string to mitigate https://gitlab.com/gitlab-org/gitlab/-/issues/285244
+1. When we receive `mydomain.gitlab.io?state=random&code=code` we verify the code's JWT signature.
+1. Get `encryptedCode` and `nonce` from the JWT claims and decrypt the code
+1. Exchange for access token and serve content if successful
+
+---
+<details>
+<summary>Sequence diagrams from the comment below</summary>
+
+### Summary
+
+* The goal of the attack is to ready the content of site `mygroup.gitlab.io` which is private
+* To achieve this attacker sends link `project.gitlab.io?domain=Attackersdomain.com` to user, which result in `attackersdomain.com?code=mygroupcode&state=irrelevant`
+* After receiving the `code` attacker can complete the Auth process for `mygroup.gitlab.io`
+
+Note: it's not possible for attacker to get `token`, only to read the content of private web-site.
+
+### How the current Auth workflow works
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant D as mygroup.gitlab.io
+    participant P as projects.gitlab.io
+    participant G as gitlab.com
+    U->>D: get index.html
+    D->>U: not authorzied, redirect to projects.gitlab.io/auth?domain=mygroup.gitlab.io&state=123
+    U->>P: projects.gitlab.io/auth?domain=mygroup.gitlab.io&state=123
+    rect rgb(0, 255, 0)
+    Note over P,G: OAuth workflow
+    P->>U: redirect to gitlab.com/oauth?redirect_url=projects.gitlab.io&state=123
+    U->>G: gitlab.com/oauth?redirect_url=projects.gitlab.io&state=123
+    G->>U: redirect to projects.gitlab.io?state=123&code=mycode
+    U->>P: projects.gitlab.io?state=123&code=mycode
+    end
+    P->>U: redirect to mygroup.gitlab.io?state=123&code=mycode
+    U->>D: mygroup.gitlab.io?state=123&code=mycode
+    rect rgb(0, 255, 0)
+    Note over D,G: Exchange code for token and verify that user has permissions for the mygroup.gitlab.io
+    D->>G: get token by code=mycode
+    G->>D: token = blablabla
+    D->>G: get project by id with token = blablabla
+    G->>D: success
+    end
+    D->>U: success
+```
+
+### Requests highlined in the green are not so relevant to the described attack, so let's get rid of them
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant D as mygroup.gitlab.io
+    participant P as projects.gitlab.io
+    participant G as gitlab.com
+    U->>D: get index.html
+    D->>U: not authorzied, redirect to projects.gitlab.io/auth?domain=mygroup.gitlab.io&state=123
+    U->>P: projects.gitlab.io/auth?domain=mygroup.gitlab.io&state=123
+    Note over P,G: OAuth workflow
+    P->>U: redirect to mygroup.gitlab.io?state=123&code=mycode
+    U->>D: mygroup.gitlab.io?state=123&code=mycode
+    Note over D,G: Exchange code for token and verify that user has permissions for the mygroup.gitlab.io
+    D->>U: success
+```
+
+### Some notes about sessions(stored in encrypted and signed cookies with 10 minutes expiration time)
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant D as mygroup.gitlab.io
+    participant P as projects.gitlab.io
+    participant G as gitlab.com
+    U->>D: get index.html
+    Note left of D: generate random state and save it in the session cookie
+    D->>U: not authorzied, redirect to projects.gitlab.io/auth?domain=mygroup.gitlab.io&state=123
+    U->>P: projects.gitlab.io/auth?domain=mygroup.gitlab.io&state=123
+    Note over P,G: domain=mygroup.gitlab.io is being saved to the session cookie
+    Note over P,G: OAuth workflow
+    Note over P,G: verify that ""GitLab Pages conrolls the domain"" from session cookie 
+    P->>U: redirect to mygroup.gitlab.io?state=123&code=mycode
+    U->>D: mygroup.gitlab.io?state=123&code=mycode
+    Note left of D: Verify that state from the query parameter is the same as in session cookie
+    Note over D,G: Exchange code for token and verify that user has permissions for the mygroup.gitlab.io
+    D->>U: success
+```
+
+### A vulnerable step
+
+You can see `verify that ""GitLab Pages conrolls the domain"" from session cookie` step above.
+
+This is how it's implemented:
+```golang
+func (a *Auth) domainAllowed(name string, domains source.Source) bool {
+	// This is incorrect but it's not important because of second check
+	isConfigured := (name == a.pagesDomain) || strings.HasSuffix("".""+name, a.pagesDomain)
+
+	if isConfigured {
+		return true
+	}
+
+	// This check is super easy to bypass by just adding the `attackersdomain.com` to any pages project passing validation
+	// Note that validation does not mean that the correct CNAME record is set
+	domain, err := domains.GetDomain(name)
+
+	// domain exists and there is no error
+	return (domain != nil && err == nil)
+}
+```
+
+### The attack as it's can be performed currently
+
+(note this diagram is a little different from [my previous comment](https://gitlab.com/gitlab-org/security/gitlab-pages/-/merge_requests/1#note_359604339):
+I placed attacker requesting user domain last to bring related steps closer, it's still possible to perform the attack this way, and it's actually even more convenient)
+
+Vulnerability executed is highlighted in green.
+
+```mermaid
+sequenceDiagram
+    participant A as Attacker
+    participant U as User
+    participant D as mygroup.gitlab.io
+    participant P as projects.gitlab.io
+    participant G as gitlab.com
+    participant AD as ATTACKERSDOMAIN.com
+    A->U: can you please visit projects.gitlab.io/auth?domain=ATTACKERSDOMAIN.COM&state=IRRELEVANT
+    U->>P: projects.gitlab.io/auth?domain=ATTACKERSDOMAIN.COM&state=IRRELEVANT
+    Note over P,G: domain=ATTACKERSDOMAIN.COM is being saved to the session cookie
+    Note over P,G: OAuth workflow
+    rect rgb(0, 255, 0)
+    Note over P,G: verify that ""GitLab Pages controls the domain"" from session cookie
+    Note over P,G: This check is bypassed by adding ATTACKERSDOMAIN.COM to a random pages project
+    P->>U: redirect to ATTACKERSDOMAIN.COM?state=IRRELEVANT&code=mycode
+    U->>AD: ?state=IRRELEVANT&code=mycode
+    end
+    AD->>A: code=mycode
+    Note right of A: Need to get a valid state in cookie:
+    A->>D: get index.html
+    D->>A: unauthorized, redirect to projects.gitlab.io/auth?domain=mygroup.gitlab.io&state=USERSTATE
+    Note right of A: skip the auth, just go the last step manually:
+    A->>D: /auth?state=USERSTATE&code=mycode
+    Note over D,G: Exchange code for token and verify that user has permissions for the mygroup.gitlab.io
+    D->>A: success
+```
+
+### The JWT fix
+
+We tried to fix this in https://gitlab.com/gitlab-org/security/gitlab-pages/-/merge_requests/1
+
+It works by completely removing the `domain` parameter and including it in the `state=JWT({random=random, domain=domain...})`.
+
+So the attacker can't send a link to domain.
+
+But, it can be exploited in a little more complicated way:
+```mermaid
+sequenceDiagram
+    participant A as Attacker
+    participant Pages as Pages Server
+    participant U as User
+    participant D as mygroup.gitlab.io
+    participant P as projects.gitlab.io
+    participant G as gitlab.com
+    participant AD as ATTACKERSDOMAIN.com
+    Note right of A: Need to get a valid state for ATTACKERSDOMAIN.COM
+    Note right of A: Add ATTACKERSDOMAIN.COM as the domain for the private pages project
+    Note right of A: But not setup DNS for it
+    A->Pages: ATTACKERSDOMAIN.com/index
+    Pages->A: not authorized, redirect to projects.gitlab.io/auth?state=JWT({random=random, domain=ATTACKERSDOMAIN.com})
+    Note right of A: Let's call JWT({random=random, domain=ATTACKERSDOMAIN.com}) ATTACKERSTATE
+    A->U: can you please visit projects.gitlab.io/auth?state=ATTACKERSTATE
+    U->>P: projects.gitlab.io/auth?state=ATTACKERSTATE
+    Note over P,G: OAuth workflow
+    rect rgb(0, 255, 0)
+    Note over P,G: use the domain from state, wich is ATTACKERSDOMAIN.COM
+    P->>U: redirect to ATTACKERSDOMAIN.COM?state=ATTACKERSTATE&code=mycode
+    U->>AD: ?state=ATTACKERSTATE&code=mycode
+    end
+    AD->>A: code=mycode
+    Note right of A: Need to get a valid state in cookie:
+    A->>D: get index.html
+    D->>A: unauthorized, redirect to projects.gitlab.io/auth?state=USERSTATE(JWT({random=random, domain=mygroup.gitlab.io}))
+    Note right of A: skip the auth, just go the last step manually:
+    A->>D: /auth?state=USERSTATE&code=mycode
+    Note over D,G: Exchange code for token and verify that user has permissions for the mygroup.gitlab.io
+    D->>A: success
+```
+
+### The ""~~Signed~~ Encrypted code"" fix
+
+My current idea is to sign the code instead of state when we redirect back to user domain
+
+```mermaid
+sequenceDiagram
+    participant A as Attacker
+    participant U as User
+    participant D as mygroup.gitlab.io
+    participant P as projects.gitlab.io
+    participant G as gitlab.com
+    participant AD as ATTACKERSDOMAIN.com
+    A->U: can you please visit projects.gitlab.io/auth?domain=ATTACKERSDOMAIN.COM&state=IRRELEVANT
+    U->>P: projects.gitlab.io/auth?domain=ATTACKERSDOMAIN.COM&state=IRRELEVANT
+    Note over P,G: domain=ATTACKERSDOMAIN.COM is being saved to the session cookie
+    Note over P,G: OAuth workflow
+    P->>U: redirect to ATTACKERSDOMAIN.COM?state=IRRELEVANT&securecode=ENCRYPTED({domain=ATTACKERSDOMAIN.COM, code=mycode})
+    U->>AD: ?state=IRRELEVANT&securecode=ENCRYPTED({domain=ATTACKERSDOMAIN.COM, code=mycode})
+    AD->>A: securecode=ENCRYPTED({domain=ATTACKERSDOMAIN.COM, code=mycode})
+    Note right of A: Need to get a valid state in cookie:
+    A->>D: get index.html
+    D->>A: unauthorized, redirect to projects.gitlab.io/auth?domain=mygroup.gitlab.io&state=USERSTATE
+    Note right of A: skip the auth, just go the last step manually:
+    A->>D: /auth?state=USERSTATE&securecode=ENCRYPTED({domain=ATTACKERSDOMAIN.COM, code=mycode})
+    Note right of D: decrypt code, and get domain=ATTACKERSDOMAIN.COM, and code=mycode
+    Note right of D: check if ATTACKERSDOMAIN.COM==mygroup.gitlab.io
+    Note right of D: it's not equal, so user was tricked into clicking this,
+    D->>A: failure
+```
+
+**I can't say if there is a way to bypass this check. I would really appreciate if everyone who read that far tries to break it** :wink: 
+
+</details>",7
+26044218,2019-10-17 13:59:25.470,Secrets cannot be passed on the command line,"Passing of Pages secrets was deprecated with issue https://gitlab.com/gitlab-org/gitlab-pages/issues/208 and issues a deprecation warning in the Pages logs. 
+
+Disallowing the passing of secrets is a breaking change, so should be implemented during the next major release of GitLab (13.0).
+",2
+21200693,2019-05-22 21:38:06.918,Default to JSON Logging,"[We are moving to make JSON the default configured log format for GitLab Pages in 12.0 Omnibus release](https://gitlab.com/gitlab-org/omnibus-gitlab/issues/4102).
+
+Would we like to make this the source install default as well by changing https://gitlab.com/gitlab-org/gitlab-pages/blob/master/logging.go#L28 ?",1
+20643279,2019-05-07 08:39:16.048,Convert https variable to Gorilla ProxyHeaders,"We temporary saved `https` flag in the context in https://gitlab.com/gitlab-org/gitlab-pages/merge_requests/168/diffs, but `https` variable is still being passed through a lot of calls.
+
+We can use https://godoc.org/github.com/gorilla/handlers#ProxyHeaders instead of both these solutions.
+
+We'll remove this flag in three steps 
+
+- [x] Merge https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/225 to log an error if `https` flag does not match the `r.URL.Scheme`
+- [x] Test bed with using a reverse proxy see https://gitlab.com/gitlab-org/gitlab-pages/issues/219#note_281592054 
+- [x] Completely remove the `https` flag from the context
+
+<details>
+<summary>Old description</summary>
+
+The following discussion from !141 should be addressed:
+
+- [ ] @nick.thomas started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/merge_requests/141#note_167068450):  (+1 comment)
+
+    > I know we use this imperative style of middleware (returning true/false to indicate whether to end) elsewhere in gitlab-pages, but I wonder if we could avoid it in this case, and instead use the `http.Handler` style instead?
+    > 
+    > One approach: the `Middleware` type would have a `ServeHTTP()` method and a `next` member. In the cases where we currently `return false`, we'd instead `m.next.ServeHTTP(w, r) ; return`. Otherwise, we'd serve the redirect and return. 
+    > 
+    > We use this pattern in workhorse and it serves us quite well. WDYT?
+
+This is mostly a refactoring issue, I think  it would make the gitlab-pages codebase easier to understand, and we could make use of more third-party implementations this way.
+
+One example: we could start using https://godoc.org/github.com/gorilla/handlers#ProxyHeaders on *just* the `ServeProxy` route!
+
+</details>",2
+17671246,2019-01-25 20:01:38.217,Serve *in*directly from artifacts,"![1_-_Artifact.zip_SSOT_plus_filesystem_cache](/uploads/31e4d81967e779c24dc76b08a89d747e/1_-_Artifact.zip_SSOT_plus_filesystem_cache.jpeg)
+
+## Prerequisites
+
+1. Pages site artifact zip files are no longer consumed https://gitlab.com/gitlab-org/gitlab-ce/issues/45888
+1. We regenerate any Pages artifact zip files that were already consumed https://gitlab.com/gitlab-org/gitlab-ee/issues/9346
+1. We have Pages pull config from the Rails API https://gitlab.com/gitlab-org/gitlab-pages/issues/161
+
+## Proposal
+
+1. Pages receives a request for a site resource.
+1. Pages does a lookup in configs as usual.
+1. If the site exists, and Pages doesn't have the artifact.zip yet, it downloads it via the Rails API.
+1. Pages extracts the zip to a unique path in its filesystem.
+1. Pages serves the site from that path.
+1. Pages regularly checks for invalidation, so the filesystem acts as an LRU or other cache.
+
+### Pros
+
+- ~Geo doesn't need to ""sync"" *anything* at all.
+- Pages becomes HA and scalable?
+- Pages site symlinks continue to work.
+- Object storage is not required.
+
+### Cons
+
+- If we are extracting artifact.zip on demand, there is a cold-cache issue, whenever a new request comes in, there is this initial download/extract time before it can handle requests, and this is shared by each ""Pages"" node. Site can be of GBs if it include a lot of images. It would 503 for a while.
+- Invalidating/expiring is complex as you need to ping each machine to free space, or each one have to ping API in order to determine if they can or cannot remove folder from disk - O(N*M)?
+
+## More related discussion
+
+GitLab Pages direction doc (internal link): https://docs.google.com/document/d/18awpT5MVhlmdX0erO1X__Od59KZvrXBbdV0HG5A7WZk/edit#
+
+@nick.thomas 
+
+>>>
+Once we have https://gitlab.com/gitlab-org/gitlab-pages/issues/78 done, we could rework the main pages functionality as a set of pointers to specific pages artifacts, accessed in the same way.
+
+We'd need to stop deleting pages artifacts, and somehow regenerate the ones already deleted, of course, but then custom domains and the group / project pages can just become pointers to artifacts, with an optional filesystem cache to speed things up.
+
+Once a given pages artifact is no longer the latest, it can expire according to the usual rules.
+>>>
+
+https://gitlab.com/gitlab-org/gitlab-pages/issues/158:
+
+@nick.thomas 
+
+>>>
+For content, I think we want to implement https://gitlab.com/gitlab-org/gitlab-ce/issues/45888. Modulo existing customer data (which could _in principle_ be backfilled), this will ensure you can _always_ get the current Pages content for a site from the GitLab API, (which may, of course, be serving a redirect to an archive in object storage).
+
+Once we have this, we can treat the file store as a **non-coherent temporary cache**. If we're still interested in continued resilience while the GitLab API is unavailable, we can endeavour to keep it filled all the time. If the file store is lost, we can stand up a new, empty one, and the cache can be refilled from the GitLab API, either aggressively, or on-first-request.
+
+If we have two of these backends, they don't have to share an NFS mount, and the loss of one won't cause an outage.
+>>>",20
+17669680,2019-01-25 17:55:27.240,Serve directly from artifacts in object storage,"![3_-_Proxy_to_artifact_in_object_storage](/uploads/12aa3170c49ec07d67f84b0930c56202/3_-_Proxy_to_artifact_in_object_storage.jpeg)
+
+## Prerequisites
+
+1. Pages site artifact zip files are no longer consumed https://gitlab.com/gitlab-org/gitlab-ce/issues/45888
+1. We regenerate any Pages artifact zip files that were already consumed https://gitlab.com/gitlab-org/gitlab-ee/issues/9346
+1. We have Pages pull config from the Rails API https://gitlab.com/gitlab-org/gitlab-pages/issues/161
+
+## Proposal
+
+1. Pages receives a request for a site resource.
+1. Pages does a lookup in configs as usual.
+1. Pages basically proxies the artifact files in object storage.
+
+### After MVP
+
+1. Pages caches the proxied files
+1. Pages translates symlinks into redirects (if we feel this is important enough behavior to add back)
+
+### Pros
+
+- ~Geo doesn't need to ""sync"" _anything_ at all.
+- Pages becomes HA and scalable?
+
+### Cons
+
+- Object storage is required.
+- Pages site symlinks would break, but it may be possible to reimplement the behavior by translating them to redirects.
+- Pages would need to keep the ""old"" way as well. To support small, simple instances, e.g. Raspberry Pi.
+- How would we transition?
+
+### More related discussion
+
+GitLab Pages direction doc (internal link): https://docs.google.com/document/d/18awpT5MVhlmdX0erO1X__Od59KZvrXBbdV0HG5A7WZk/edit#
+
+@brodock https://gitlab.com/gitlab-org/gitlab-ee/issues/4611#note_88542926:
+
+>>>
+I built a similar infra for hosting landing-pages at my previous company. The use-case is very similar to ours and it was also inspired in how GitHub Pages works.
+
+The endpoint that served the pages were proxying requests to the S3 bucket, based on the domain we would find the base folder and then try to look for files.
+Because S3 calls can be expensive, I've also added a short-lived TTL cache between the twos, so any spike in traffic would not mean multiple requests to the object storage.
+
+Relevant information is here: http://shipit.resultadosdigitais.com.br/blog/do-apache-ao-go-como-melhoramos-nossas-landing-pages/ (it's in portuguese but google translator does a really good job).
+
+For that specific use-case the Domain mapping was kept in both the database (for persistence reasons) and in Redis (so it is fast). Redis was being used not as cache but as main source of truth for that.
+>>>
+
+@nick.thomas https://gitlab.com/gitlab-org/gitlab-ee/issues/4611#note_101235573:
+
+>>>
+Serving the _contents_ of the artifacts directly from object storage does several undesirable things from my point of view:
+
+- Makes object storage mandatory for Pages (unnecessary complexity for small sites)
+- Requires many changes in the Pages daemon
+- Breaks current symlink support, so breaking existing pages deployments
+
+Ultimately, though, the route we take there is up to ~Release and @jlenny.
+>>>
+
+https://gitlab.com/gitlab-org/gitlab-pages/issues/68:
+
+@ayufan 
+
+>>>
+We could serve pages directly from ZIP archives, but loading all of the metadata is IO and memory consuming operation so it is not worthy.
+
+Maybe the solution is to assume that pages access data behind object storage, always. We could then build pages and sidekiq to access object storage directly, not filesystem. Extract data there and update metadata to make pages to pick a new changes.
+>>>
+
+@ayufan 
+
+>>>
+Can pages be just regular OAuth application? Can pages use general API to download artifacts? This is possible even today. Maybe we can just generate one time URLs to download artifacts, similar how you can sign S3 URLs.
+>>>",20
+16202508,2018-11-29 04:03:28.753,Custom error pages not served for namespace domains,"Summary
+===
+
+`/404.html` not served even though it exists.
+
+Steps to reproduce
+===
+
+Create a GitLab Pages website with `/404.html`. Go to `/non/existing_file`.
+
+Expected
+===
+
+`/404.html` served.
+
+Actual
+===
+
+Default GitLab 404 page served when using `*.gitlab.io`, but `/404.html` served when using custom domain.
+
+Useful links
+===
+
+Public repository with a minimal, complete, verifiable example: https://gitlab.com/error-page-demo/error-page-demo.gitlab.io
+
+Non-existent GitLab Page: https://error-page-demo.gitlab.io/non/existing_file
+
+
+Page that should be served: https://error-page-demo.gitlab.io/404.html
+
+Relevant documentation: https://docs.gitlab.com/ce/user/project/pages/introduction.html#custom-error-codes-pages",2
+13689763,2018-08-25 06:44:46.063,Load domain data from API instead of traversing filesystem,"We've seen a number of bugs where stale values of `config.json` are stored or stale directories mess up the domains loading. I think it might make sense to switch GitLab Pages to load the data from the API. We are doing this to support access control in !94.
+
+- [ ] CE: Add API endpoint to serve project pages config.json
+- [ ] Pages: Fetch and cache config when it does not exist",5
+2803186,2016-08-22 18:30:50.935,Support HSTS on GitLab Pages,"## Problem to Solve
+
+Some users want to enforce no access to their web content without HTTPS/certificates. This can be done with [HTTP Strict Transport Security (HSTS) policy](https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security), but we do not currently support enabling this for GitLab Pages sites.
+
+## Proposal
+
+By allowing for enabling this as a custom configuration/policy associated with a Pages site, we can make this possible.
+<!-- triage-serverless v3 PLEASE DO NOT REMOVE THIS SECTION -->
+*This page may contain information related to upcoming products, features and functionality.
+It is important to note that the information presented is for informational purposes only, so please do not rely on the information for purchasing or planning purposes.
+Just like with all projects, the items mentioned on the page are subject to change or delay, and the development, release, and timing of any products, features, or functionality remain at the sole discretion of GitLab Inc.*
+<!-- triage-serverless v3 PLEASE DO NOT REMOVE THIS SECTION -->",1
+2574075,2016-07-09 13:57:40.932,Support for single page applications route all requests to index.html.,"## Problem to Solve 
+
+When routing requests to Gitlab Pages, if there is no default index.html, the request renders an error that does not permit SEO or support of SPA on GitLab Pages. 
+
+## Solution 
+
+Route all requests to GitPages to /index.html by:
+*  implementing a `route single page app to index.html` to a checkbox in **Pages > Settings**
+* Enable SPAs to serve any accompanying files so that it works
+* Ensure existing files are served before trying to serve `index.html`
+
+## Update 2021-07-20
+Closing this issue in favor of https://gitlab.com/gitlab-org/gitlab-pages/-/issues/57. We aim to enable SPAs via a new `.gitlab-pages.yml`",4
+118056437,2022-11-03 07:20:58.432,"Follow-up from ""Add auth-cookie-session-timeout flag"" - In Auth constructor use options struct","The following discussion from !834 should be addressed:
+
+- [ ] @proglottis started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/834#note_1156512951): 
+
+    > nit, not directly related to your change, but this constructor has enough arguments now that it's probably worth extracting an options struct.",2
+117942630,2022-11-01 13:43:17.770,`cache_pages_domain_api` feature flag cause failures in staging,"### Summary
+
+During the rollout of `cache_pages_domain_api` feature flag, the gitlab pages qa tests on staging started to fail.
+
+After some investigation with `@vshushlin`, we found out that the application settings are different between rails nodes (where the cache is created) and sidekiq nodes (where the cache is invalidated). Since we us a hash for the application settings in the cache key, the sidekiq job never finds the cache key to invalide it.
+
+Related:
+- https://gitlab.com/gitlab-org/gitlab/-/issues/376332+
+- https://gitlab.com/gitlab-org/gitlab/-/issues/364127+
+
+### Possible fixes
+
+```json:table
+{
+    ""items"" : [
+{
+""option"": ""🅰️"",
+""description"": ""Instead of using the application settings hash in the cache key we could insert the hash in the cached value and validate it when reading the cache. This way the app settings is not part of the cache key, so it should get invalidated in the sidekiq nodes."",
+""cons"": ""validating the cache manually based on the cached value.""
+},
+{
+""option"": ""🅱️"",
+""description"": ""Instead of using the application settings hash in the cache key we could have a two layers cache. The main cache key would save the app settings hash, which would be the key to the payload itself."",
+""cons"": ""two reads on redis to find the cached value.""
+}
+]
+}
+```",3
+117645763,2022-10-26 19:52:12.963,Support HSTS on GitLab Pages on per domain basis (also on gitlab.com),"## Problem to Solve
+
+Some users want to enforce no access to their web content without HTTPS/certificates. 
+
+This can be done with [HTTP Strict Transport Security (HSTS) policy](https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security), but we do not currently support enabling this for GitLab Pages sites on GitLab.com.
+
+## Solution 
+
+Allow users to enable HSTS for Pages on GitLab.com.",5
+115192449,2022-09-16 09:14:32.428,Session timeout after 10 minutes,"### Summary
+
+We use gitlab-pages for several internal website hostings and our users experience annoying session timeouts due to the short lifetime of the gitlab-pages cookie of 10 minutes. As an example, a single page web app can't load further assets (e.g. images) after the session timeout and a (hard) refresh in the browser is necessary.
+
+The `authSessionMaxAge` constant is hardcoded in [`internal/auth/auth.go`](https://gitlab.com/gitlab-org/gitlab-pages/-/blob/14e310074668254398d13f74e647dd16df2cb12c/internal/auth/auth.go#L40):
+
+```go
+authSessionMaxAge      = 60 * 10 // 10 minutes
+```
+
+It seems that this was introduced with https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/178.
+
+So we have a few questions:
+- Why was the timeout set to exactly 10 minutes? Is there a reason for this (e.g. a standard)?
+- If there is no specific reason, would it be possible to increase this value?
+- Or would it be possible to make this value configurable?
+
+
+WDYT?
+
+If desired, we would be happy to support you as ~""Leading Organization""  with a ~""Community contribution"".
+
+### Example Project
+
+<!-- If possible, please create an example project here on GitLab.com that exhibits the problematic 
+behavior, and link to it here in the bug report. If you are using an older version of GitLab, this 
+will also determine whether the bug is fixed in a more recent version. -->
+
+### What is the current *bug* behavior?
+
+There's a session timeout after 10 minutes.
+
+### What is the expected *correct* behavior?
+
+The duration to a session timeout is higher or can be configured.
+
+### Goal
+
+Make the timeout configurable:
+
+1. [x] Add a new flag to Pages e.g. `auth-cookie-session-timeout` with default value of `10m` :arrow_right: https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/834
+1. [x] Add the flag to Omnibus, see [sample MR](https://gitlab.com/gitlab-org/omnibus-gitlab/-/merge_requests/6144/diffs) :arrow_right: https://gitlab.com/gitlab-org/omnibus-gitlab/-/merge_requests/6495
+1. [x] Add the flag to the Helm charts, see [sample MR](https://gitlab.com/gitlab-org/charts/gitlab/-/merge_requests/2338/diffs) :arrow_right: https://gitlab.com/gitlab-org/charts/gitlab/-/merge_requests/2838
+1. [x] Update the admin documentation, see [sample MR](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/89780/diffs) :arrow_right: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/102996",3
+115128713,2022-09-15 12:07:38.985,GCS ranged requests sometimes fails with 400,"<!---
+
+Please read this!
+
+**NOTE**: Please check https://gitlab.com/gitlab-org/gitlab/-/issues/331699 if you had issues upgrading to 14.0+
+
+Before opening a new issue, make sure to search for keywords in the issues (including closed ones)
+- https://gitlab.com/gitlab-org/gitlab-pages/issues
+
+and verify the issue you're about to submit isn't a duplicate.
+--->
+
+
+### Summary
+
+In GitLab.com, we recently ran into an [incident](https://gitlab.com/gitlab-com/gl-infra/production/-/issues/7727) where a small number of Pages hosts failed with 500 errors. Digging into it we found that this resulted from internal error where ranged requests to GCS were failing with ""400 Bad Request"".
+
+This behavior seems recent (started Sepetmeber 8th), judging by graphs from GCS:
+![image](/uploads/795e5836674f380e1ada61233dd81ff8/image.png).
+
+Kibana logs doesn't provide much info beside the error itself, so perhaps we may need to consider logging the response body of 400 responses.
+
+<!-- DO NOT CHANGE -->",3
+111236649,2022-07-06 08:16:37.411,Update documentation to state _redirects limits are now configurable,"Based on the work in https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/778+, we want to update the ~documentation guides to let users know that the Pages ` _redirects limits` are now configurable.",1
+110795348,2022-06-28 00:12:00.958,Flaky TestDomainResolverError race,"I've seen an increase in race test failures for `TestDomainResolverError` recently, I think it's worth investigating a bit more.
+
+Job [#2647463990](https://gitlab.com/gitlab-org/gitlab-pages/-/jobs/2647463990) failed for be06885fdd167a523dd8e1e103bcbb23bb32db61:",1
+110261083,2022-06-16 20:24:21.528,Move Gitlab Pages documentation menu in the sidebar one level up,"### Summary
+
+Gitlab Pages contribution documentation was recently moved to the docs site. I think it deserves to be a bit more discoverable/easier to access. For that, I propose to move it to its own *contributing* submenu.
+| before | after |
+|--------|-------|
+| <img alt=""SCR-20220616-l99"" src=""https://gitlab.com/gitlab-org/gitlab-docs/uploads/76a348a3f1c32c69d18dfb674aa7780d/SCR-20220616-l99.png"" width=""300""/> | <img alt=""image"" src=""https://gitlab.com/gitlab-org/gitlab-docs/uploads/0abb0e10552412569fa43e60ffc03de1/image.png"" width=""300""/> |",1
+109935782,2022-06-10 18:09:27.774,Remove doc/development in favor of https://gitlab.com/gitlab-org/gitlab/-/blob/master/doc/development/pages/index.md,"<!---
+
+Please read this!
+
+**NOTE**: Please check https://gitlab.com/gitlab-org/gitlab/-/issues/331699 if you had issues upgrading to 14.0+
+
+Before opening a new issue, make sure to search for keywords in the issues (including closed ones)
+- https://gitlab.com/gitlab-org/gitlab-pages/issues
+
+and verify the issue you're about to submit isn't a duplicate.
+--->
+
+
+### Summary
+
+### Steps to reproduce
+
+<!-- Describe how one can reproduce the issue - this is very important. Please use an ordered list. -->
+
+### Example Project
+
+<!-- If possible, please create an example project here on GitLab.com that exhibits the problematic 
+behavior, and link to it here in the bug report. If you are using an older version of GitLab, this 
+will also determine whether the bug is fixed in a more recent version. -->
+
+### What is the current *bug* behavior?
+
+<!-- Describe what actually happens. -->
+
+### What is the expected *correct* behavior?
+
+<!-- Describe what you should see instead. -->
+
+### Relevant logs and/or screenshots
+
+<!-- Paste any relevant logs - please use code blocks (```) to format console output, logs, and code
+ as it's tough to read otherwise. -->
+
+### Output of checks
+
+<!-- If you are reporting a bug on GitLab.com, write: This bug happens on GitLab.com -->
+
+### Possible fixes
+
+<!-- If you can, link to the line of code that might be responsible for the problem. -->
+
+<!-- DO NOT CHANGE -->",1
+108886739,2022-05-20 17:11:50.237,[SPIKE] create a gitlab-pages router,"### Goal
+
+Try to improve how routes are handled in gitlab-pages. 
+
+### Expected Outcome
+
+An example of how to organize gitlab-pages routes and a plan of action in how to do that in small steps.",3
+108336188,2022-05-10 23:08:57.856,Investigate and configure bundle on CI to disallow any changes to Gemfile.lock,"This is a ~""corrective action"" of sirt-2266.
+
+Determine whether this project (https://gitlab.com/gitlab-org/gitlab-pages) uses `bundle` or `bundle install` in CI. Per the Rubygems.org advisory, we should use either the `frozen` or `deployment` options as defense-in-depth to mitigate supply chain attacks. This project needs to use the `frozen` or `deployment` options if not yet.
+
+## More background
+
+See https://github.com/rubygems/rubygems.org/security/advisories/GHSA-hccv-rwq6-vh79:
+
+> Using Bundler in --frozen or --deployment mode in CI and during deploys, as the Bundler team has always recommended, will guarantee that your application does not silently switch to versions created using this exploit.
+
+Note that the `deployment` option installs gems to `vendor`, which we may not want. So `frozen` will usually be the smaller change.
+
+Note that:
+
+> \[DEPRECATED\] The `--frozen` flag is deprecated because it relies on being remembered across bundler invocations, which bundler will no longer do in future versions. Instead please use `bundle config set --local frozen 'true'`, and stop using this flag",1
+107117140,2022-04-25 07:47:32.009,Add early return and tests for internal/handlers/https,"The following discussion from !735 should be addressed:
+
+- [ ] @vshushlin started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/735#note_922396637): 
+
+    > I would add 
+    > 
+    > ```golang
+    > if !redirect {
+    > 	return handler
+    > }
+    > 
+    > and tests for this handler. But let's move it to the follow-up issue. This is already a nice improvement :thumbs-up:",1
+106881635,2022-04-20 06:50:39.305,Infer artifacts-server from internalGitlabServerFromFlags() unless it's set explicitly,"### Summary
+
+We have a lot of config options pointing to the gitlab server. We use them for different reasons:
+
+1. getting domain information
+2. redirecting to authentication
+3. fetching OAuth token
+4. proxying artifacts
+
+In the simplest case, it should be possible to infer all of them from a single URL.
+
+Note:
+1. some of these URL work in the `internal` network (e.g. OAuth token, gitlab domain information)
+2. while others should be public(e.g. OAuth redirects), because we can redirect the user to this URL
+
+So we should have at least 2 parameters:
+- `gitlab-server`
+- `gitlab-internal-server`
+
+And all of the rest can be inferred from this.
+
+Right now `artifacts-server` should always be set in the config, I suggest we infer if from `internalGitlabServerFromFlags()` unless it's set.
+
+**Optional:** mark `artifacts-server` as deprecated an remove it on the next major release.
+
+## Implementation details
+
+```golang
+func artifactsServerFromFlags() string {
+	if *artifactsServer != """" {
+		return *artifactsServer
+	}
+
+	return internalGitlabServerFromFlags() + ""/api/v4""
+}
+```",1
+106318294,2022-04-08 09:46:42.625,TLS Ciphers are breaking in FIPS Mode,"### Summary
+
+When Pages is running in FIPS mode, some [ciphers](https://gitlab.com/gitlab-org/gitlab-pages/blob/master/internal/tls/tls.go#L13-L13) do not work.
+
+### Steps to reproduce
+
+Follow steps in https://gitlab.com/gitlab-org/gitlab-pages/-/issues/718#note_904531139
+
+It also has the list of which ciphers do not work in FIPS mode.
+
+### What is the current *bug* behavior?
+
+All the ciphers mentioned below work when Pages is running as part of GDK but do not work when Pages is hosted on a FIPS enabled RHEL server
+
+#### `TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305` and `TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305`
+
+These are TLS 1.2 ciphers. By default the curl connection goes for TLS1.3 connection unless explicitly specified using `--tlsv1.2 --tls-max 1.2`
+
+
+<details>
+<summary>Logs when Pages is running in GDK and explicit TLS versions not specified in curl</summary>
+
+```sh
+$ curl https://127.0.0.1:3012 -H 'Host: t1.vishaltak.com' --verbose --insecure --cipher ECDHE-RSA-CHACHA20-POLY1305
+*   Trying 127.0.0.1:3012...
+* Connected to 127.0.0.1 (127.0.0.1) port 3012 (#0)
+* ALPN, offering h2
+* ALPN, offering http/1.1
+* Cipher selection: ECDHE-RSA-CHACHA20-POLY1305
+* successfully set certificate verify locations:
+*  CAfile: /etc/ssl/cert.pem
+*  CApath: none
+* (304) (OUT), TLS handshake, Client hello (1):
+* (304) (IN), TLS handshake, Server hello (2):
+* (304) (IN), TLS handshake, Unknown (8):
+* (304) (IN), TLS handshake, Certificate (11):
+* (304) (IN), TLS handshake, CERT verify (15):
+* (304) (IN), TLS handshake, Finished (20):
+* (304) (OUT), TLS handshake, Finished (20):
+* SSL connection using TLSv1.3 / AEAD-CHACHA20-POLY1305-SHA256
+* ALPN, server accepted to use h2
+* Server certificate:
+*  subject: C=IN; ST=MH; L=Mumbai; O=GitLab; OU=Create; CN=pages.gdk.test; emailAddress=vtak@gitlab.com
+*  start date: Apr  7 10:38:07 2022 GMT
+*  expire date: Apr  7 10:38:07 2023 GMT
+*  issuer: C=IN; ST=MH; L=Mumbai; O=GitLab; OU=Create; CN=pages.gdk.test; emailAddress=vtak@gitlab.com
+*  SSL certificate verify result: self signed certificate (18), continuing anyway.
+* Using HTTP2, server supports multiplexing
+* Connection state changed (HTTP/2 confirmed)
+* Copying HTTP/2 data in stream buffer to connection buffer after upgrade: len=0
+* Using Stream ID: 1 (easy handle 0x12100e600)
+> GET / HTTP/2
+> Host: t1.vishaltak.com
+> user-agent: curl/7.79.1
+> accept: */*
+>
+* Connection state changed (MAX_CONCURRENT_STREAMS == 250)!
+< HTTP/2 200
+< cache-control: max-age=600
+< content-type: text/html; charset=utf-8
+< etag: ""7918027bec724fb2a62bcc049eef34f25848f0d4e0aaa5955107e3fb87859dba""
+< expires: Fri, 08 Apr 2022 09:03:39 UTC
+< last-modified: Tue, 22 Mar 2022 14:11:29 GMT
+< vary: Origin
+< content-length: 632
+< date: Fri, 08 Apr 2022 08:53:39 GMT
+...
+```
+
+</details>
+
+
+**Logs when Pages is running in FIPS RHEL**
+
+Curl logs
+
+```sh 
+$ curl https://127.0.0.1:3012 -H 'Host: t1.vishaltak.com' --verbose --insecure --cipher ECDHE-ECDSA-CHACHA20-POLY1305 --tlsv1.2 --tls-max 1.2
+*   Trying 127.0.0.1:3012...
+* Connected to 127.0.0.1 (127.0.0.1) port 3012 (#0)
+* ALPN, offering h2
+* ALPN, offering http/1.1
+* Cipher selection: ECDHE-ECDSA-CHACHA20-POLY1305
+* successfully set certificate verify locations:
+*  CAfile: /etc/ssl/cert.pem
+*  CApath: none
+* (304) (OUT), TLS handshake, Client hello (1):
+* error:1404B410:SSL routines:ST_CONNECT:sslv3 alert handshake failure
+* Closing connection 0
+curl: (35) error:1404B410:SSL routines:ST_CONNECT:sslv3 alert handshake failure
+```
+
+Pages Server logs
+```json
+{""level"":""info"",""msg"":""http: TLS handshake error from 127.0.0.1:34048: tls: no cipher suite supported by both client and server"",""time"":""2022-04-08T09:10:37Z""}
+```
+
+
+#### `TLS_AES_128_GCM_SHA256` , `TLS_AES_256_GCM_SHA384` and `TLS_CHACHA20_POLY1305_SHA256`
+
+These are TLS v1.3 ciphers. 
+
+Curl logs
+
+```sh
+$ curl https://127.0.0.1:3012 -H 'Host: t1.vishaltak.com' --verbose --insecure  --tls13-ciphers TLS_AES_128_GCM_SHA256 --tlsv1.3
+*   Trying 127.0.0.1:3012...
+* TCP_NODELAY set
+* Connected to 127.0.0.1 (127.0.0.1) port 3012 (#0)
+* ALPN, offering h2
+* ALPN, offering http/1.1
+* TLS 1.3 cipher selection: TLS_AES_128_GCM_SHA256
+* successfully set certificate verify locations:
+*   CAfile: /etc/ssl/certs/ca-certificates.crt
+  CApath: /etc/ssl/certs
+* TLSv1.3 (OUT), TLS handshake, Client hello (1):
+* TLSv1.3 (IN), TLS alert, protocol version (582):
+* error:1409442E:SSL routines:ssl3_read_bytes:tlsv1 alert protocol version
+* Closing connection 0
+curl: (35) error:1409442E:SSL routines:ssl3_read_bytes:tlsv1 alert protocol version
+```
+
+Pages server logs
+
+```json
+{""level"":""info"",""msg"":""http: TLS handshake error from 127.0.0.1:34066: tls: client offered only unsupported versions: [304]"",""time"":""2022-04-08T09:15:42Z""}
+```
+
+### What is the expected *correct* behavior?
+
+The HTML should be served while respecting the TLS version and the cipher
+
+### Comments
+
+I think, for TLS 1.2, ciphers `ECDHE-RSA-CHACHA20-POLY1305` and `ECDHE-ECDSA-CHACHA20-POLY1305` are not supported in FIPS mode
+
+**Reason**
+```sh
+$ openssl ciphers -v -stdname  | grep TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305    # when run of RHEL FIPS machine, gives empty result
+$ openssl ciphers -v -stdname  | grep TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305  # when run of RHEL FIPS machine, gives empty result
+```
+
+
+I think TLS v1.3 is not supported in FIPS mode and that is why the Pages server logs `tls: client offered only unsupported versions: [304]` . `304` refers to TLS v1.3 as can be seen [here](https://cs.opensource.google/go/go/+/refs/tags/go1.18:src/crypto/tls/common.go;l=33) . 
+
+However, out of the 3 TLSv.13 ciphers mentioned above, the first two can be seen as available in FIPS RHEL OpenSSL.
+
+```sh
+$ openssl ciphers -v -stdname -s -tls1_3         # when run of RHEL FIPS machine
+TLS_AES_256_GCM_SHA384 - TLS_AES_256_GCM_SHA384  TLSv1.3 Kx=any      Au=any  Enc=AESGCM(256) Mac=AEAD
+TLS_AES_128_GCM_SHA256 - TLS_AES_128_GCM_SHA256  TLSv1.3 Kx=any      Au=any  Enc=AESGCM(128) Mac=AEAD
+TLS_AES_128_CCM_SHA256 - TLS_AES_128_CCM_SHA256  TLSv1.3 Kx=any      Au=any  Enc=AESCCM(128) Mac=AEAD
+```
+
+`TLS_CHACHA20_POLY1305_SHA256` is not available in the list
+
+#### OpenSSL Version Details
+- Local Mac - `LibreSSL 2.8.3`
+- GDK (Ubuntu) - `OpenSSL 1.1.1f  31 Mar 2020`
+- FIPS Pages(RHEL) - `OpenSSL 1.1.1k  FIPS 25 Mar 2021`
+
+If you are using Mac, you would want to spin up some server(Ubuntu) which has openssl installed or install a separate openssl on Mac. The default openssl installed in Mac does have TLS v1.3 ciphers available for some reason. 
+
+
+### Note
+
+While testing this, I've generated certificates for the pages domain (`pages.gdk.test`) and not for the custom domain (`t1.vishaltak.com`) .
+
+<!-- DO NOT CHANGE -->",2
+106238762,2022-04-07 09:58:59.934,Revamp gitlab-pages development docs,"<!---
+
+Please read this!
+
+**NOTE**: Please check https://gitlab.com/gitlab-org/gitlab/-/issues/331699 if you had issues upgrading to 14.0+
+
+Before opening a new issue, make sure to search for keywords in the issues (including closed ones)
+- https://gitlab.com/gitlab-org/gitlab-pages/issues
+
+and verify the issue you're about to submit isn't a duplicate.
+--->
+
+
+### Summary
+
+While setting up my gitlab-pages environment I got confused with some information on `doc/development.md`. It was also confusing to have some duplicated information in https://gitlab.com/gitlab-org/gitlab-development-kit/-/blob/main/doc/howto/pages.md.
+
+I propose to have all the information regarding gitlab-pages development in one place (a Single Source Of Truth - SSOT). For that, I:
+
+1. Revamped the `gitlab-pages/doc/development.md` to have all the required information to start a gitlab-pages developing environment (this MR)
+1. If this MR is approve, I'll open another MR in the GDK repository to point the `GDK/doc/howto/pages.md` to the `gitlab-pages/doc/development.md`.",2
+106045796,2022-04-04 15:48:48.597,Arbitrary protocol redirection,"<!---
+
+Please read this!
+
+**NOTE**: Please check https://gitlab.com/gitlab-org/gitlab/-/issues/331699 if you had issues upgrading to 14.0+
+
+Before opening a new issue, make sure to search for keywords in the issues (including closed ones)
+- https://gitlab.com/gitlab-org/gitlab-pages/issues
+
+and verify the issue you're about to submit isn't a duplicate.
+--->
+
+
+### Summary
+
+<!-- Summarize the bug encountered concisely. -->
+
+GitLab pages can be used to redirect to arbitrary protocols in the authentication flow.
+
+
+### Steps to reproduce
+
+<!-- Describe how one can reproduce the issue - this is very important. Please use an ordered list. -->
+
+Consider the following URL:
+
+```
+https://projects.gitlab.io/auth?domain=mailto://gitlab-com.gitlab.io?body=OMGWTF&state=aaa
+```
+
+It will, after the login redirect to `gitlab.com` redirect the user to their mail client.
+
+![image](/uploads/44a20d4331d7cc8ee9699884c47d8bc7/image.png)
+
+This might be potentially used e.g. on mobile devices to exfiltrate authentication token via custom URL handler.
+
+### Example Project
+
+<!-- If possible, please create an example project here on GitLab.com that exhibits the problematic 
+behavior, and link to it here in the bug report. If you are using an older version of GitLab, this 
+will also determine whether the bug is fixed in a more recent version. -->
+
+### What is the current *bug* behavior?
+
+<!-- Describe what actually happens. -->
+
+Redirect to arbitrary protocols is possible.
+
+### What is the expected *correct* behavior?
+
+Redirect should only be possible to `https` or `http` URLs.
+<!-- Describe what you should see instead. -->
+
+### Relevant logs and/or screenshots
+
+<!-- Paste any relevant logs - please use code blocks (```) to format console output, logs, and code
+ as it's tough to read otherwise. -->
+
+### Output of checks
+
+<!-- If you are reporting a bug on GitLab.com, write: This bug happens on GitLab.com -->
+
+### Possible fixes
+
+<!-- If you can, link to the line of code that might be responsible for the problem. -->
+
+<!-- DO NOT CHANGE -->",2
+105901313,2022-04-01 16:01:55.060,Unable to download large files from gitlab.io,"### Summary
+
+If you try to download a large file from gitlab.io the connection is closed after about 37s. This is probably a regression of the recent security fix. 
+
+### Steps to reproduce
+
+Try to download a large file over a slow connection or try to rate limit your connection (`wget --limit-rate` works to reproduce this issue). This affects f.e. https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo. (see https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/issues/77) If you try to download the mentioned `codium_1.66.0-1648720116_amd64.deb` (80Mb) and the download requires more than about 37s the connection is closed and the download is not finished.
+
+
+## TODO
+
+- [x] change the default to 5 minutes https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/722
+- [x] make backports to versions we backported security fix to
+   - 1.51: https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/723
+   - 1.54: https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/724
+   - 1.56: https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/725
+- [x] make these parameters configurable in charts and omnibus
+   - charts: https://gitlab.com/gitlab-org/charts/gitlab/-/merge_requests/2504
+   - omnibus: https://gitlab.com/gitlab-org/omnibus-gitlab/-/merge_requests/6029
+- [x] log them in http://gitlab.com/gitlab-org/gitlab-pages/blob/4b1afecbb6ae1886bfd3a31f256909ca2770bce4/internal/config/config.go#L331-L331
+- [x] remove the hot fix from https://gitlab.com/gitlab-com/gl-infra/k8s-workloads/gitlab-com/-/merge_requests/1697
+   - https://gitlab.com/gitlab-com/gl-infra/k8s-workloads/gitlab-com/-/merge_requests/1731",3
+102683500,2022-02-18 12:21:07.463,Remove rate limits feature flags,"### Summary
+
+We rolled out rate limits for gitlab pages, so now we can remove feature flags guarding it.
+
+SO we need to:
+1. remove 4 relevant feature flags from https://gitlab.com/gitlab-org/gitlab-pages/-/blob/a8be317a96f2dfb4ab30e338daee2b51833c2322/internal/feature/feature.go#L12-L12 
+1. remove `enforce` flag from https://gitlab.com/gitlab-org/gitlab-pages/-/blob/master/internal/ratelimiter/ratelimiter.go#L48, and all tests using it
+1. clean our production to not mention these feature flags: https://gitlab.com/gitlab-com/gl-infra/k8s-workloads/gitlab-com/-/blob/96a3bf149c1cd2847f29c3ed666c480e6b8d15b7/releases/gitlab/values/values.yaml.gotmpl#L449 , https://gitlab.com/gitlab-com/gl-infra/k8s-workloads/gitlab-com/-/blob/96a3bf149c1cd2847f29c3ed666c480e6b8d15b7/releases/gitlab/values/gprd.yaml.gotmpl#L97 , and other files, **grep the repository for each of them**
+1. remove mentions of feature flags in https://docs.gitlab.com/ee/administration/pages/#rate-limits",2
+102495890,2022-02-15 17:33:07.002,TLS security for GitLab Pages metrics endpoints,"Refer https://gitlab.com/groups/gitlab-org/-/epics/7479
+
+GitLab components report metrics via Prometheus, and sometimes start a pprof listener to aid live profiling. Either of these may be open and listening when running GitLab in production, as they are on GitLab.com
+
+1. Inventory which endpoints report to Prometheus
+1. Determine of those endpoints are already or can be TLS-secured
+1. Secure each unsecured endpoint
+
+~""devops::release"" ~""group::release"" ~""Category:Pages""",5
+101609858,2022-01-31 17:47:18.142,"Intermittent 404s with gitlab-org.gitlab.io due to ""domain does not exist""","### Summary
+
+@marcel.amirault mentioned that he was seeing intermittent 404s while visiting https://gitlab-org.gitlab.io/gitlab-roulette/ today.
+
+https://log.gprd.gitlab.net/goto/e5236f50-82bc-11ec-a649-b7cbb8e4f62e shows that the `domain does not exist` error pops up quite frequently for this host:
+
+![image](/uploads/81fd4b665c5aded40fe716eb759cbe7f/image.png)
+
+The issue seems distributed across multiple pods:
+
+![image](/uploads/082536dceb7b114b7a8e247abbc4b629/image.png)
+
+Curious why these URLs seem to be involved?
+
+![image](/uploads/520b15b310d4e7bc88608728cf42568b/image.png)
+
+https://gitlab-org.gitlab.io/trello-power-up/scripts/api.js should exist.
+
+<!-- Summarize the bug encountered concisely. -->
+
+### Steps to reproduce
+
+<!-- Describe how one can reproduce the issue - this is very important. Please use an ordered list. -->
+
+### Example Project
+
+<!-- If possible, please create an example project here on GitLab.com that exhibits the problematic 
+behavior, and link to it here in the bug report. If you are using an older version of GitLab, this 
+will also determine whether the bug is fixed in a more recent version. -->
+
+### What is the current *bug* behavior?
+
+<!-- Describe what actually happens. -->
+
+### What is the expected *correct* behavior?
+
+<!-- Describe what you should see instead. -->
+
+### Relevant logs and/or screenshots
+
+<!-- Paste any relevant logs - please use code blocks (```) to format console output, logs, and code
+ as it's tough to read otherwise. -->
+
+### Output of checks
+
+<!-- If you are reporting a bug on GitLab.com, write: This bug happens on GitLab.com -->
+
+### Possible fixes
+
+<!-- If you can, link to the line of code that might be responsible for the problem. -->
+
+<!-- DO NOT CHANGE -->
+
+~""devops::release"" ~""group::release"" ~""Category:Pages""",5
+100941602,2022-01-19 22:28:41.956,feat: make server shutdown timeout configurable,"The following discussion from !664 should be addressed:
+
+- [x] @jaime started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/664#note_815813893): 
+
+    > // TODO: make this timeout configurable
+
+# Proposal
+
+Add a new config flag `server-shutdown-timeout` of type `time.Duration`.
+
+- [x] Add to Pages server
+- [x] Add to Omnibus config (example https://gitlab.com/gitlab-org/omnibus-gitlab/-/merge_requests/5832/diffs)
+- [x] Add to GitLab Charts (example https://gitlab.com/gitlab-org/charts/gitlab/-/merge_requests/2338)
+- [x] Document in the admin docs (example https://gitlab.com/gitlab-org/gitlab/-/merge_requests/77969)",4
+99072743,2021-12-15 10:32:37.139,Include correlation ID and remote IP in Sentry tags,"### Summary
+
+While investigating https://gitlab.com/gitlab-com/gl-infra/production/-/issues/6074, it was hard correlating 50x requests to Sentry errors because the latter don't include things like correlation ID or remote IP. Having those tags (and preferably even more) could aid greatly in tracking down problems.",3
+99052899,2021-12-15 02:42:07.837,refactor: revert back to archive/zip once go1.17 is no longer supported,"### Summary
+
+Due to a bug in go1.17, we had to introduced a forked version of the `archive/zip` package: https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/646.
+
+This bug is fixed in go1.18, so eventually, we can revert back to using `archive/zip` in place of `gitlab.com/gitlab-org/golang-archive-zip` once support for go1.17 has been dropped.
+
+<!-- DO NOT CHANGE -->
+
+~""devops::release"" ~""group::release"" ~""Category:Pages""",1
+98258008,2021-11-10 13:37:42.502,"Allow customizing the artifacts path (""public"") in GitLab Pages","### Reasoning 
+
+Currently GitLab Pages will only publish built files from a folder named `public` inside the project root.
+
+Except for a few minor Frameworks this requires changing the default behaviour of the framework the user is using:
+
+For example, Next.js uses `.next`, Nuxt and Astro use `dist`, Eleventy uses `_site`, etc... &mdash; what all of them have in common is the fact, that the `public` folder (sometimes in the root directory, sometimes not) often has a slightly different use: It stores static public files that don't need to go through the build process.
+
+This means that in order to deploy a site with pages not only does the user need to configure the build path, they also often need to change where files from the *original* `public` folders live.
+
+So the default behaviour of Pages is almost never what the user needs. It almost always is in conflict with the default behaviour of the frameworks. This causes confusion because it's not clearly documented (gitlab#340682).
+
+The most user-centric way to approach this is to refactor GitLab Pages so that it obtains the artifacts folder from the `.gitlab-ci.yml` file and uses whatever has been specified there.
+
+### Proposal
+
+#### The initial idea
+
+The easiest way would be to just **drop** the requirement entirely and do the following:
+ - If there's only one folder in artifacts, use that as the pages root
+ - If there's multiple folders, do some educated guessing which one to use (quoted from the original MR):
+   > In the case where `artifacts.paths` contains more than one folder, it will check for the presence of any of the     following folders. These are the output folders generated by the [most popular frontend frameworks](https://gitlab.com/gitlab-org/incubation-engineering/jamstack/meta/-/issues/12#popular-frameworks), ordered by the popularity of the related framework (but `public` first, because backwards compatibility):
+   > - `public` (previous GitLab behaviour, Hugo, Gatsby, Svelte)
+   > - `build` (React)
+   > - `dist` (Vue, Nuxt.js, Angular, Astro, Vite)
+   > - `out` (Next.js)
+   > - `_site` (Eleventy, Jekyll)
+
+The problem with that approach is that it would *change GitLab Pages behavior* for existing pages. If someone had previously uploaded files inside the `pages` job that's not in a `public` directory, they would start to be exposed at the time the change came into effect. 
+Although it's rather unlikely that users uploaded artifacts in the pages job they *did not want* to be exposed, this case cannot be excluded, so following the principle of least surprise, we should require the user to opt in to a behaviour like this.
+
+#### The better idea
+
+Let's introduce a new property to the pipeline. One that's specific to the `pages` job. Say, `publish`
+
+```yaml
+pages:
+  script: ...
+  publish: some/dir
+```
+
+So this new `publish` property has a semantic meaning: ""This is the folder I want to publish"".
+
+In the background this does two things:
+
+1. It behaves as `artifacts.paths` with a single entry. (Pages needs a single root directory anyway, so it doesn't make much sense to allow more than one dir, at least for Pages. The user is allowed to add a classic `artifacts` property if they want to publish artifacts from that repo too, but it would be ignored by the pages server)
+
+2. It causes the GitLab Pages server to treat a folder of that name as the pages root. I guess the best implementation to do this would be via the API, but I'm open to suggestions.
+
+Now, if there's no `publish` property in the pages job definition, we just keep the legacy behaviour: Without a `publish` property, Pages will only ever expose the `public` folder. No surprises for anyone. Users would have to explicitly enable the new behaviour.",4
+96169536,2021-10-26 14:01:39.855,Enable domain-base rate-limiting,Choose rate-limit for gitlab.com based on results of https://gitlab.com/gitlab-org/gitlab-pages/-/issues/654 and enable rate-limiting. Remove feature flags for self-hosted version.,1
+96169359,2021-10-26 13:59:44.935,Enable domain-based rate-limiting in the test mode,Enable rate-limiting introduced in https://gitlab.com/gitlab-org/gitlab-pages/-/issues/630 in test-only mode(only report how many requests were rejected without actually rejecting them),1
+96079199,2021-10-25 11:52:37.359,Try to build GitLab Pages with FIPS compliant libraries,See https://gitlab.com/gitlab-org/gitlab/-/issues/296017#note_487842290 as reference.,2
+95676479,2021-10-19 10:01:54.301,Wildcard redirects break Let's Encrypt integration,"From https://gitlab.com/gitlab-org/gitlab/-/merge_requests/72069: 
+
+> The Let's encrypt automatic integration for gitlab pages is not working when using wildcard redirects.
+> 
+> I.e. `/* /index.html 200` in _redirects file for pages.
+
+This happens because https://gitlab.com/gitlab-org/gitlab-pages/blob/5e86747b6287381e2f23afe837ede1820876cf8d/internal/acme/acme.go#L33-L33 checks if project has a file in it, and we handle redirects, so our acme middleware doesn't redirect to gitlab.
+
+I see a few ways of fixing this:
+
+1. stop redirecting any `""/.well-known/acme-challenge/*""` files
+1. remove this `if domain.ServeFileHTTP(w, r)` check completely. This was originally done to allow users to manually implement their integration with Let's Encrypt. People were doing this before we had our one integration.
+1. In the API response for domain add `redirect_for_acme_challenges: true` and replace `if domain.ServeFileHTTP(w, r) {` with `if !domain.RedirectForAcmeChallenges {`
+1. In the API response return the actually acme challenges like `{acme_challenges: [{path: ""/.well-known/acme-challenge/somehting"", value: ""somevalue""}]}`. Currently, we rely on the main gitlab instance being public and reachable from Let's Encrypt, so we just redirect to it. If we go with the last option, we can get rid of this requirement. 
+
+However, last 2 options will also slow down the Let's Encrypt integration, as we update domain config cache not that often.
+
+Actually, I'm(@vshushlin) in favor of the first option - it shouldn't break anything for existing users, as not many people use redirects yet. And it doesn't slow down the Let's Encrypt integraiton.",1
+95409156,2021-10-14 09:19:21.675,"Replace GetCompressedPageFromListener, GetPageFromListenerWithCookie and GetProxiedPageFromListener with GetPageFromListenerWithHeaders","In https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/594/diffs#b0462893f1f2c58c31c518d3cfb09feb2cb3dc57_402_402 we introduced GetPageFromListenerWithHeaders.
+
+Now we can replace GetCompressedPageFromListener, GetPageFromListenerWithCookie and GetProxiedPageFromListener with it. They all are very similar and differ only be headers.
+
+~""devops::release"" ~""group::release"" ~""Category:Pages""",1
+95406544,2021-10-14 08:45:50.412,Make internal/lru metrics optional,"### Summary
+
+Currently, https://gitlab.com/gitlab-org/gitlab-pages/blob/247bd7ba2fd9139711218c6a42ed03c551f958d9/internal/lru/lru.go#L30-L30 makes metric parameters required.
+
+So in https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/594#note_703313432 we needed to make them required for rate-limiter too.
+
+If these parameters were optional:
+* it may be easier to test without need for things like https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/594/diffs#16df871fa23e530eb52c7b56cc4ea5ce8a5e5997_108_113 (unless we want to test metrics specifically)
+* `ratelimiter.New` interface would be cleaner
+
+So I suggest:
+* Allow `nil` for metrics in https://gitlab.com/gitlab-org/gitlab-pages/blob/247bd7ba2fd9139711218c6a42ed03c551f958d9/internal/lru/lru.go#L30-L30. Or use functional options for them.
+* Convert metrics in ratelimiter.New to functional options as well
+
+**This is a very low priority and just nice to have refactoring**
+
+<!-- DO NOT CHANGE -->
+
+~""devops::release"" ~""group::release"" ~""Category:Pages""",1
+93685391,2021-09-15 04:18:16.657,Allow to configure IP-rate-limits in Omnibus/CNG,"Follow-up from https://gitlab.com/gitlab-org/gitlab-pages/-/issues/490
+
+* Add flags support to omnibus -> 1 MR
+* Add flags to CNG -> 1 MR
+* Add documentation to admin guide -> 1 MR",3
+93685350,2021-09-15 04:16:36.597,Add rate limiting per domain name,"- Add per-domain rate limiting, this could be added much more quickly -> 1-2 MRs
+- Enable per-source-IP in all environments -> 2 MRs
+
+
+Follow-up from https://gitlab.com/gitlab-org/gitlab-pages/-/issues/490#note_676655191",3
+93685291,2021-09-15 04:12:54.113,Enable rate limit per source IP without dropping requests,"Follow-up 3 https://gitlab.com/gitlab-org/gitlab-pages/-/issues/490#note_676655191
+
+Add configuration flags to Pages, integrate with the `ratelimit` package and add acceptance tests. The flags disable the rate limiter by default so this needs to be enabled in our environments manually. That means 1 MR for staging and another one for production.
+
+Follow approach described in https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/575#note_675965682 where we deploy the code and start collecting metrics as-if-enabled to understand the impact of this functionality.
+
+- [ ] pre-prod environments, blocked by https://gitlab.com/gitlab-com/gl-infra/delivery/-/issues/2083
+- [ ] prod, blocked by  https://gitlab.com/gitlab-com/gl-infra/production/-/issues/5706
+- [ ] create a dashboard in Grafana or Kibana",3
+93685212,2021-09-15 04:11:27.580,GitLab Pages Source IP Rate Limiting,"Follow-up 2 https://gitlab.com/gitlab-org/gitlab-pages/-/issues/490#note_676655191
+
+- Add a `ratelimit` package with support for source IP rate limit
+- Add middleware
+- Add metrics
+
+### Release notes
+GitLab Pages can become quite popular. When too many users are trying to access the Page at the same time, this can lead to an outage.
+
+In this release, GitLab is introducing rate limiting per source IP. This will make Pages hosted on gitlab.com more stable. For users with a self hosted GitLab instance, you can also limit the number of concurrent requesters.",3
+93685144,2021-09-15 04:10:15.429,Extract lru cache to its own package so it can be reused,Follow-up 1 https://gitlab.com/gitlab-org/gitlab-pages/-/issues/490#note_676655191,1
+92972812,2021-09-02 05:11:51.921,Enable FF_ENABLE_PLACEHOLDERS by default,"We should enable `FF_ENABLE_PLACEHOLDERS` by default after this feature has been validated for a longer time, perhaps in %""14.4""",1
+92972789,2021-09-02 05:10:20.890,Remove FF_ENABLE_REDIRECTS feature flag,"`FF_ENABLE_REDIRECTS` has been enabled by default since the feature was merged https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/336 in %""13.4""",1
+92897197,2021-08-31 23:35:50.657,Investigate and test sentry integration,"### Summary
+
+Seems like Pages is not reporting any errors to Sentry at all https://sentry.gitlab.net/gitlab/gitlab-pages/.
+
+- We ignore the error when initializing the error tracker in https://gitlab.com/gitlab-org/gitlab-pages/-/blob/master/main.go#L28 so we might be blindly assuming it’s working, when in fact is not.
+- There is a way to deploy a local instance of Sentry for testing purposes and integrate with the GDK https://gitlab.com/gitlab-org/gitlab-development-kit/-/issues/748
+- Consider implementing some sort of catch-all error reporting.
+- Verify the DSN set in https://gitlab.com/gitlab-com/gl-infra/chef-repo/-/blob/master/roles/gprd-base-fe-web-pages.json#L32 is correct",3
+92242264,2021-08-19 05:34:27.799,Replace defer with t.Cleanup in tests,"At least split into 2 MRs
+
+- unit tests
+- acceptance tests
+
+But smaller chunks would be great and easier to review
+
+
+The following discussion from !546 should be addressed:
+
+- [ ] @jaime started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/546#note_654658851):  (+1 comment)
+
+    > **suggestion**: thinking if we should use `t.Cleanup` and extract this into the `testhelpers`
+    > 
+    > ```diff
+    > git diff --color=always --exit-code
+    > diff --git a/internal/auth/auth_test.go b/internal/auth/auth_test.go
+    > index d03407a52..d2f219c83 100644
+    > --- a/internal/auth/auth_test.go
+    > +++ b/internal/auth/auth_test.go
+    > @@ -15,6 +15,7 @@ import (
+    > 
+    >  	""gitlab.com/gitlab-org/gitlab-pages/internal/request""
+    >  	""gitlab.com/gitlab-org/gitlab-pages/internal/source""
+    > +	""gitlab.com/gitlab-org/gitlab-pages/internal/testhelpers""
+    >  )
+    > 
+    >  func createTestAuth(t *testing.T, internalServer string, publicServer string) *Auth {
+    > @@ -211,7 +212,7 @@ func testTryAuthenticateWithCodeAndState(t *testing.T, https bool) {
+    >  	require.Equal(t, true, auth.TryAuthenticate(result, r, source.NewMockSource()))
+    > 
+    >  	res := result.Result()
+    > -	defer res.Body.Close()
+    > +	testhelpers.Close(t, res.Body)
+    > 
+    >  	require.Equal(t, http.StatusFound, result.Code)
+    >  	require.Equal(t, ""https://pages.gitlab-example.com/project/"", result.Header().Get(""Location""))
+    > diff --git a/internal/testhelpers/testhelpers.go b/internal/testhelpers/testhelpers.go
+    > index 3ec97a79c..46d4932ca 100644
+    > --- a/internal/testhelpers/testhelpers.go
+    > +++ b/internal/testhelpers/testhelpers.go
+    > @@ -2,6 +2,7 @@ package testhelpers
+    > 
+    >  import (
+    >  	""fmt""
+    > +	""io""
+    >  	""mime""
+    >  	""net/http""
+    >  	""net/http/httptest""
+    > @@ -68,6 +69,15 @@ func ToFileProtocol(t *testing.T, path string) string {
+    >  	return fmt.Sprintf(""file://%s/%s"", wd, path)
+    >  }
+    > 
+    > +// Close a closer like response.Body as part of testing.T.Cleanup
+    > +func Close(t *testing.T, c io.Closer) {
+    > +	t.Helper()
+    > +
+    > +	t.Cleanup(func() {
+    > +		require.NoError(t, c.Close())
+    > +	})
+    > +}
+    > +
+    >  // Getwd must return current working directory
+    >  func Getwd(t *testing.T) string {
+    >  	t.Helper()
+    > ```
+    > 
+    > WDYT?",2
+89642676,2021-07-02 01:32:09.467,Disable jailing mechanism by default,"### Release notes
+We disable the jailing mechanism for GitLab Pages by default. The main reason for this is that [many users complain that it causes a lot of problems 
+after upgrading to 14.0](https://gitlab.com/gitlab-org/gitlab/-/issues/331699). It also lost it relevance since we stopped serving directly from the 
+disk starting from 14.0. You can still [enable jailing back](LINK TO https://gitlab.com/gitlab-org/gitlab/-/merge_requests/65791/diffs ONCE IT'S 
+MERGED) if disabling it will break something for you. In that case please reach to us on the [feedback issue](https://gitlab.com/gitlab-org/gitlab/-/issues/331699).
+
+### Background
+
+Starting from GitLab 14.1 the [jailing/chroot mechanism is disabled by default](https://gitlab.com/gitlab-org/gitlab-pages/-/issues/589).
+If you are using API-based configuration and the new [Zip storage architecture](#zip-storage)
+there is nothing you need to do.
+
+If you run into any problems please [open a new issue](https://gitlab.com/gitlab-org/gitlab-pages/-/issues/new)
+and enable the jail again by setting the environment variable:
+
+1. Edit `/etc/gitlab/gitlab.rb`.
+1. Set the `DAEMON_ENABLE_JAIL` environment variable to `true` for GitLab Pages:
+
+   ```ruby
+   gitlab_pages['env']['DAEMON_ENABLE_JAIL'] = ""true""
+   ```
+
+
+Disabling the jail will hopefully fix a bunch of issues related to DNS resolution when running Pages inside a Docker container and ease the transition to the new Pages architecture.
+
+
+Per @vshushlin suggestion https://gitlab.com/gitlab-org/gitlab-pages/-/issues/589#note_618738893
+
+- Add `daemon-enable-jail` flag to Pages available for source installations
+- For Omnibus installations, you can enable this by setting the following environment variable in your `/etc/gitlab/gitlab.rb` file
+
+```rb
+gitlab_pages['env']['DAEMON_ENABLE_JAIL'] = ""true""
+```",2
+89577791,2021-07-01 01:54:39.659,Internal API access drops URL path component,"I am using the GitLab CE Docker images for 13.12 and run GitLab Pages on a [separate server](https://docs.gitlab.com/ee/administration/pages/#running-gitlab-pages-on-a-separate-server).  My setup still uses disk based configuration and all pages are accessible.  I have `gitlab_pages['inplace_chroot'] = true` and set `external_url` to point to my GitLab instance.
+
+Preparing for an upgrade to 14.0 on a test setup I ran into an issue contacting the GitLab server's API.  This seems to be caused by the fact that my GitLab instance is hosted on a URL like `http://server.example.internal/gitlab`.
+
+On 13.12, I see the following in the GitLab Pages logs
+``` console
+==> /var/log/gitlab/gitlab-pages/current <==
+{""level"":""info"",""msg"":""Checking GitLab internal API availability"",""time"":""2021-07-01T01:03:21Z""}
+{""error"":""failed to connect to internal Pages API: Get \""http://server.example.internal/api/v4/internal/pages/status\"": dial tcp: lookup maniac.machine.easy on [::1]:53: dial udp [::1]:53: connect: cannot assign requested address"",""level"":""warning"",""msg"":""attempted to connect to the API"",""time"":""2021-07-01T01:03:21Z""}
+```
+Note the absence of the `/gitlab` path component in the URL!
+
+After I copied `/etc/resolv.conf` to an `etc/` directory directly below `gitlab_rails['pages_path']`, that changed to
+``` console
+==> /var/log/gitlab/gitlab-pages/current <==
+{""level"":""info"",""msg"":""Checking GitLab internal API availability"",""time"":""2021-07-01T01:20:45Z""}
+{""error"":""failed to connect to internal Pages API: HTTP status: 404"",""level"":""warning"",""msg"":""attempted to connect to the API"",""time"":""2021-07-01T01:20:45Z""}
+```
+For the above GitLab Pages log entry, I see the following in the logs on my GitLab server
+``` console
+==> /var/log/gitlab/nginx/gitlab_access.log <==
+10.11.55.227 - - [01/Jul/2021:01:20:45 +0000] ""GET /api/v4/internal/pages/status HTTP/1.1"" 404 1576 """" ""Go-http-client/1.1"" 1.99
+```
+confirming that the `/gitlab` path component is ignored.
+
+I have tried setting `gitlab_pages['internal_gitlab_server'] = http://server.example.internal/gitlab` but that didn't make a difference.
+
+Despite all of the above, I am able to access pages using 13.12.  So far so good :thinking:  
+However, when I add `gitlab_pages['domain_config_source'] = ""gitlab""` to my 13.12 configuration, all I get is `502` HTTP status error pages :sob:  
+
+Seeing that 14.0 requires access to the internal API, it seems I will loose GitLab Pages functionality if I upgrade :worried:",1
+88716490,2021-06-15 05:50:27.785,Add flag to disable ACME challenge,"Currently Pages depends on [`-gitlab-server` to enable support for the ACME challenge middleware](https://gitlab.com/gitlab-org/gitlab-pages/-/blob/39c7efd7a9045cfde6ca230e5586d8ae1842ddb0/app.go#L517). 
+This means it's enabled by default now that the API is on by default. We should have a flag to allow users to disable the middleware if needed.
+
+```go
+	if config.GitLab.Server != """" {
+		a.AcmeMiddleware = &acme.Middleware{GitlabURL: config.GitLab.Server}
+	}
+```
+
+## Proposal 
+
+- Add `-disable-acme-middleware` flag to `internal/config/flags.go`
+- Add `disable_acme_middleware` to Omnibus default to `nil`",2
+88715846,2021-06-15 05:26:15.608,Use internal-gitlab-server in ACME Middleware and Auth package,"ACME middleware and the `auth` package both talk to the GitLab server. Currently uses the value of `-gitlab-server`. However, this may cause issues in networks with local access only. We should use the value of `config.GitLab.InternalServer` instead, which uses `-interanl-gitlab-server`.",1
+87172523,2021-05-17 07:32:33.337,Refactor acceptance tests to use GitLab API stub,"As part of removing support of disc source configuration, we need to make sure that acceptance tests are running using the API as well. Most of the current tests use disk source so this effort would likely take 2-3 MRs to get through.
+
+https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/483#note_576522305",3
+86252215,2021-04-30 00:02:04.068,Remove use-legacy-storage from Pages,Decided to remove unnecessary flag use-legacy-storage from Pages during our last Pages sync. The logic will be handled by omnibus instead https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/5993,1
+86163535,2021-04-28 19:17:22.895,Add Permissions-Policy: interest-cohort=() header to Pages sites hosted on GitLab.com,"### Background
+
+This issue is the same as https://gitlab.com/gitlab-org/gitlab/-/issues/327904, but for GitLab Pages instead of GitLab itself.
+
+### Proposal
+
+Begin sending the `Permissions-Policy: interest-cohort=()` header by default for Pages sites.
+
+For now, we'll scope this change to Pages sites hosted on GitLab.com, and not self-managed Pages.
+
+### Why?
+
+- [FLoC has some worrying privacy concerns](https://www.eff.org/deeplinks/2021/03/googles-floc-terrible-idea)
+- [GitHub Pages recently blocked FLoC](https://github.blog/changelog/2021-04-27-github-pages-permissions-policy-interest-cohort-header-added-to-all-pages-sites/)
+
+### Additional info
+
+GitHub only enabled this new header for non-custom sites:
+
+> Pages sites using a custom domain will not be impacted
+
+I'm not exactly sure why they made this decision. I think we should send this header by default for _all_ Pages sites, unless there's a convincing reason not to.
+
+### Technical proposal
+
+* Add `Permissions-Policy: interest-cohort=()` to the [config CustomHeaders](https://gitlab.com/gitlab-org/gitlab-pages/-/blob/4ff61e374a7dbfa51fee91799f11197e0f8d53f7/internal/config/config.go#L251) on startup
+* Add a boolean flag `-disable-floc-header` (or `-disable-permissions-policy-header`) to https://gitlab.com/gitlab-org/gitlab-pages/-/blob/master/internal/config/flags.go -> when `true` we don't attach that header as above
+* Add the option to Omnibus
+* Update admin docs",3
+85999746,2021-04-27 05:24:27.363,Handle multiple errors in config validation,"The following discussion from !465 should be addressed:
+
+- [ ] @hswimelar started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/465#note_560875755):  (+1 comment)
+
+    > This might be a good chance to either use non-fatal logging and return an error at the end. This way, multple problems with the config can be reported all at once, so the user may understand all the work they need to do, rather than having to fix the config one problem at a time.
+    > 
+    > https://github.com/hashicorp/go-multierror works really well here, but I'm not a maintainer, so I don't feel very confident recommending you to add a third-party dependency. Maybe something do in a commit you can easily revert, if you decide to do down this path.",1
+84834773,2021-04-08 05:21:56.430,Remove chroot logic,"We should remove chroot/jail once we fully rollout ZIP, on or after %""14.3"" 
+
+https://gitlab.com/gitlab-org/gitlab/-/issues/326117#note_546346101
+
+This can be removed after `use_legacy_storage` has been removed https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/6166",3
+81597674,2021-03-24 23:42:58.086,Reduce cyclomatic complexity of appMain,Job [#1122897267](https://gitlab.com/gitlab-org/gitlab-pages/-/jobs/1122897267) failed for fa7c12070e7ba921c1d5091f735eec4cc638cd6b:,1
+80527421,2021-03-09 04:50:20.468,Make mutex in type Gitlab a value receiver,"The following discussion from !434 should be addressed:
+
+- [ ] @ash2k started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/434#note_522916031): 
+
+    > There is almost never a need to make mutexes pointers. I wonder why it's a pointer here?",1
+78475986,2021-02-05 08:42:18.476,Allow to disable local disk type of access,"Since Pages can run in a fully remote type of access we should
+allow disabling disk access completely.
+
+Maybe the simplest way to achieve that would be to specify `-enable-disk=false`,
+or switch to specifying an array of `-allowed-paths=[]` instead that would superseed `-pages-root`.
+
+This would be needed to ensure that we fully disable a disk-type of accesses for cases where it is not needed,
+like CNG.
+
+Proposal:
+
+- Introduce `-enable-disk`, when false Pages will not need to scan the `pages-root` directory. However, a `pages-root` value is still needed for daemonizing into a jail or chroot.",2
+78475817,2021-02-05 08:38:08.969,Introduce a switch for `disk` serving that would allow this type of access being disabled,"Currently, we expose `disk` serving as a way to access data.
+
+We should introduce a switch that would disallow usage of that feature with a toggle.
+This toggle ideally:
+- should be off by default with %""14.0""
+- should be off by default for every CNG installation
+
+```
+- use-legacy-storage=true
+```",2
+77799953,2021-01-25 13:54:18.794,"Pages ""auto"" configuration source doesn't work as expected","After `13.7` some people started to have problems with gitlab-pages. Most common symptom: pages are available 50% of the time.
+
+The problem is only present if people have multiple servers running both pages and `gitlab-rails`(see below)
+
+### Consider this setup
+* client has gitlab instance ""gitlab.example.com""
+* and multiple servers running both `gitlab-rails` and `gitlab-pages` simultaneously
+
+### How ""auto"" currently works
+* During startup `gitlab-pages` checks if the API is available multiple times until it gets `200 OK` in response. Which it eventually does because there is a load balancer for ""gitlab.example.com"" and eventually `gitlab-pages` hits the same server as one it's running on.
+* Then `gitlab-pages` remembers that `API is functioning` and will serve `502` errors if it isn't.
+
+### Workaround
+* run steps 8-10 in https://docs.gitlab.com/13.7/ee/administration/pages/index.html#running-gitlab-pages-on-a-separate-server
+* or explicitly set `gitlab_pages['domain_config_source'] = ""disk""` as described in https://docs.gitlab.com/ee/administration/pages/#gitlab-api-based-configuration (not recommended, because in %14.0 this option will be removed and you'll need to do the first option anyway)
+
+### Suggested fix
+change ""auto"" behavior: if we ever fail to access API with unauthorized error - fallback to disk. (do not do this if `gitlab` is set explicitly).",2
+76842878,2021-01-07 00:36:31.450,Re-enable IPv6 listeners in acceptance tests,"Re-enable IPv6 listeners in acceptance tests once https://gitlab.com/gitlab-com/gl-infra/infrastructure/-/issues/12258 is resolved
+
+Blocked by https://gitlab.com/gitlab-com/gl-infra/infrastructure/-/issues/12258
+
+Related to #524",1
+76168314,2020-12-17 06:45:20.047,Flaky acceptance tests due to port already in use,"Since we split the acceptance tests execution in https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/403, we now get a bunch of errors due to the ports being already in use. 
+
+Retrying the jobs one by one in a failing pipeline seem to be enough to make the tests pass.
+
+Sample job https://gitlab.com/gitlab-org/gitlab-pages/-/jobs/912690661
+```
+msg=""could not create socket"" error=""listen tcp [::1]:37000: bind: cannot assign requested address""
+```
+
+A potential solution is to use TCP port 0 and let the OS assign an available port. However, there is no easy way to communicate the port that was assigned to the Pages acceptance tests. This causes [`WaitUntilRequestSucceeds`](https://gitlab.com/gitlab-org/gitlab-pages/-/blob/21066de52d7f7af759bdf2395694c935110da1bb/test/acceptance/helpers_test.go#L155) to wait until timeout to get a response from the binary currently running.
+
+Sample faling pipeline
+https://gitlab.com/gitlab-org/gitlab-pages/-/pipelines/237350515
+
+---
+
+## Update 2020-01-07
+
+IPv6 seems to be disabled in some `gitlab-org-docker` runners https://gitlab.com/gitlab-com/gl-infra/infrastructure/-/issues/12258.",1
+76013210,2020-12-14 07:02:16.166,Make gitlab client cache configurable,"The `internal/source/gitlab/cache/` package is currently semi hardcoded using the [`defaultCacheConfiguration`](https://gitlab.com/gitlab-org/gitlab-pages/-/blob/5e5ce293e7eb529f4443198b8cd8bb4d9a1ff418/internal/source/gitlab/cache/cache.go#L11). This makes it hard to write acceptance tests that can execute faster. For example https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/393#note_463829311.
+
+We should introduce extra flags that will allow configuring the cache's behaviour for resolving a domain's configuration.
+
+## Default configuration
+
+```go
+var defaultCacheConfig = cacheConfig{
+	cacheExpiry:          10 * time.Minute,
+	entryRefreshTimeout:  60 * time.Second,
+	retrievalTimeout:     30 * time.Second,
+	maxRetrievalInterval: time.Second,
+	maxRetrievalRetries:  3,
+}
+``` 
+
+## Implementation
+
+1. Add the following flags to Pages and override `defaultCacheConfig`
+
+  - gitlab-cache-expiry -> The maximum time a domain's configuration is stored in the cache (default: 600s)
+  - gitlab-cache-refresh -> The interval at which a domain's configuration is set to be due to refresh (default: 60s)
+  - gitlab-cache-cleanup -> The interval at which expired items are removed from the cache (default: 60s)
+  - gitlab-retrieval-timeout -> The maximum time to wait for a response from the GitLab API per request (default: 30s)
+  - gitlab-retrieval-interval -> The interval to wait before retrying to resolve a domain's configuration via the GitLab API (default: 1s)
+  - gitlab-retrieval-retries -> The maximum number of times to retry to resolve a domain's configuration via the API (default: 3)
+
+
+2. Move `cacheConfig` to `internal/config/`
+3. Add flags to Omnibus
+4. Documentation updates
+
+The first part of https://gitlab.com/gitlab-org/gitlab-pages/-/issues/507 is done so we can work on this
+
+## What do these settings do
+
+Users can configure these settings when using [API-based configuration](https://docs.gitlab.com/ee/administration/pages/#gitlab-api-based-configuration) to modify the cache behavior for a domain's resolution. The recommended default values are set inside GitLab Pages and should only be modified if needed.
+
+Some examples:
+
+- Increasing `gitlab-cache-expiry` will allow items to exist in the cache longer. This setting might be useful if the communication between Pages and GitLab Rails is not stable or the content served by Pages does not change frequently.
+- Increasing `gitlab-cache-refresh` will reduce the frequency at which GitLab Pages requests a domain's configuration from GitLab Rails. This setting might be useful for content that does not change frequently.
+- Decreasing `gitlab-retrieval-retries` will report issues between Pages and Rails more quickly. However, they can be transient failures rather than real issues.",4
+75395466,2020-12-01 00:52:26.451,Refactor `Error`s to strings that aren't used as `error`,"Follow up to https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/399#note_455909360
+
+@jaime started a discussion https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/399#note_455909360:
+
+> If we are using them as error messages rather than errors, then we should probably change them to just string constants or even inline them in the log line itself. There's no point in defining an error that is not going to be returned or used as value, WDYT?
+> 
+> e.g. define the messages as strings
+> 
+> ```go
+> const (
+>	createArtifactRequestErrMsg = ""Failed to create the artifact request""
+>	artifactRequestErrMsg       = ""Failed to request the artifact""
+> )
+> ```",1
+74943046,2020-11-25 01:23:27.781,Use CorrelationID middleware in Pages,"Since Pages does not appear to use CorrelationIDs are present (it should!)
+
+The following discussion from !397 should be addressed:
+
+- [ ] @andrewn started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/397#note_452561607):  (+2 comments)
+
+    > @jaime would you mind reviewing please?
+
+---
+
+1. Add the correlation ID to Pages, including a `propagate-correlation-id` flag.
+1. Add flag to Omnibus `gitlab_pages['propagate_correlation_id'] to Omnibus
+1. Update Pages admin documentation 
+
+---
+
+# Propagating the correlation ID
+
+Setting the `propagate_correlation_id` in Omnibus will allow installations behind a reverse proxy generate and set a correlation ID to requests sent to GitLab Pages. When a reverse proxy sets the header value `x-request-id`, the value will be propagated in the request chain. Users [can find the correlation ID in the logs](https://docs.gitlab.com/ee/administration/troubleshooting/tracing_correlation_id.html#identify-the-correlation-id-for-a-request).",3
+74618720,2020-11-19 10:01:00.981,Refactor config flags and consolidate in internal/config/ package,"- Move all config flags to `internal/config/`
+- Refactor config struct so it can be called from any other package
+
+The following discussion from !392 should be addressed:
+
+- [ ] @jaime started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/392#note_450695359): 
+
+    > Move all config flags to `internal/config/`",2
+74416375,2020-11-16 09:12:14.631,Make `/pages` to be an actual `artifacts-path`,"We decided that `file://` being used for ZIP will return a full absolute path as seen from Rails perspective.
+
+However, when doing `chroot` in `pages` we mount `pages-root` under `/pages`. We should instead ensure
+that in chroot env the absolute path to access resource is exactly the same, to allow the `file://` returned by
+Rails to function exactly the same.
+
+This is required for https://gitlab.com/gitlab-org/gitlab-pages/-/issues/485.",1
+73899685,2020-11-05 08:32:43.022,Support splat (wildcard) redirects,"In https://gitlab.com/gitlab-org/gitlab-pages/-/issues/24, a simple redirect mechanism was implemented https://docs.gitlab.com/ee/user/project/pages/redirects.html.
+
+It would be great if we also supported splat (wildcard) redirect support. According to the [Netlify docs](https://docs.netlify.com/routing/redirects/redirect-options/#splats):
+
+```
+/news/*  /blog/:splat
+```
+
+This would redirect paths like `/news/2004/01/10/my-story` to `/blog/2004/01/10/my-story`.
+
+It would mean a lot for the docs site, since we want to move away from the `/ee` prefix and use something like `/gitlab`.
+
+```
+/ee/*  /gitlab/:splat
+```
+
+### Release Notes
+
+Details to be added",2
+73297571,2020-10-24 16:05:31.917,Object Storage should have a strict TTFB timeout,"We had/have an outage related to GCS used by GitLab Pages:
+
+https://prometheus-app.gprd.gitlab.net/graph?g0.range_input=1h&g0.expr=avg(rate(gitlab_pages_httprange_trace_duration_sum%7Brequest_stage%3D%22httptrace.ClientTrace.GotFirstResponseByte%22%7D%5B5m%5D)%2Frate(gitlab_pages_httprange_trace_duration_count%7Brequest_stage%3D%22httptrace.ClientTrace.GotFirstResponseByte%22%7D%5B5m%5D))&g0.tab=0&g1.range_input=2h&g1.expr=sum(gitlab_pages_httprange_open_requests)&g1.tab=0&g2.range_input=2h&g2.stacked=1&g2.expr=sum(increase(gitlab_pages_vfs_operations_total%7Boperation%3D%22Open%22%7D%5B5m%5D))%20by%20(vfs_name%2C%20operation)&g2.tab=0
+
+### TTFB
+
+![image](/uploads/fd84ed1775b3ae7c32735a9bf8c76cfb/image.png)
+
+We clearly see that TTFB sky rockets once we disabled NFS. In regular operation we expect `25ms`, during outage of GCS we were seeing around `20s`, but once we disabled it appears that some requests had TTFB close to ""a few minutes"".
+
+### Connections
+
+![image](/uploads/24df853cd766d9b48b65962c0464ab49/image.png)
+
+This created a crazy backlog of 6k open connections to GCS. Our timeout on the connection is 30 minutes.
+
+### Summary
+
+This outage showed some aspects to improve in Pages related how Pages handles timeouts, and what timeouts it should use to ensure sane service recovery and reducing amplification pressure due to outage happening elsewhere.
+
+### Proposal
+
+Define TTFB to be no longer than 15s. This should ensure that ""sane amount"" of requests is opened, and system can fast-reject instead of hang.
+
+```golang
+var httpClient = &http.Client{
+	// The longest time the request can be executed
+	Timeout: 30 * time.Minute,
+	Transport: httptransport.NewTransportWithMetrics(
+		""httprange_client"",
+		metrics.HTTPRangeTraceDuration,
+		metrics.HTTPRangeRequestDuration,
+		metrics.HTTPRangeRequestsTotal,
+	),
+}
+```
+
+We should configure the:
+
+- `TLSHandshakeTimeout time.Duration`, aka before being able to write `request`
+- `ResponseHeaderTimeout time.Duration`, aka close to `TTFB`
+- `ExpectContinueTimeout time.Duration`, aka similar to `TTFB`
+
+Or, just implement that differently as part of RoundTrip of `httprange` to define a timeout to receiving response (but not yet fully reading it).
+
+More here: https://blog.cloudflare.com/the-complete-guide-to-golang-net-http-timeouts/",1
+73291617,2020-10-24 10:50:23.835,The unavailability of GitLab API makes us fallback to disk-serving,"Currently, if the GitLab API is unavailable we fallback to using `disk serving`.
+
+This is OK, now, but in a fully cloud-native architecture, this should rather
+return a proper `500` type of error.
+
+We should disable `local instance()` and instead return a proper error to client.
+
+```golang
+func (d *Domain) resolve(r *http.Request) *serving.Request {
+	request, _ := d.Resolver.Resolve(r)
+
+	// TODO improve code around default serving, when `disk` serving gets removed
+	// https://gitlab.com/gitlab-org/gitlab-pages/issues/353
+	if request == nil {
+		return &serving.Request{Serving: local.Instance()}
+	}
+
+	return request
+}
+
+// ServeFileHTTP returns true if something was served, false if not.
+func (d *Domain) ServeFileHTTP(w http.ResponseWriter, r *http.Request) bool {
+	if !d.HasLookupPath(r) {
+		// TODO: this seems to be wrong: as we should rather return false, and
+		// fallback to `ServeNotFoundHTTP` to handle this case
+		httperrors.Serve404(w)
+		return true
+	}
+
+	request := d.resolve(r)
+
+	return request.ServeFileHTTP(w, r)
+}
+```",1
+72696799,2020-10-14 08:56:02.169,Allow to serve `zip` from a disk `/pages`,"Currently, GitLab Pages can serve remotely stored ZIP archives.
+
+However, since we want to migrate all our deployments to ZIP,
+we should support serving a local stored content as well.
+
+This is needed to ensure that we can migrate on-premise installations
+using NFS or local disks to ZIP-architecture.",5
+72676917,2020-10-13 23:38:37.891,Fix TestVFSFindOrCreateArchiveCacheEvict flaky test,"I found this flaky test locally, I believe this line https://gitlab.com/gitlab-org/gitlab-pages/-/blob/6cba2f2875856a7b4e2d008ca348d7b91098ed35/internal/vfs/zip/vfs_test.go#L120 is causing trouble
+
+```
+ go test ./internal/vfs/zip -run TestVFSFindOrCreateArchiveCacheEvict -count 10 -failfast
+--- FAIL: TestVFSFindOrCreateArchiveCacheEvict (0.00s)
+    vfs_test.go:126:
+        	Error Trace:	vfs_test.go:126
+        	Error:      	Should not be: &zip.zipArchive{fs:(*zip.zipVFS)(0xc0000b1e90), path:""http://127.0.0.1:60311/public.zip"", once:sync.Once{done:0x1, m:sync.Mutex{state:0, sema:0x0}}, done:(chan struct {})(0xc0000b26c0), openTimeout:30000000000, cacheNamespace:""1:"", resource:(*httprange.Resource)(0xc00007fe00), reader:(*httprange.RangedReader)(0xc00007ba50), archive:(*zip.Reader)(0xc00007fe80), err:error(nil), files:map[string]*zip.File{""public/"":(*zip.File)(0xc000240160), ""public/404.html"":(*zip.File)(0xc000240370), ""public/bad_symlink.html"":(*zip.File)(0xc000240790), ""public/index.html"":(*zip.File)(0xc0002402c0), ""public/subdir/"":(*zip.File)(0xc000240420), ""public/subdir/2bp3Qzs9CCW7cGnxhghdavZ2bJDTzvu2mrj6O8Yqjm3YMRozRZULxBBKzJXCK16GlsvO1GlbCyONf2LTCndJU9cIr5T3PLDN7XnfG00lEmf9DWHPXiAbbi0v8ioSjnoTqdyjELVKuhsGRGxeV9RptLMyGnbpJx1w2uECiUQSHrRVQNuq2xoHLlk30UAmis1EhGXP5kKprzHxuavsKMdT4XRP0d79tie4tjqtfRsP4y60hmNS1vSujrxzhDa"":(*zip.File)(0xc0002406e0), ""public/subdir/hello.html"":(*zip.File)(0xc0002404d0), ""public/subdir/linked.html"":(*zip.File)(0xc000240580), ""public/symlink.html"":(*zip.File)(0xc000240630)}}
+        	Test:       	TestVFSFindOrCreateArchiveCacheEvict
+        	Messages:   	a different archive is returned
+FAIL
+FAIL	gitlab.com/gitlab-org/gitlab-pages/internal/vfs/zip	0.132s
+FAIL
+```",1
+72631918,2020-10-13 10:01:55.835,Pages 404s with pages_artifacts_archive enabled,"We had a Silver Customer ([Zendesk](https://gitlab.zendesk.com/agent/tickets/176158) - internal only) report that they started getting 404s on their Pages project, but it worked when copying in a new project.
+
+That happened a few hours after the `pages_artifacts_archive` rollout percentage was increased.
+
+@ayufan turned off the feature flag and we were able to see the Pages again.
+
+Relevant [Slack thread](https://gitlab.slack.com/archives/C1BSEQ138/p1602582002162400?thread_ts=1602547809.159500&cid=C1BSEQ138) (internal only)",3
+72614208,2020-10-13 05:42:39.952,Improve zip cache refreshing for the same domain,"We open a bunch of archives each minute: https://prometheus-app.gprd.gitlab.net/graph?g0.range_input=1h&g0.expr=increase(gitlab_pages_zip_opened%5B5m%5D)&g0.tab=0
+
+From slack: https://gitlab.slack.com/archives/C1BSEQ138/p1602144418115300
+
+```
+kamil Oct 8th at 7:06 PM
+@jaime I think we are done with LRU for time being. Maybe next get archive refresh to be working?
+4 replies
+
+kamil  5 days ago
+Looking at this graph it appears that we open a bunch of archives each minute: https://prometheus-app.gprd.gitlab.net/graph?g0.range_input=1h&g0.expr=increase(gitlab_pages_zip_opened%5B5m%5D)&g0.tab=0
+
+jaime  1 day ago
+do you mean we’re refreshing too often?
+
+kamil  22 hours ago
+Yes, we each time we refresh the domain via API a new URL is being returned due to changed auth params. This means that we reload each accessed archive every minute. (edited) 
+
+kamil  22 hours ago
+Due to caching, holding 2-3 archives for a given domain at a single time.
+```",1
+72377135,2020-10-08 09:18:48.703,Add vfs type to access log,"From [slack comment](https://gitlab.slack.com/archives/C1BSEQ138/p1602147615122100?thread_ts=1602147179.119100&cid=C1BSEQ138):
+> I also think that it would be helpful for us to extend kibana logs with information on how the file was served (if it was ZIP), so we could ELK grep logs and find unique domains being served.",1
+71929438,2020-09-30 09:26:49.550,Cache `Readlink` data,"Currently `Readlink` is evaluated each time. Similarly to [`cacheOffset`](https://gitlab.com/gitlab-org/gitlab-pages/-/issues/461) we should cache symlinks as well.
+
+To ensure that `Readlink` is processed in a predictable time, using minimal amount of requests, especially that in some cases we need to perform symlink traversal.",1
+71907954,2020-09-30 02:19:12.835,Improve tooling for local Golang development,"Local development is not friendly for Go newcomers, decreasing the likelihood of ~""Community contribution""s
+
+- Since go modules was introduced, `make setup` fails trying to remove `.GOPATH/`. $GOPATH is not needed anymore so we should remove this
+
+```sh
+$ make setup
+
+rm: .GOPATH:
+...
+rm: .GOPATH/pkg/mod/sourcegraph.com/sqs/pbtypes@v0.0.0-20180604144634-d3ebe8f20ae4/void.pb.go: Permission denied
+```
+
+- `make lint` fails with `ERRO Running error: context loading failed: no go files to analyze`
+- Add `make format` for people that run into linter issues , e.g. https://gitlab.com/gitlab-org/gitlab-pages/-/jobs/764364111",3
+71658480,2020-09-25 02:21:21.568,Negative cache errored zip archives,"Having two intervals:
+
+* positive cache: long-time cache, likely prolonged
+* negative cache: short-time cache, likely not prolonged
+
+---
+The following discussion from !351 should be addressed:
+
+- [ ] @ayufan started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/351#note_418261431): 
+
+    > I believe that we have a TODO item: Should we cache an archive that cannot be read for a long period? Aka. negative cache.
+    > 
+    > This works very well for positive cache, but also makes us to cache negative cache (errored archive forever).",1
+71443472,2020-09-21 11:54:45.704,Ignore `@ hashed` directory when performing disk scan.,"In https://gitlab.com/gitlab-org/gitlab/-/merge_requests/42461 we store zipped pages site version on the same top directory as other pages content. But add `@hashed` to avoid name collision with namespaces.
+
+IIRC pages currently recusively scans all subdirectories in `shared/pages`, so we need exclude `shared/pages/@hashed`.
+
+It may sound irrelevant for .com, since we disabled this disk scan completely. But it's not true for self-managed instances, and once we [enable feature flag responsible for creating pages deployments](https://gitlab.com/gitlab-org/gitlab/-/issues/245308) this directory will appear on self-managed. This may create performance problem and maybe some security risks(unlikely though).
+
+But maybe pages will just not find `config.json` file there and ignore this directory automatically, but that's need to be tested. :shrug:",1
+71430811,2020-09-21 07:45:04.405,Handle extra headers when serving from compressed zip archive,"Handle some missing headers lost functionality by using `io.Copy` instead of `http.ServeContent`.
+
+Go src for [`http.ServeContent`](https://github.com/golang/go/blob/ef20f76b8bc4e082d5f81fd818890d707751475b/src/net/http/fs.go#L130) as reference.
+
+## Proposal
+
+1. Handle request headers:
+- If-Match
+- If-Unmodified-Since
+- If-None-Match
+- If-Modified-Since
+- ~~If-Range~~ can't use this header with compressed files
+
+2. Set in response header:
+- Last-Modified
+
+~""backend-weight::2"" 
+---
+The following discussion from !348 should be addressed:
+
+- [ ] @vshushlin started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/348#note_415122700):  (+2 comments)
+
+    > **Question:** from `ServeContent` docs:
+    > 
+    > > ...sets the MIME type, and handles If-Match, If-Unmodified-Since, If-None-Match, If-Modified-Since...
+    > 
+    > Do we plan to reimplement MIME types and modified-since logic? Do we need follow up issues for them?",3
+71425929,2020-09-21 05:08:55.944,Implement zip cache callbacks,"The following discussion from !351 should be addressed:
+
+- [ ] @ayufan started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/351#note_414831416): 
+
+    > As a follow-up maybe we would have ""a kind of callback"" on `zipArchive`?
+    > 
+    > ```golang
+    > func (z *zipArchive) onCacheAdded() {}
+    > func (z *zipArchive) onCacheRefreshed() {}
+    > func (z *zipArchive) onCacheEvicted() {}
+    > ```
+    > 
+    > We would simply call these methods on these points, and they could update metrics on a will, assuming that if you ever call `onCacheAdded()` the `onCacheEvicted()` will be called as well.
+
+And implement tests https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/351#note_418262162",1
+71425440,2020-09-21 04:42:24.962,Make zip cache configurable,"A simple in-memory cache was introduced in https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/351 and https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/364 with some hard-coded values. These should be configurable.
+
+## Proposal
+
+* Add configuration changes flag to Pages
+  - Add a zipCacheConfig type and flags:
+  - `zip-cache-expiration`
+  - `zip-cache-cleanup`
+  - `zip-cache-refresh`
+  - `zip-open-timeout`
+  - ~~`zip-cache-dataoffset-size`~~
+  - ~~`zip-cache-dataoffset-prune-count`~~
+  - ~~`zip-cache-readlink-size`~~
+  - ~~`zip-cache-readlink-prune-count`~~
+* Add documentation
+* Add flag to omnibus
+
+---
+The following discussion from !351 should be addressed:
+
+- [ ] @jaime started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/351#note_414788991):  (+2 comments)
+
+    > **question**: are these values good enough? Should we make them configurable in future iterations?",3
+71182750,2020-09-15 08:07:27.075,Cache dataOffset and symlink when requesting zip files,"Currently `Readlink` and `dataOffset` are evaluated each time, we should cache them to lower the latency when serving from zip.
+
+To ensure that `Readlink` is processed in a predictable time, using minimal amount of requests, especially that in some cases we need to perform symlink traversal.
+
+---
+
+The following discussion from !348 should be addressed:
+
+- [ ] @ayufan started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/348#note_412690978): 
+
+    > I wish that we would cache `dataOffset`, since the `file.DataOffset()` each time makes us to fire additional request.",1
+70849987,2020-09-08 02:15:41.257,Make httprange http client configurable,"In https://gitlab.com/gitlab-org/gitlab-pages/-/issues/448 we introduced an `httprange` package that can download artifacts and support reading ranges from the response body. The `httpClient` used has a hardcoded timeout which should be configurable.
+
+We should either pass an httpClient when initializing a resource or some config flags
+
+## Proposal
+
+- Add configuration changes flag to Pages
+- Add documentation
+- Add flag to omnibus
+- Add flag to charts
+
+---
+The following discussion from !333 should be addressed:
+
+- [ ] @vshushlin started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/333#note_408522039): 
+
+    > Do we already have an issue for that? Can we add a link?",3
+70848619,2020-09-08 01:18:31.804,Use versioned templates for security scanners,"Some security templates keep changing and they break our pipelines when they are merged to the default branch. We should use a versioned template pointing to a stable branch, e.g.
+
+```yaml
+inclue:
+  - https://gitlab.com/gitlab-org/gitlab/-/raw/13-3-stable-ee/lib/gitlab/ci/templates/Security/Dependency-Scanning.gitlab-ci.yml
+```
+
+---
+The following discussion from !343 should be addressed:
+
+- [ ] @jaime started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/343#note_408774219): 
+
+    > We should use versioned templates",1
+70685400,2020-09-03 13:08:04.247,TestClientStatusClientTimeout flaky,"https://gitlab.com/gitlab-org/gitlab-pages/-/jobs/718191293
+
+```
+=== RUN   TestClientStatusClientTimeout
+    client_test.go:303: 
+        	Error Trace:	client_test.go:303
+        	Error:      	""failed to connect to internal Pages API: Get ""http://127.0.0.1:42673/api/v4/internal/pages/status"": context deadline exceeded"" does not contain ""Client.Timeout""
+        	Test:       	TestClientStatusClientTimeout
+--- FAIL: TestClientStatusClientTimeout (0.06s)
+```",1
+70194664,2020-08-24 05:44:59.085,Remove GitLab API internal polling,Remove polling from Pages implemented in gitlab-pages!304 (merged),1
+70178333,2020-08-24 01:28:39.390,Create an `httprange` package to allow loading content from object storage,"Source https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/326/diffs#c697a55849ad2b6da28d7b6de7e8effd7860e40b
+
+- `http_range` should create resources that can be read in chunks from a pre-signed URL
+- Add metrics and traceln",2
+70174536,2020-08-24 01:00:09.452,Support range requests for zip,"PoC https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/331
+
+Depends on https://gitlab.com/gitlab-org/gitlab-pages/-/issues/448
+
+- Define a `SeekableFile` interface
+- Extend zip http reader to support range requests",1
+70053993,2020-08-20 08:14:55.998,Abstract `VFS` `Root`,"Currently, pages assumes that projects are located in subdirectories `pages_dir/group/subgroup/project/public/index.html`. While in the zip object storage VFS will just have `/public/index.html` in the archive structure.
+
+Based on the work in https://gitlab.com/gitlab-org/gitlab-pages/-/issues/439 we want to abstract some kind of `Root directory` for the project. It will allow us to implement zip serving much easier.",1
+69757262,2020-08-12 10:56:19.871,Support VFS serving from LookupPath,"- Add a `VFS` type to `LookupPath`
+- Extend the serving `Reader` to hold a map of `VFS`'s
+- Resolve file contents using the specified `VFS`
+
+MR https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/329/diffs",1
+69757192,2020-08-12 10:53:57.104,VFS implementation for zip archives,"Add `zip` implementation of the VFS interface introduced in https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/324 and !325.
+
+Depends on https://gitlab.com/gitlab-org/gitlab-pages/-/issues/446 and https://gitlab.com/gitlab-org/gitlab-pages/-/issues/448.
+
+- Add a `zip` package that opens archives using `http_range` - source https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/326/diffs#f0eb7ce2a638003d1f5dd027e9b5ce3aa44355e7_0_1
+- Implement the `VFS` interface - source https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/326/diffs#21487386d5527c7631ac241c03fb0400516c3839_0_1
+- Update metrics acceptance tests for `TestPrometheusMetricsCanBeScraped`",2
+69101016,2020-07-28 04:49:05.917,Fix intermittent cache test failures,"Job [#658818771](https://gitlab.com/gitlab-org/gitlab-pages/-/jobs/658818771) failed for 43f724fe2886e07cd97799ff0a14a3b98a239ec3:
+
+```plaintext
+    --- FAIL: TestResolve/when_retrieval_failed_because_of_resolution_context_being_canceled (0.00s)
+        cache_test.go:264: 
+            	Error Trace:	cache_test.go:264
+            	            				cache_test.go:113
+            	            				cache_test.go:253
+            	            				cache_test.go:93
+            	            				cache_test.go:252
+            	Error:      	An error is expected but got nil.
+            	Test:       	TestResolve/when_retrieval_failed_because_of_resolution_context_being_canceled
+```
+
+Another job https://gitlab.com/gitlab-org/gitlab-pages/-/jobs/658818891
+
+```plaintext
+=== RUN   TestResolve/when_item_is_in_long_cache_only
+    cache_test.go:207: 
+        	Error Trace:	cache_test.go:207
+        	            				cache_test.go:113
+        	            				cache_test.go:200
+        	            				cache_test.go:93
+        	            				cache_test.go:199
+        	Error:      	Not equal: 
+        	            	expected: 0x1
+        	            	actual  : 0x0
+        	Test:       	TestResolve/when_item_is_in_long_cache_only
+```
+
+Retrying a job fixes it https://gitlab.com/gitlab-org/gitlab-pages/-/jobs/658821575",1
+68932846,2020-07-24 05:33:13.660,Use exponential back-off for polling status endpoint,"The following discussion from !304 should be addressed:
+
+- [ ] @jaime started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/304#note_382039256):  (+2 comments)
+
+    > **question**: should we consider using an exponential back-off approach?
+    > 
+    > Some sample library https://pkg.go.dev/github.com/cenkalti/backoff/v4?tab=doc#pkg-examples",1
+59219708,2020-07-15 13:28:56.899,Adopt zip package from workhorse,Extracted from https://gitlab.com/gitlab-org/gitlab/-/issues/28784#note_375446009,1
+54558743,2020-07-12 23:41:30.593,Preprocess zip archives on load and cache file structure,"Preprocess zip archive and cache relevant files:
+
+* cache only relevant list of files with references where to fetch them in an efficient way
+* cache into a `map` to have `O(logn)` search
+
+Reference code https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/326/diffs#f0eb7ce2a638003d1f5dd027e9b5ce3aa44355e7_0_34
+
+Depends on https://gitlab.com/gitlab-org/gitlab-pages/-/issues/443
+
+### Considerations
+
+A noticeable change came up during the [profiler demo](https://gitlab.com/gitlab-com/gl-infra/scalability/-/issues/479#note_423617206) with ~""team::Scalability""  where we saw that `readArchive` is allocating a considerable amount of memory (about 28MB for the top 1%) for `docs.gitlab.com` alone in production. 
+
+[Profiler on GCP](https://console.cloud.google.com/profiler;timespan=1h/gitlab-pages;type=HEAP/inuse_space?project=gitlab-production) (internal) 
+
+![Screen_Shot_2020-10-08_at_3.21.17_pm](/uploads/6a0a161802a5c7b5d2c31b5dcbe4be06/Screen_Shot_2020-10-08_at_3.21.17_pm.png)
+
+[Allocated memory spike](https://prometheus-app.gprd.gitlab.net/graph?g0.range_input=1w&g0.stacked=1&g0.expr=max(go_memstats_alloc_bytes%7Binstance%3D~%22web-pages-.*%22%7D)&g0.tab=0) after enabling Zip for 5% of Pages projects on 2020-10-08 ~12:30 UTC
+
+![Screen_Shot_2020-10-12_at_10.52.25_am](/uploads/36f50746826ed854b4d2a2019d6cbad9/Screen_Shot_2020-10-12_at_10.52.25_am.png)
+
+---
+<details>
+<summary>The following discussion from !299 should be addressed:
+</summary>
+- [ ] @ayufan started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/299#note_377210608): 
+
+    > Oh, yes, yes, yes. It would really help to convert a flat list into:
+    > 
+    > - `map[string]zip.File`, ideally with `zip.File` having an `offset` as well
+    > 
+    > And, drop all the ones that are not within `public/`
+
+Cache flat list idea https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/299#note_377210617
+</details>",1
+54062784,2020-07-07 20:59:11.915,Tech Evaluation of supporting NFS in cloud native deployments as an alternative to object storage for Pages,"### Problem to solve 
+
+Support for object storage in Pages is currently looking to arrive early FY22.
+
+This is impacting a few deployments to our `gitlab` helm chart:
+
+1. GitLab.com's [migration to Kubernetes](https://gitlab.com/groups/gitlab-com/gl-infra/-/epics/98) (multiple services depend upon Pages - including web and api services)
+1. A very large opportunity who requires Pages
+
+One way to potentially solve this, is to introduce shared storage into our Kubernetes deployments.
+
+### Evaluation 
+
+* [ ] Discuss feasibility of this idea with ~""group::distribution"", ~infrastructure, and ~Quality 
+* [ ] Ask large opportunity if they would be open to / capable of utilizing shared storage in their Kubernetes cluster
+* [ ] Implement Pages in the Helm chart and cloud native images (does not look like this is present today) - https://gitlab.com/gitlab-org/charts/gitlab/-/issues/37
+  * [ ] Add support for a shared `ReadWriteMany` PV across needed services (Pages, Sidekiq, API, and Web)
+* [ ] Run a 50k architecture load test on a cloud native deployment with Pages (will require utilizing something like Rook, Portworx, etc. to provide ReadWriteMany support)
+* [ ] Strongly consider utilizing this architecture on GitLab.com, so we can move forward with k8s migration/dogfooding, as well as confirm this Pages architecture works at scale before recommending to our customers
+* [ ] Launch official support for Pages in Helm charts using shared storage",1
+53851171,2020-07-03 01:22:15.708,Add metrics for zip serving,"Zip serving package implements the `type Serving interface`. We should add some metrics to serve from zip archives similar to https://gitlab.com/gitlab-org/gitlab-pages/-/issues/365 so that we can track and compare serving times from archives vs disk.
+
+- ZipServingOpenArchivesTotal
+- ZipServingFilesPerArchiveCount
+
+https://gitlab.slack.com/archives/C1BSEQ138/p1601113581019900
+
+> I think we should for OS access have a histogram of timings of different request stages, like: connection, tls handshake, response write, response to the first byte, response read. This would allow us to understand how responsive is OS on different stages. (edited) 
+
+>Also, for caches we should have hit/miss metric, and amount of cache entries :slightly_smiling_face:",1
+53850876,2020-07-03 01:04:41.782,Tech Evaluation: Extract the Reader logic from disk serving into its own package so it can be reused,"Serving from disk uses the [`type Reader struct`](https://gitlab.com/gitlab-org/gitlab-pages/-/blob/master/internal/serving/disk/reader.go#L19) to try to find and resolve paths from the file system structure. 
+
+This logic can be reused to serve content from zip archives https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/299/diffs#580d90130ae2083bae1a5eda81a8947e0b57d443_0_51",1
+35363254,2020-06-03 07:09:06.761,root config contains unknown keys: license_management,"Pipeline failed `root config contains unknown keys: license_management`
+
+https://gitlab.com/gitlab-org/gitlab-pages/pipelines/152290252
+
+`license_management` has been deprecated https://gitlab.com/gitlab-org/gitlab/-/issues/14624
+
+We need to update to `license_scanning`",1
+35168405,2020-05-29 11:57:49.820,Remove eslint sast,"For some reason, eslint-sast decided that we need it, and now pipeline is passed with warnings :see_no_evil:
+
+https://gitlab.com/gitlab-org/gitlab-pages/pipelines/150886980",1
+34952382,2020-05-25 02:07:10.975,Keep track of dev dependencies in go.mod,"When running `make setup`, the dev tools will be installed into the project's local `.GOPATH`. However, this overwrites the `go.mod` and `go.sum` files with a reference to those tools. The `make deps-check` rule will fail **If the changes are committed by mistake**.
+
+Using a `tools.go` file is a common pattern to keep track of dev dependencies inside the `go.mod` file.
+
+The [release-cli tools.go](https://gitlab.com/gitlab-org/release-cli/-/blob/master/cmd/release-cli/tools.go) has an example of how to do it. We also reference https://marcofranssen.nl/manage-go-tools-via-go-modules/:
+
+> To ensure my tool dependencies are not removed and can leverage the Go Modules, I create a file tools.go. In this file I will list all my tool dependencies using an import statement.
+
+To do:
+
+- Add a file called `tools.go` to the root directory and add the dev/tool dependencies.
+- `make deps-check` will add an entry to `go.mod`, consider version locking to a desired release.
+- Commit the changes.",1
+34867840,2020-05-22 02:10:55.273,SAST scanning fails intermittently,"Example of a job where the SAST scanning fails
+
+Job [#562578827](https://gitlab.com/gitlab-org/gitlab-pages/-/jobs/562578827) failed for 98c479549ef6e4017fa052a4d5f19535e70b6d2e:
+
+```
+docker: error during connect: Post http://docker:2375/v1.40/containers/create: dial tcp: lookup docker on 169.254.169.254:53: no such host.
+```
+
+From [Slack thread](https://gitlab.slack.com/archives/CETG54GQ0/p1590023829443200)
+
+> @fcatteau license-scanning works fine so this might be related to sast, and in that case the legacy SAST orchestrator (Docker-in-Docker)
+
+>by the way, the CI configuration implicitly enables the Docker-in-Docker orchestrator for SAST even though the no-DinD is now the default
+https://gitlab.com/gitlab-org/security/gitlab-pages/-/blob/master/.gitlab-ci.yml#L63
+see https://gitlab.com/gitlab-org/gitlab/-/issues/218541
+
+>the important difference between sast and license-scanning is that the former explicitly calls docker run whereas the latter sets the image.name in its job definition. this might explain why License Scanning works. I'm able to pull registry.gitlab.com/gitlab-org/security-products/sast:2 though
+
+>  I suggest you override the rules of the *-sast jobs triggered for this project, and don't override sast anymore. could you try that in a MR? also, I suggest you share this with #g_secure-static-analysis
+
+> actually you only need to override secrets-sast and gosec-sast . see https://gitlab.com/gitlab-org/security/gitlab-pages/-/jobs/548248714#L192",1
+34789512,2020-05-20 07:56:14.188,Add Dangerbot to Pages,"Pages does not currently have a Dangerbot and therefore does not suggest reviewers for MRs. In theory any engineer working on Golang should be able to do reviews, so there would be a large pool of reviewers.
+
+The maintainer pool in Pages is quite small presently, but this is [being worked on](https://gitlab.com/gitlab-com/www-gitlab-com/-/issues/7701), with the intention of developing more maintainers within ~""group::release"".
+
+Additional reviewers would be added to `team.yml`
+
+```yml
+  projects:
+    gitlab-pages: reviewer
+```",2
+34562513,2020-05-14 15:09:28.045,Tech Evaluation for option B of Serve custom 404.html file for namespace domains,"https://gitlab.com/gitlab-org/gitlab-pages/-/issues/183
+
+Open the research issue for implementing the approach `B` and prioritize it. It's really tricky to implement and basically only `custom 404s for namespace level projects, e.g. username.gitlab.io` are broken, they are not broken on custom domains or on `username.gitlab.io/myprojectname`.
+
+Tasks
+
+* [ ]  Update proposal for linked issue ",1
+34133160,2020-05-05 00:40:00.985,Use custom .golangci.yml file with improved lint rules,"The following discussion from !264 should be addressed:
+
+- [ ] @krasio started a [discussion](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/264#note_333342106):  (+2 comments)
+
+    > Is this to avoid name clash with the `client` package?
+
+--- 
+
+We use [automatic linting](https://docs.gitlab.com/ee/development/go_guide/#automatic-linting) via `golangci-lint` with a default set of relaxed rules. To improve the code style we should add a custom `.golangci.yml` file enabling a set of useful linters.
+
+We can use [GitLab's Runner `.golangci.yml`](https://gitlab.com/gitlab-org/gitlab-runner/-/blob/master/.golangci.yml) for consistency or use as a base for the set of rules we want to apply to Pages.
+
+
+cc @krasio @vshushlin @sean_carroll
+
+--- 
+
+## Linters
+
+From [GitLab's Runner `.golangci.yml`](https://gitlab.com/gitlab-org/gitlab-runner/-/blob/master/.golangci.yml)
+
+| Linter | Enable in iteration # | 
+| ------ | :--------------------:|
+| bodyclose | 2 |
+| deadcode | 2 |
+| dogsled | 2 |
+| goconst | 1 |
+| gocyclo | 1 |
+| goimports | 1 |
+| golint | 1 |
+| gosec | 1 |
+| gosimple | 1 |
+| govet | 1 |
+| ineffassign | 2 |
+| misspell | 2 |
+| structcheck | 2 |
+| typecheck | 2 |
+| unconvert | 2 |
+| unused | 2 |
+| varcheck | 2 |
+| whitespace | 2 |
+
+### Other linters to consider
+
+List of supported [linters](https://golangci-lint.run/usage/linters/) by `golangci-lint`
+
+| Linter | Description |
+| ------ | :----------:|
+| wsl | improve empty line spacing (annoying but makes the code more readable) |
+| interfacer | Linter that suggests narrower interface types |
+| lll | long lines |
+| unparam |  Reports unused function parameters |
+| gocritic | The most opinionated Go source code linter |
+| gochecknoinits | This will help with #342 |
+
+---
+
+## MRs
+
+- [x] Add .golangci.yml linter configuration !286 
+- [x] Enable more linters https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/287",2
+34001444,2020-04-30 13:59:36.861,Remove `gitlab-server` fallback to `auth-server` and `artifacts server`,"Currently `auth-server` and `artifacts-server` may be used instead of `gitlab-server` command line flag. That was done for a seamless upgrade.
+
+Deprecation was announced, so we can just remove it in %""14.0""
+
+From @igorwwwwwwwwwwwwwwwwwwww's comment https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/270#note_334218639 :
+
+> Alternatively, I think it might be good to remove this fallback logic.
+> 
+> From an operational perspective, I found it very surprising that `gitlab-server` inherits from both auth server as well as artifacts server.
+> 
+> I would find the inverse *much* more intuitive. But even having to specify all the params would be acceptable.
+> 
+> So if we can verify that the main consumers of this (probably just omnibus?) are always specifying `gitlab-server` explicitly, it may be worth simply requiring it to be specified without fallback.
+
+We need to:
+
+- [x] Mark auth-server as deprecate in Omnibus(might be already done)
+- [x] Make a release deprecation post. draft:
+```
+We're changing the behaviour of some configuration options of GitLab Pages. If you run GitLab Pages via Omnibus based package, no action required. Otherwise, make sure to set [`gitlab-server` parameter and remove `auth-server`](https://docs.gitlab.com/ee/administration/pages/).
+```
+
+
+Later we may consider removing `artifacts-server` and use `gitlab-server`(or better: new parameter introduced in https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/276) and appending path.",2

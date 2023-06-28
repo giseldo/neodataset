@@ -1,0 +1,871 @@
+issuekey,created,title,description,storypoints
+4550129,2017-02-27 14:01:24.951,Show basic information about workspace,"When showing a workspace, instead of the blank page with `Selected workspace !` written in it, we should have:
+ - `Welcome to WORKSPACENAME`
+ - a list of the users of the workspace
+ - the deletion button (in red with a confirmation popup), see #241",2
+4512995,2017-02-23 15:00:04.147,Notification return undefined: undefined when we try to import a bus,![image](/uploads/5e3beac092b9cf52f27b1ede9d385ad5/image.png),1
+4501513,2017-02-22 16:35:53.230,BugFix : Border Image Icon + padding md-dialog,![Sélection_047](/uploads/91384b8be5a724caacdbe4004a9a9931/Sélection_047.png),1
+4500243,2017-02-22 13:55:00.841,Redirect to login should send back to originally requested page,,3
+4500217,2017-02-22 13:52:54.852,Images are not visible anymore when the base href is not /,"If you go to http://linagora.gitlab.io/petals-cockpit/, you can see images are missing.
+
+This is most certainly related to ee186ed where `/` were added in front of the asset URLs",2
+4490772,2017-02-21 14:53:51.911,Add bus/container/component/SU content e2e tests,See: https://gitlab.com/linagora/petals-cockpit/blob/c89b653dd525aa5c6abebbd2ae02656ad3df1906/frontend/e2e/workspace-needspetals.e2e-spec.ts,2
+4490638,2017-02-21 14:37:59.673,Workspaces list should be closeable,"Even though a user can close the workspaces list by clicking on the current workspace, it still would make sense that it is closeable in the regular way (by clicking outside of the dialog).
+
+Related : https://github.com/angular/material2/issues/3392
+Fix in : https://github.com/angular/material2/pull/3460",2
+4490543,2017-02-21 14:24:34.859,Add autofocus on the login page,The login field should be autofocused.,1
+4490540,2017-02-21 14:24:03.640,Disable autofocus in mobile mode,This is bothering because the keyboard will popup and take all the screen.,1
+4490537,2017-02-21 14:23:29.033,"In mobile, just added new workspace should not have an icon","In mobile, the workspaces in the workspaces list have no icon, but if you add one, it will have an icon.",1
+4490532,2017-02-21 14:22:36.667,Import error on mobile goes out of the screen,,1
+4490526,2017-02-21 14:22:03.737,Receiving a delete event via SSE should nicely handle the situation if on the deleted element page,"As a user, if I'm on an element or subelement that is deleted (su,sa,comp,sl undeploy, bus deletion, bus in progress deletion), I should be notified in a nice way so that I am not surprised and can optionally continue what I was doing if possible.
+
+To be discussed what to do in that case:
+ - simply go back to workspace main page
+ - lock everything on the page and show a message saying it was deleted?",2
+4490449,2017-02-21 14:13:15.438,New bus in progress are not broadcasted via SSE,"If two browsers are open on the same workspace, if one add a new bus in progress, it should appear in the other one (as with a bus import ok).",4
+4490424,2017-02-21 14:10:58.494,"On mobile, clicking on the (+) to import a bus should close the sidebar",,3
+4490417,2017-02-21 14:09:51.014,"During search in tree, elements hidden by fold should be made visible via unfold of their parent","From:
+![image](/uploads/3b04876e4cb33ece31efae3e536723ab/image.png)
+
+This is what happens:
+![image](/uploads/f22d7ebf6487af41ae7f9574faa83d1a/image.png)
+
+Instead of:
+![image](/uploads/1074606c95ee9fef99cca1c1bc5e2d2e/image.png)",2
+4490409,2017-02-21 14:09:08.771,Show the green led only on the current workspace,Feature of the year ! :fireworks:,1
+4490393,2017-02-21 14:06:16.841,Containers' names in reachabilities are incorrect when using real petals,"When importing the bus on petals1, the names of the containers in the reachabilities are incorrect.
+
+It is Container 5 and 6, instead of petals-cockpit1 and 2.",2
+4489747,2017-02-21 12:41:15.549,Reload on a bus/container/component/su does not work,"Workspace is probably not loaded yet.
+No error but infinitely loading.
+
+Maybe take this opportunity to use resolve for loading workspace data!",4
+4489468,2017-02-21 12:12:33.006,"Move logout, avatar and name to the top bar","In order to solve #233.
+
+But keep name/avatar on the left when on mobile.",5
+4489115,2017-02-21 11:29:50.675,Worskpace list should not gray the top bar,"In order to solve #233 
+
+Most certainly, the dialog should be moved to the workspaces component and have it constrained to it in term of graying.",2
+4488941,2017-02-21 11:08:15.687,Workspace deletion UI,"Related to #133
+
+The deletion button should be in the workspace configuration pane (see #267), it should be red and a popup should confirm the action with a description of what will happen: everything in the workspace will be deleted.",3
+4488931,2017-02-21 11:06:57.070,Workspace deletion API,"take care of stopping current import and stuffs like that...
+
+Related to #133 ",3
+4488773,2017-02-21 10:52:30.965,Component deployment UI,Using #235,5
+4488766,2017-02-21 10:52:00.764,SU deployment UI,Using #236,3
+4488761,2017-02-21 10:51:42.030,Spinner on workspaces list,Use the store to display previous data while fetching updated ones,2
+4488758,2017-02-21 10:51:22.357,SU deployment API,"The backend should allow the frontend to trigger SU deployment via zip upload.
+
+Related to #170.",3
+4488749,2017-02-21 10:50:28.290,Component deployment API,"The backend should allow the frontend to trigger component deployment via zip upload.
+
+Related to #182.",4
+4488743,2017-02-21 10:49:20.577,Serve files toward petals for deployment,Related to #182 and #170,4
+4445735,2017-02-20 10:17:12.647,Add a warning icon next to failed bus in progress in the side bar,,1
+4445608,2017-02-20 10:02:30.022,Investigate batchActions w.r.t. Effects,"Basically, it seems that actions in batchActions are not taken into account by effects…
+
+Either we need to extract the actions that should trigger effects, or this should be fixed upstream.
+Second is better of course!",2
+4445142,2017-02-20 09:18:12.464,Use navigate instead of dispatch when selecting a workspace,"In the workspace dialog, prefer to use navigate and relies on its implementation to fetch the workspace.",3
+4428296,2017-02-17 15:39:24.125,Show a message when the search bar doesn't yield any result,"So that the user is not confused if she types something in the search bar without paying attention.
+
+Do not forget the following e2e test:
+```
+    // check there's a warning saying no buses available
+    expect(element(by.css(`md-sidenav .info.no-bus`)).getText())
+      .toEqual(`The workspace ""Workspace 0"" doesn't match any bus, container, component or SU with a name containing ""Some random search"".`);
+```",1
+4427550,2017-02-17 14:30:23.024,Incoherent state of bus import view just after import is clicked,"When importing a bus (with the mocks, the second time for example, when we will receive an error from the SSE), the following things happen:
+ - we click on import
+ - import become grayed
+ - import become clickable again <- this moment happens because the store is updated before we are redirected to the newly created bus in progress
+ - the url change and the view is reloaded has it is expected
+
+The 3rd point shouldn't happen
+
+I think it is also related to #220…",3
+4427255,2017-02-17 14:00:43.843,Rework the SSE on the frontend side,"Two problems:
+ - we need to be 100% sure that all events that arrive on the SSE since the moment we opened it are processed (currently it is not the case in some extreme cases)
+ - we need to be sure the subscription done for each of the events are properly closed when changing workspaces (currently it is not the case at all)",5
+4424540,2017-02-17 12:05:08.761,Improve mocks for failing bus import,"Currently, the mocks fail with an HTTP error on the first import, fail with an SSE error on the second import, and works for the rest.
+
+We should introduce special ips where it fails, to let people play with it as they want as well as exploit it for the tests!",4
+4422243,2017-02-17 08:35:42.786,Uniformise identifier for users with the rest in the backend,"Users are identified via the `username` field, while all the other datatypes are using the `id` field.
+
+It would be better to use `id` everywhere, and then simplify the code in the frontend thanks to that.
+Do not forget to update the mocks too.",2
+4405663,2017-02-16 10:37:42.507,Add a clear button to the import bus form,,1
+4370314,2017-02-14 10:30:13.138,Show workspaces users in workspaces list,"In the workspace list, even if a workspace has multiple users, it is always written: `You're the only one to use this workspace`
+
+This #237 .",3
+4124506,2017-01-30 16:30:36.160,Too much verbose error on backend when accessing an incorrect workspace,"If I try to access /workspaces/lol, the backend shows me the following:
+
+<details>
+<summary>Very long stacktrace
+</summary>
+WARN  [2017-01-30 16:28:32,105] org.glassfish.jersey.internal.Errors: The following warnings have been detected: WARNING: Unknown HK2 failure detected:
+MultiException stack 1 of 3
+org.glassfish.jersey.server.ParamException$PathParamException: HTTP 404 Not Found
+	at org.glassfish.jersey.server.internal.inject.PathParamValueFactoryProvider$PathParamValueFactory.provide(PathParamValueFactoryProvider.java:95)
+	at org.glassfish.jersey.server.internal.inject.ParamInjectionResolver.resolve(ParamInjectionResolver.java:134)
+	at org.jvnet.hk2.internal.ClazzCreator.resolve(ClazzCreator.java:212)
+	at org.jvnet.hk2.internal.ClazzCreator.resolveAllDependencies(ClazzCreator.java:229)
+	at org.jvnet.hk2.internal.ClazzCreator.create(ClazzCreator.java:358)
+	at org.jvnet.hk2.internal.SystemDescriptor.create(SystemDescriptor.java:487)
+	at org.glassfish.jersey.process.internal.RequestScope.findOrCreate(RequestScope.java:162)
+	at org.jvnet.hk2.internal.Utilities.createService(Utilities.java:2022)
+	at org.jvnet.hk2.internal.ServiceLocatorImpl.internalGetService(ServiceLocatorImpl.java:774)
+	at org.jvnet.hk2.internal.ServiceLocatorImpl.internalGetService(ServiceLocatorImpl.java:737)
+	at org.jvnet.hk2.internal.ServiceLocatorImpl.getService(ServiceLocatorImpl.java:707)
+	at org.glassfish.jersey.internal.inject.Injections.getOrCreate(Injections.java:172)
+	at org.glassfish.jersey.server.model.MethodHandler$ClassBasedMethodHandler.getInstance(MethodHandler.java:284)
+	at org.glassfish.jersey.server.internal.routing.PushMethodHandlerRouter.apply(PushMethodHandlerRouter.java:74)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:109)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:112)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:112)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:112)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage.apply(RoutingStage.java:92)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage.apply(RoutingStage.java:61)
+	at org.glassfish.jersey.process.internal.Stages.process(Stages.java:197)
+	at org.glassfish.jersey.server.ServerRuntime$2.run(ServerRuntime.java:318)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:271)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:267)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:315)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:297)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:267)
+	at org.glassfish.jersey.process.internal.RequestScope.runInScope(RequestScope.java:317)
+	at org.glassfish.jersey.server.ServerRuntime.process(ServerRuntime.java:305)
+	at org.glassfish.jersey.server.ApplicationHandler.handle(ApplicationHandler.java:1154)
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:473)
+	at org.glassfish.jersey.servlet.WebComponent.service(WebComponent.java:427)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:388)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:341)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:228)
+	at io.dropwizard.jetty.NonblockingServletHolder.handle(NonblockingServletHolder.java:49)
+	at org.eclipse.jetty.servlet.ServletHandler$CachedChain.doFilter(ServletHandler.java:1772)
+	at io.dropwizard.servlets.ThreadNameFilter.doFilter(ThreadNameFilter.java:34)
+	at org.eclipse.jetty.servlet.ServletHandler$CachedChain.doFilter(ServletHandler.java:1759)
+	at io.dropwizard.jersey.filter.AllowedMethodsFilter.handle(AllowedMethodsFilter.java:50)
+	at io.dropwizard.jersey.filter.AllowedMethodsFilter.doFilter(AllowedMethodsFilter.java:44)
+	at org.eclipse.jetty.servlet.ServletHandler$CachedChain.doFilter(ServletHandler.java:1759)
+	at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:582)
+	at org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:224)
+	at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1180)
+	at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:512)
+	at org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:185)
+	at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1112)
+	at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:141)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:134)
+	at com.codahale.metrics.jetty9.InstrumentedHandler.handle(InstrumentedHandler.java:240)
+	at io.dropwizard.jetty.RoutingHandler.handle(RoutingHandler.java:51)
+	at org.eclipse.jetty.server.handler.gzip.GzipHandler.handle(GzipHandler.java:462)
+	at io.dropwizard.jetty.BiDiGzipHandler.handle(BiDiGzipHandler.java:68)
+	at org.eclipse.jetty.server.handler.RequestLogHandler.handle(RequestLogHandler.java:56)
+	at org.eclipse.jetty.server.handler.StatisticsHandler.handle(StatisticsHandler.java:169)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:134)
+	at org.eclipse.jetty.server.Server.handle(Server.java:534)
+	at org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:320)
+	at org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:251)
+	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:283)
+	at org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:110)
+	at org.eclipse.jetty.io.SelectChannelEndPoint$2.run(SelectChannelEndPoint.java:93)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.executeProduceConsume(ExecuteProduceConsume.java:303)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.produceConsume(ExecuteProduceConsume.java:148)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.run(ExecuteProduceConsume.java:136)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:671)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$2.run(QueuedThreadPool.java:589)
+	at java.lang.Thread.run(Thread.java:745)
+Caused by: java.lang.NumberFormatException: For input string: ""lol""
+	at java.lang.NumberFormatException.forInputString(NumberFormatException.java:65)
+	at java.lang.Long.parseLong(Long.java:589)
+	at java.lang.Long.valueOf(Long.java:803)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.glassfish.jersey.server.internal.inject.PrimitiveValueOfExtractor.getValue(PrimitiveValueOfExtractor.java:97)
+	at org.glassfish.jersey.server.internal.inject.PrimitiveValueOfExtractor.extract(PrimitiveValueOfExtractor.java:114)
+	at org.glassfish.jersey.server.internal.inject.PathParamValueFactoryProvider$PathParamValueFactory.provide(PathParamValueFactoryProvider.java:93)
+	... 68 more
+MultiException stack 2 of 3
+java.lang.IllegalArgumentException: While attempting to resolve the dependencies of org.ow2.petals.cockpit.server.resources.WorkspaceResource errors were found
+	at org.jvnet.hk2.internal.ClazzCreator.resolveAllDependencies(ClazzCreator.java:247)
+	at org.jvnet.hk2.internal.ClazzCreator.create(ClazzCreator.java:358)
+	at org.jvnet.hk2.internal.SystemDescriptor.create(SystemDescriptor.java:487)
+	at org.glassfish.jersey.process.internal.RequestScope.findOrCreate(RequestScope.java:162)
+	at org.jvnet.hk2.internal.Utilities.createService(Utilities.java:2022)
+	at org.jvnet.hk2.internal.ServiceLocatorImpl.internalGetService(ServiceLocatorImpl.java:774)
+	at org.jvnet.hk2.internal.ServiceLocatorImpl.internalGetService(ServiceLocatorImpl.java:737)
+	at org.jvnet.hk2.internal.ServiceLocatorImpl.getService(ServiceLocatorImpl.java:707)
+	at org.glassfish.jersey.internal.inject.Injections.getOrCreate(Injections.java:172)
+	at org.glassfish.jersey.server.model.MethodHandler$ClassBasedMethodHandler.getInstance(MethodHandler.java:284)
+	at org.glassfish.jersey.server.internal.routing.PushMethodHandlerRouter.apply(PushMethodHandlerRouter.java:74)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:109)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:112)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:112)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:112)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage.apply(RoutingStage.java:92)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage.apply(RoutingStage.java:61)
+	at org.glassfish.jersey.process.internal.Stages.process(Stages.java:197)
+	at org.glassfish.jersey.server.ServerRuntime$2.run(ServerRuntime.java:318)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:271)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:267)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:315)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:297)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:267)
+	at org.glassfish.jersey.process.internal.RequestScope.runInScope(RequestScope.java:317)
+	at org.glassfish.jersey.server.ServerRuntime.process(ServerRuntime.java:305)
+	at org.glassfish.jersey.server.ApplicationHandler.handle(ApplicationHandler.java:1154)
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:473)
+	at org.glassfish.jersey.servlet.WebComponent.service(WebComponent.java:427)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:388)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:341)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:228)
+	at io.dropwizard.jetty.NonblockingServletHolder.handle(NonblockingServletHolder.java:49)
+	at org.eclipse.jetty.servlet.ServletHandler$CachedChain.doFilter(ServletHandler.java:1772)
+	at io.dropwizard.servlets.ThreadNameFilter.doFilter(ThreadNameFilter.java:34)
+	at org.eclipse.jetty.servlet.ServletHandler$CachedChain.doFilter(ServletHandler.java:1759)
+	at io.dropwizard.jersey.filter.AllowedMethodsFilter.handle(AllowedMethodsFilter.java:50)
+	at io.dropwizard.jersey.filter.AllowedMethodsFilter.doFilter(AllowedMethodsFilter.java:44)
+	at org.eclipse.jetty.servlet.ServletHandler$CachedChain.doFilter(ServletHandler.java:1759)
+	at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:582)
+	at org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:224)
+	at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1180)
+	at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:512)
+	at org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:185)
+	at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1112)
+	at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:141)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:134)
+	at com.codahale.metrics.jetty9.InstrumentedHandler.handle(InstrumentedHandler.java:240)
+	at io.dropwizard.jetty.RoutingHandler.handle(RoutingHandler.java:51)
+	at org.eclipse.jetty.server.handler.gzip.GzipHandler.handle(GzipHandler.java:462)
+	at io.dropwizard.jetty.BiDiGzipHandler.handle(BiDiGzipHandler.java:68)
+	at org.eclipse.jetty.server.handler.RequestLogHandler.handle(RequestLogHandler.java:56)
+	at org.eclipse.jetty.server.handler.StatisticsHandler.handle(StatisticsHandler.java:169)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:134)
+	at org.eclipse.jetty.server.Server.handle(Server.java:534)
+	at org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:320)
+	at org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:251)
+	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:283)
+	at org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:110)
+	at org.eclipse.jetty.io.SelectChannelEndPoint$2.run(SelectChannelEndPoint.java:93)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.executeProduceConsume(ExecuteProduceConsume.java:303)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.produceConsume(ExecuteProduceConsume.java:148)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.run(ExecuteProduceConsume.java:136)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:671)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$2.run(QueuedThreadPool.java:589)
+	at java.lang.Thread.run(Thread.java:745)
+MultiException stack 3 of 3
+java.lang.IllegalStateException: Unable to perform operation: resolve on org.ow2.petals.cockpit.server.resources.WorkspaceResource
+	at org.jvnet.hk2.internal.ClazzCreator.create(ClazzCreator.java:387)
+	at org.jvnet.hk2.internal.SystemDescriptor.create(SystemDescriptor.java:487)
+	at org.glassfish.jersey.process.internal.RequestScope.findOrCreate(RequestScope.java:162)
+	at org.jvnet.hk2.internal.Utilities.createService(Utilities.java:2022)
+	at org.jvnet.hk2.internal.ServiceLocatorImpl.internalGetService(ServiceLocatorImpl.java:774)
+	at org.jvnet.hk2.internal.ServiceLocatorImpl.internalGetService(ServiceLocatorImpl.java:737)
+	at org.jvnet.hk2.internal.ServiceLocatorImpl.getService(ServiceLocatorImpl.java:707)
+	at org.glassfish.jersey.internal.inject.Injections.getOrCreate(Injections.java:172)
+	at org.glassfish.jersey.server.model.MethodHandler$ClassBasedMethodHandler.getInstance(MethodHandler.java:284)
+	at org.glassfish.jersey.server.internal.routing.PushMethodHandlerRouter.apply(PushMethodHandlerRouter.java:74)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:109)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:112)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:112)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage._apply(RoutingStage.java:112)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage.apply(RoutingStage.java:92)
+	at org.glassfish.jersey.server.internal.routing.RoutingStage.apply(RoutingStage.java:61)
+	at org.glassfish.jersey.process.internal.Stages.process(Stages.java:197)
+	at org.glassfish.jersey.server.ServerRuntime$2.run(ServerRuntime.java:318)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:271)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:267)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:315)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:297)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:267)
+	at org.glassfish.jersey.process.internal.RequestScope.runInScope(RequestScope.java:317)
+	at org.glassfish.jersey.server.ServerRuntime.process(ServerRuntime.java:305)
+	at org.glassfish.jersey.server.ApplicationHandler.handle(ApplicationHandler.java:1154)
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:473)
+	at org.glassfish.jersey.servlet.WebComponent.service(WebComponent.java:427)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:388)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:341)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:228)
+	at io.dropwizard.jetty.NonblockingServletHolder.handle(NonblockingServletHolder.java:49)
+	at org.eclipse.jetty.servlet.ServletHandler$CachedChain.doFilter(ServletHandler.java:1772)
+	at io.dropwizard.servlets.ThreadNameFilter.doFilter(ThreadNameFilter.java:34)
+	at org.eclipse.jetty.servlet.ServletHandler$CachedChain.doFilter(ServletHandler.java:1759)
+	at io.dropwizard.jersey.filter.AllowedMethodsFilter.handle(AllowedMethodsFilter.java:50)
+	at io.dropwizard.jersey.filter.AllowedMethodsFilter.doFilter(AllowedMethodsFilter.java:44)
+	at org.eclipse.jetty.servlet.ServletHandler$CachedChain.doFilter(ServletHandler.java:1759)
+	at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:582)
+	at org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:224)
+	at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1180)
+	at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:512)
+	at org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:185)
+	at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1112)
+	at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:141)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:134)
+	at com.codahale.metrics.jetty9.InstrumentedHandler.handle(InstrumentedHandler.java:240)
+	at io.dropwizard.jetty.RoutingHandler.handle(RoutingHandler.java:51)
+	at org.eclipse.jetty.server.handler.gzip.GzipHandler.handle(GzipHandler.java:462)
+	at io.dropwizard.jetty.BiDiGzipHandler.handle(BiDiGzipHandler.java:68)
+	at org.eclipse.jetty.server.handler.RequestLogHandler.handle(RequestLogHandler.java:56)
+	at org.eclipse.jetty.server.handler.StatisticsHandler.handle(StatisticsHandler.java:169)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:134)
+	at org.eclipse.jetty.server.Server.handle(Server.java:534)
+	at org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:320)
+	at org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:251)
+	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:283)
+	at org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:110)
+	at org.eclipse.jetty.io.SelectChannelEndPoint$2.run(SelectChannelEndPoint.java:93)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.executeProduceConsume(ExecuteProduceConsume.java:303)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.produceConsume(ExecuteProduceConsume.java:148)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.run(ExecuteProduceConsume.java:136)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:671)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$2.run(QueuedThreadPool.java:589)
+	at java.lang.Thread.run(Thread.java:745)
+</details>
+This is too much, we should not see this kind of things",1
+4123891,2017-01-30 15:16:01.954,Ensure frontend works with backend!,"In particular w.r.t. #180, #188, #187, #186!
+
+Todo:
+* [x]  bus import (#191 !201)
+* [x]  bus discard (#222 !205)
+* [x]  add workspace (#221 !209)
+* [x]  verify that the connected user is shown (#218 !202)
+* [x]  ensure e2e tests pass
+* [ ]  other?",3
+4045587,2017-01-23 15:16:47.108,Show and modify component configuration parameters,"As a user, when clicking on a component in the workspace tree, I should be able to see the values of its configuration parameters.
+
+It should show me which one are modifiable at runtime, and allow me to modify them.
+
+It should also show me those that are not modifiable (because they are only configurable, see #183 or not modifiable).",8
+3878178,2017-01-04 16:12:37.640,Preload main application js chunk while user is logging in,"When #178 is fixed, it would be great that while the user is logging in, the rest of the application be loaded so that everything seems smooth.",1
+3878163,2017-01-04 16:08:02.661,Add copyrights to bundled js produced by angular-cli,"Only keep one at the head of each file!
+
+See http://webpack.github.io/docs/list-of-plugins.html#bannerplugin",2
+3755024,2016-12-16 11:54:43.443,Allow to redo a previously failed bus import,"As a user, after I do an import and it fails, I should be able to change the settings and click on a Redo button.",3
+3740709,2016-12-14 12:40:53.326,Add admin user by default,"As a user, when I start cockpit for the first time, when opening the website, I want to be prompted for creating a first admin user.",3
+3614173,2016-11-28 09:19:33.240,Add License information to deliverable,"The deliverable should contain LICENSE and COPYRIGHT files.
+
+Related to #177.",1
+3589704,2016-11-25 09:21:17.438,Laxer validation on backend output,"Currently, the backend validates what is sent back to the frontend quite strictly (e.g., empty name for workspace will issue an error 500).
+
+It would make sense to enable this only at dev time and prefer to have this insured by being strict on input coming from frontend.",2
+3568378,2016-11-23 10:41:50.164,test to import a bus,"- first import should fail, verify that the error is displayed
+- second import should work, verify that it's in the sidenav
+
+See also #225 ",3
+3506216,2016-11-15 12:14:45.975,Allow to cancel a bus import,"During a bus import, if it gets stuck, then the user could want to cancel it.
+
+It should abort everything server-side too (killing actors, removing from db, etc)",2
+3438086,2016-11-08 07:17:17.001,change server default port,"Currently, the default port is 8080.
+
+As we discussed during our sprint review (end sprint 2, begin sprint 3), many apps uses that port.
+It'd be convenient to change it.",1
+3397034,2016-11-04 16:12:05.019,Improve error message on import bus failure,"Currently, we see things like that:
+`""org.ow2.petals.jmx.api.api.exception.ConnectionErrorException: Can not connect using URI : service:jmx:rmi:///jndi/rmi://localhost:7701/PetalsJMX with lol/lol""`
+
+There is extra Exceptions as well as the password visible... !",4
+3396148,2016-11-04 15:08:08.201,remember last workspace of user,"As a user, when I open Petals Cockpit, I want to be directly on my last used workspace.",3
+3201286,2016-10-11 12:02:43.438,Make the executable product runnable without any configuration by default,"Make a startup script and default configurations.
+
+Put logs in file.",3
+3063747,2016-09-22 14:24:36.537,Workspace collaboration,"As a workspace user, I can add and remove users from the the workspaces I have access to, because I want to collaborate with them on the same data.",5
+27923655,2019-12-04 09:38:40.336,[API] Prevent workspaces duplicates,Backend should check if a workspace name already exists before creating a new one.,1
+27923600,2019-12-04 09:37:32.413,[UI] Prevent workspaces duplicates,Frontend should check if a workspace name already exists before requesting its creation.,1
+9566526,2018-03-05 14:29:04.371,Set up a running Petals,"Set up a running Petals on a local machine, for testing purpose.
+create custom artifacts, running fake services (hello world type)",5
+9561475,2018-03-05 10:58:57.662,[API] Send endpoint details,"GET `/endpoints/{eId}`
+
+Have 1 service & 1-n interface.
+
+Return endpoint details :
+```
+{
+  service: string,
+  interfaces: string[],
+},...
+```
+
+Related #451",1
+9561444,2018-03-05 10:56:53.067,[API] Send interface details,"GET `/interfaces/{sId}`
+
+Can have 1-n endpoints & 1-n services.
+
+Return service details :
+```
+{
+  endpoints: string[],
+  services: string[],
+},...
+```
+
+Related #450",1
+9561388,2018-03-05 10:53:04.241,[UI] Display endpoint details,Related #451,3
+9561370,2018-03-05 10:52:09.525,[UI] Display interface details,Related #450,3
+9560801,2018-03-05 10:21:38.848,Can't reopen workspace selection dialog,"1. Open worskpace selection dialog with yellow ""open workspace"" button
+2. Open it again with top left purple petals logo
+3. Close dialog (click outside, press esc)
+Now user can't reopen a workspace.
+
+Should not be able to open dialog from petals icon when dialog is already open.",2
+9445694,2018-02-26 10:35:29.257,[UI] Display SL version in overview,"As for now, loaded SL version are not visible (except sometimes when uploading a component).  
+It should be visible in an informational card, like this one:   
+![Screenshot_from_2018-02-26_11-18-27](/uploads/49cdf758e4ee6507ede3d7dd928f448f/Screenshot_from_2018-02-26_11-18-27.png)
+
+Text would be:
+```
+ABOUT {SL name}
+version {SL version}
+```
+No need for a state indicator (SL can only be loaded).",1
+9375033,2018-02-21 14:47:53.662,[UI][Firefox] Fix hidden buttons on workspace deletion,"Buttons are not visible without scrolling
+![Screenshot_from_2018-03-05_11-37-23](/uploads/67d8027facf761b228911bc4427c9cfe/Screenshot_from_2018-03-05_11-37-23.png)
+",1
+9373632,2018-02-21 14:20:59.518,Improve upload component cards layout,"Reduce card size when no content.  
+Adapt width when content (activated).  
+Always show cards in column mode (not row).  
+Wrap content if too big.",2
+9373058,2018-02-21 13:51:00.197,"[API] Refactor service, endpoint and interface events",,2
+9373022,2018-02-21 13:49:16.678,"[UI] Refactor service, endpoint and interface events","Events:
+* SERVICES_UPDATED
+* WORKSPACE_CONTENT
+* BUS_IMPORT_OK",2
+9267593,2018-02-14 13:06:35.562,[UI] Remove the gap in administration page,"In the administration page, if the browser height is large enough, there is a white gap after the window:
+![Capture_d_écran_2018-02-14_à_14.03.45](/uploads/140e442f33c5d56c7d3ddcb93a91b445/Capture_d_écran_2018-02-14_à_14.03.45.png)",1
+9024566,2018-02-02 15:23:45.166,[UI] Fix: choose SLs for component deployment,"Following unfinished issue #365
+
+ - ~~read the SLs from `jbi/component/shared-library-list` in the zip~~
+ - ~~if there is a SL in the zip that is not in the container, show it in some way or another and prevent deployment!~~
+ - override the SLs (only those in the container can be chosen)
+
+`overrides` was added to the deploy component POST body, it contains a json body with:
+```
+{
+  // can be omitted and the name won&#39;t be overridden
+  ""name"": ""new-name"",
+  // can be omitted and the SLs won&#39;t be overridden (but if empty, they will be overridden!)
+  ""sharedLibraries"": [
+    { ""name"": ""slName"", ""version"": ""1.0.0"" }
+  ]
+}
+```
+
+Version field and name field must not be null or empty.",4
+8945448,2018-01-30 09:40:49.158,Update copyrights,,1
+8917250,2018-01-29 10:30:21.462,Display interfaces list,,1
+8917224,2018-01-29 10:29:07.258,[API] Send interfaces list,"```
+interfaces: [
+id: {
+  id: string,
+  name: string,
+  containerId: string,
+  componentId: string
+},
+]...
+```",4
+8917184,2018-01-29 10:26:51.998,[UI] Display interfaces list,,4
+8917131,2018-01-29 10:23:55.314,Display endpoints list,Endpoints should be visible in `services` tab,1
+8917074,2018-01-29 10:21:26.295,[UI] Display endpoints list,,4
+8917052,2018-01-29 10:20:11.512,[API] Send endpoints list,"```
+endpoints: [
+id: {
+  id: string,
+  name: string,
+  containerId: string,
+  componentId: string
+},
+]...
+```",3
+8832087,2018-01-24 16:25:15.088,Importing a bus after an import error does not display services,"The problem is probably related to ""**discard & retry**"". 
+After the bus import failure and the update of the form with the correct information, the import of the bus is carried out without the display of the services.
+
+> Need investigate",1
+8828236,2018-01-24 14:18:59.759,"In case of problem reading "".zip"", we take the risk of returning null to an element sent","When we send a component with an empty name field:
+
+Expected: The component should has its original name
+
+Actual: The component has null as name",2
+8828191,2018-01-24 14:16:41.144,Problem reading .zip,"When a binding component file is selected when uploading a component, if there is no shared libraries, the component name is not detected.
+
+It should be detected.",1
+8551332,2018-01-10 16:27:10.449,[UI] Upgrade services list to services tree,"Services Tree should look like: 
+
+```
+NamespaceName1
+  LocalpartName1
+  LocalpartName2
+NamespaceName2
+  LocalpartName3
+NamespaceName3
+  LocalpartName4
+```
+
+Related #406",5
+8263979,2017-12-18 15:48:27.278,Replacement of old e2e tests (protractor) for cypress e2e tests,Delete `workspace-tree.e2e-specs.ts`,2
+8054619,2017-12-05 13:22:32.740,can't reopen an item in left menu (tree) after a search not found,"1)  
+![image](/uploads/ab51be87a4d96c61829783a8db3b0a89/image.png)
+
+2)  
+![image](/uploads/973954cb2ab8fb40fb2dbcdaa7095fe7/image.png)",1
+7971276,2017-11-29 15:56:04.472,Continuous deployment is broken,"CD is broken and it seems to be related to the generation of apidocs folder.
+
+It hasn't been deployed for at least a month and we should fix that ASAP...",3
+7968765,2017-11-29 13:22:42.912,[API] Send service details,"GET `/services/{sId}`
+
+Can have 1-n endpoints & 1-n interfaces.
+
+Return service details :
+```
+{
+  endpoints: string[],
+  interfaces: string[],
+},...
+```
+
+Related #410",3
+7967983,2017-11-29 13:14:09.244,[UI] Display service details,Related #410 ,5
+7967960,2017-11-29 13:12:22.505,Display service details,Display information in central page when a service has been clicked.,2
+7967920,2017-11-29 13:09:32.348,[API/SSE] Push instantiated services list,Related #407,3
+7965741,2017-11-29 10:20:58.606,[UI] Display the services list,"Display name of services on clickable items
+
+Related #406 ",5
+7965461,2017-11-29 10:04:46.554,[API] Return instantiated services list,"Return name of services
+```
+""services"": [
+   id: {
+      ""id"": id,
+      ""name"": {namespace}localpart,
+      ""containerId"": containerId,
+      ""componentId"": componentId
+      }
+]
+
+```
+
+Related #406",5
+7965432,2017-11-29 10:03:06.079,Display the services list,"As a user, when I click on the service tab, I want to see all services instantiated.",2
+7932115,2017-11-27 16:13:06.125,retry bus import,"when a bus import fails, we should have 2 options:
+- retry the import
+- edit it (by creating a new one)",3
+7719808,2017-11-13 14:11:33.182,Informational messages should not always be closable,,1
+7687351,2017-11-10 13:34:09.276,The searchForm should be reset input after Closing of the message info in nav tree,,1
+7169339,2017-10-12 07:41:01.170,Show containers that are down properly,"Currently, when containers are down, the backend simply returns 409s and the frontend doesn't properly show:
+ - that a container is down on the bus overview
+ - the containers graph in the container overview",3
+7070740,2017-10-04 09:21:41.889,Do not store import bus passwords in clear in the DB,"Normally, there is no reason to keep them stored at all.",2
+7015635,2017-09-29 13:38:54.200,[UI] Change shared library name and version during deploy,"To be done:
+ - read the name from `jbi/service-library/identification/name` in the zip
+ - if there is already a SL in the container with the same name, show it in some way or another and prevent deployment!
+ - read the version from `jbi/service-library[version]` in the zip
+ - override both or none
+
+`overrides` was added to the deploy shared library POST body, it contains a json body with:
+```
+{
+  // mandatory, not empty
+  ""sharedLibrary"": { ""name"": ""slName"", ""version"": ""1.0.0"" }
+}
+```",5
+6997889,2017-09-28 11:49:53.814,[UI] Change SA name for deployment,"To be done:
+ - read sa name from zip (in jbi/service-assembly/identification/name)
+ - if there is already a SA in the container with the same name, show it in some way or another and prevent deployment!
+ - allow to override
+
+`overrides` was added to the deploy service assembly POST body, it contains a json body with:
+
+```
+{
+  // can be omitted and the name won't be overridden
+  ""name"": ""new-name""
+}
+```
+Related to #389",3
+6960765,2017-09-26 12:48:29.934,Show the component in the SU overview,In the same way that we show the SA,1
+6940923,2017-09-25 09:07:34.403,Change service unit names during service assembly deployment,"As a user, I can choose a name for the various SUs present inside a SA to be deployed, because I want it them have different names from the one setup inside the zip.
+I should be able to choose if I want to customize their names and see an input only in that case.
+
+Careful, because the order of elements being not guaranteed (according to XML spec…), we should find a way to know which name pertains to which SU.",4
+6940717,2017-09-25 08:54:11.538,Change service assembly name during deployment,"As a user, I can choose a name for the SA to be deployed, because I want it to have a different name from the one setup inside the zip.
+I should be able to choose if I want to customize the name and see an input only in that case.",1
+6940710,2017-09-25 08:53:44.235,Change shared library name and version during deployment,"As a user, I can choose a name or a version for the SL to be deployed, because I want it to have a different name or version from the one setup inside the zip.
+I should be able to choose if I want to customize the name/version and see inputs only in that case.",1
+6903480,2017-09-21 09:56:49.286,Clear upload component once upload is done,"From a container, when uploading an {component|SA|SL} the upload component is not reset to its initial state when the upload is done.",1
+6203933,2017-07-24 12:26:38.176,Backend fails to retrieve install parameters after uninstall,"Error PetalsAdmin line 238 NPE.
+
+Install a component, start it, stop it, uninstall it: now the backend fails",2
+6202260,2017-07-24 09:44:43.444,The display of expansion panel is too large and generate a bug when we are on mobile,,1
+6167414,2017-07-20 14:53:48.434,feat(frontend): display errors in a separated modal,"Petals errors are often verbose and the UI is not well organized when displaying one.
+
+We should consider display a logo and some small text and just invite the user to click on a button if he wants to see the complete logs.
+
+Also, logs might be displayed in (nearly) full screen for a better visibility.",3
+5811680,2017-06-22 12:32:40.846,Add icons to the workspace tree,,2
+5810279,2017-06-22 10:10:53.462,Release 0.11.0,,1
+5799639,2017-06-21 13:07:18.857,[UI] choose SLs for component deployment,"For #343
+
+ - read the SLs from `jbi/component/shared-library-list` in the zip
+ - if there is a SL in the zip that is not in the container, show it in some way or another and prevent deployment!
+ - override the SLs (only those in the container can be chosen)
+
+`overrides` was added to the deploy component POST body, it contains a json body with:
+```
+{
+  // can be omitted and the name won't be overridden
+  ""name"": ""new-name"",
+  // can be omitted and the SLs won't be overridden (but if empty, they will be overridden!)
+  ""sharedLibraries"": [
+    { ""name"": ""slName"", ""version"": ""1.0.0"" }
+  ]
+}
+```",3
+5678789,2017-06-12 08:20:08.964,"Follow-up from ""frontend: improve multiples views""","The following discussion from !348 should be addressed:
+
+- [ ] @maxime1992 started a [discussion](https://gitlab.com/linagora/petals-cockpit/merge_requests/348#note_31840323):  (+1 comment)
+
+    > Create a shared component to draw a led (if you don't have time for that, please open a new issue)",1
+5659124,2017-06-09 07:44:10.360,Handle 404 for a workspace,Little bit different than #340 and related to #164,2
+5552472,2017-05-30 13:03:28.098,Manage workspaces users as an admin,"As the application admin, I want to be able to manage the users of existing workspaces.
+
+See also #358 and #361",5
+5552430,2017-05-30 13:00:10.191,Manage application users as an admin,"As an admin, I want to be able to add and remove users from the application.",5
+5552170,2017-05-30 12:36:20.005,"Component overview, show the list of used SLs",,1
+5551419,2017-05-30 11:05:01.570,Undeploy Shared Library,"As a user I want to be able to undeploy a shared library
+
+Tasks:
+ - #346 
+ - #351 ",3
+5551329,2017-05-30 10:54:02.488,Deploy Shared Libraries,"As a user, I want to be able to deploy a shared library to a container
+
+Tasks:
+ - #349 
+ - #350 ",4
+5550593,2017-05-30 09:33:02.768,Choose shared library during component deployment,"As a user, when I deploy a component, I want to choose the SLs used by the component.
+I must be able to choose if I want to customize the SLs: if not, then the component configuration of the zip will be used, else a list will be shown and I can select which one I want.
+
+Need #332 to work.
+
+",1
+5549858,2017-05-30 08:20:42.860,"In the tree, put the SA, SL and Component in their own category","```
+|_ bus
+    |_ container
+        |_ components
+            |_ comp 1
+                |_ SU 1
+            |_ comp 2
+        |_ SAs
+            |_ SA 1
+            |_ SA 2
+        |_ SLs
+            |_ SL 1
+```",3
+5538986,2017-05-29 12:31:45.044,Do the release,,1
+5497064,2017-05-24 11:25:12.973,Do not fail on incorrect URLs,"Currently, when the user tries to access to an URL that does not exists, the application simply fails and must be reloaded.
+
+We should at least redirect the user to the workspace instead (and later handle this via #164)",4
+5495910,2017-05-24 10:00:20.931,Rework the workspace page,,2
+5439566,2017-05-18 12:33:55.665,Make the backend relying as much as possible on the containers instead of db,"Related to #168.
+
+Rewrite all the mutations/commands in the backend so that they act by working directly with the container instead of the db.
+The db would only be there to store some view of the current state of the system, but not as input for mutations.
+
+Note: this an event sourcing way of architecturing things, ultimately we would want to remove any db related code from the workspace actor and populate the db on the side based on the events happening.",5
+5439466,2017-05-18 12:28:01.310,Introduce Shared Libraries,"As a user, I can see deployed shared libraries.
+
+Tasks:
+ - #345 
+ - #348 ",7
+5439379,2017-05-18 12:20:35.308,Do not show a red warning on fields if they are still pristine,"In many of the forms, simply moving from field to field marks them as red even though they are still pristine.
+
+For example in workspace dialog, the name field becomes red as soon as you un-select it.",2
+5439358,2017-05-18 12:17:25.499,[UI] change deployed component name,"To be done:
+ - read the name from `jbi/component/identification/name` in the zip
+ - if there is already a component in the container with the same name, show it in some way or another and prevent deployment!
+ - override the name
+
+There should be a checkbox `override component name` which would make an input visible (empty by default).
+
+`overrides` was added to the deploy component POST body, it contains a json body with:
+```
+{
+  // can be omitted and the name won't be overridden
+  ""name"": ""new-name"",
+  // can be omitted and the SLs won't be overridden (but if empty, they will be overridden!)
+  ""sharedLibraries"": [
+    { ""name"": ""slName"", ""version"": ""1.0.0"" }
+  ]
+}
+```",6
+5439349,2017-05-18 12:16:21.951,Change component name during deployment,"As a user, I can choose a name for the component to be deployed, because I want it to have a different name from the one setup inside the zip.
+I should be able to choose if I want to customize the name and see an input only in that case.",1
+5419448,2017-05-17 09:37:09.889,"feat(frontend): component overview, add a list of all its SUs and SA",,2
+5198623,2017-04-26 10:39:27.896,Return bad request (4xx) when the deploy of a component or a SU fails,See #311 and !315 that implements the handle of the error on the frontend if needed,1
+5178595,2017-04-25 11:45:41.759,[UI] SA lifecycle management,"Once #322 is closed.
+
+The SA operations tab should show:
+ - the same lifecycle operations as with one SU
+ - a mention that it will affect its SUs
+
+The SU operations tab should show:
+ - the lifecycle operations if it's the only SU of its SA (and a mention that it will affect the SA too thus)
+ - a message and a link to the SA saying that to change its state, the user should change its SA state.
+
+The `SA_CHANGE_STATE` SSE event should also be taken into account (and maybe the `SU_CHANGE_STATE` removed).",4
+5178538,2017-04-25 11:38:58.519,[UI] introduce Service Assemblies,"Show the service assemblies in the tree:
+ - they are just under a container
+ - the SUs are still under the component (they have exactly one component)
+ - the SUs are also visible under their SA (they have exactly one SA for now...)
+
+The SA overview should show:
+ - the list of its SUs with the possibility to click on them to go to their overview
+
+The SU overview should show (when clicking from its tree node under a component or an SA):
+ - a link to their SA and a link to their component",5
+5178504,2017-04-25 11:33:15.091,[API] SA deployment,"After #319 is done, we can introduce:
+ - `POST` on `/workspaces/ID/serviceassemblies` for deploying an SA
+ - `SA_DEPLOYED` event in SSE
+
+This maybe means that `SU_DEPLOYED` event will be removed...",3
+5178484,2017-04-25 11:31:55.829,[API] SA lifecycle management,"After #319 is done, we can introduce:
+ - `PUT` on `/workspaces/ID/serviceassemblies/ID` for changing state
+ - `SA_STATE_CHANGE` event in SSE
+
+We should also remove:
+ - `PUT` on `/workspaces/ID/serviceunits/ID` for changing state
+ 
+
+This maybe means that the `SU_STATE_CHANGE` event will be removed but maybe not...",3
+5178456,2017-04-25 11:29:02.590,[API] introduce Service Assemblies in backend,"Introduce:
+ - `GET` on `/serviceassemblies/ID` for read operations
+ - `serviceassemblies` field in `/workspaces/ID` response
+ - `serviceassemblies` field in the `WORKSPACE_CONTENT` SSE event
+ - `serviceassembly` field in the SU responses
+
+For this we may need to:
+ - add some migration db step to create the existing SUs corresponding SAs and move their state to it
+ - change some URLs and datatypes on the frontend for it to continue to work as before (e.g., changing the state of an SU by changing the state of its SA).",4
+5164137,2017-04-24 13:22:49.306,SA multi SU,"As a user, I want to: 
+- Deploy SAs on containers
+- See them in the tree under the container
+- Manage their lifecycle
+- See their SUs from their overview
+- Go to the SA from the SU
+
+I still want to be able to deploy an SU from a component, and its SA (mono SU) should be visible with the others.",3
+5164116,2017-04-24 13:20:47.839,Move lifecycle management of component into operations tab,Add a button to go from the state to the lifecycle management,2
+5125632,2017-04-21 13:18:13.137,Show error in case of deploy and lifecycle problem for SUs and Components,"When one of the lifecyle operations is invoked via http, there can be an error coming from the backend.
+This error should be shown on the page.",4
+5125611,2017-04-21 13:15:48.676,Container overview with nice schemas,"As a user, when I click on a container, I would like to see some kind of schema that summarise the state of the container.
+
+~~A first idea is to have an heatmap where the elements are the components, the size the number of service deployed and the colour a shade from red to green based on the % of started SU.~~ moved to #338",4
+5125595,2017-04-21 13:13:49.040,Bus overview with nice schema,"As a user, when I click on a bus, I want to see in its overview the following elements:
+ - ~~configured registries~~ (later: #150)
+ - containers
+
+And I want to see it in a nice schema where you can click on the containers for example.",5
+5125461,2017-04-21 12:57:40.219,Event from the SSE shouldn't redirect people that didn't initiate the action!,"Currently, when we receive an event from the SSE about a new deployed component, SU, unloaded artefact, deleted bus, etc, everybody gets redirected to the newly deployed component or su.
+But if I am not the initiator of the action, I don't want that!
+
+The solution should be done by differentiating the direct result of the action (the success of the http call) from the indirect result of the action (the receival of the event from the SSE).",3
+5010961,2017-04-11 09:21:58.354,"Add Components, SLs and SUs by using an URL","As a user, I want to be able to add/deploy a component, a SL or a SU by giving an URL to the artefact.",6
+4894081,2017-03-29 09:19:22.212,"When clearing the form import bus, also clean errors (if any)","I made an import, it failed.
+
+So far, so good, the error is displayed.
+
+Then I cleaned it but the error's still here :
+
+![image](/uploads/3e3066658868db5547764a58a1ebb801/image.png)",2
+4878913,2017-03-28 07:05:42.216,Opened container content page interferes with workspace change,"If one clicks on a container of a bus (e.g., http://linagora.gitlab.io/petals-cockpit/#/workspaces/idWks0/petals/containers/idCont0) and tries to change workspace, the following error happens:
+```
+ERROR Error: Uncaught (in promise): TypeError: Cannot read property 'containers' of undefined
+TypeError: Cannot read property 'containers' of undefined
+```
+
+Most certainly because closing the workspace remove whatever is needed by the container content page.
+
+Best would be to completely avoid that situation by not closing the workspace until the url changed.",2
+4842020,2017-03-24 09:39:55.289,Provide a realistic demonstration version,"It'd be good for MVP to have better names in the demo.
+
+This can be done once #334 is implemented.",7
+4749758,2017-03-17 16:05:14.975,HTTP import error is shown on the latest opened import form,"If you import a bus and then quickly shift to another bus in progress, the http error will be shown on the form while it shouldn't!",2
+4699445,2017-03-13 10:07:06.564,Notifications should be cancelled on workspace change!,,1
+4699345,2017-03-13 09:56:04.135,Make e2e tests with backend work,Related: #225,4
+4650512,2017-03-07 16:22:09.454,Use a material button for SUs and components lifecycle management,"See https://gitlab.com/linagora/petals-cockpit/merge_requests/239#note_24931282
+
+and https://github.com/angular/material2/issues/3478",1
+4650061,2017-03-07 15:39:41.769,Transaction and error status do not work well together,"In the backend, in WorkspaceActor, we should prefer throwing exception instead of returning status to be sure things are rolled back in case it is needed!",1
+4649497,2017-03-07 14:36:52.660,Unreachable containers should be shown too in the container overview,"Currently only reachable containers are listed, but the unreachable ones are the important ones from an administration point of view.",1
+4596003,2017-03-02 15:13:08.963,Component lifecycle management API,"See #11.
+
+We should handle well the case where there is deployed SUs on a component and it thus can't be unloaded!",2
+4595998,2017-03-02 15:12:18.608,Components lifecycle management UI,"See #11 
+
+It should be using a PUT on /workspaces/WID/components/COMPID with a body:
+```
+{
+    ""state"": ""Started""
+}
+```
+
+Note that the possible transitions are:
+- shutdown->Started
+- shutdown->Unloaded
+- stopped->Started
+- stopped->Unloaded
+- started->Stopped
+- loaded->Unloaded
+- loaded->Started
+
+And also it can't be unloaded if there is SUs deployed on it.
+
+Note also that the CONFLICT status code will be returned if the transition is not valid.
+So there is no way to go directly to the shutdown and loaded states, but they are states where a component can be!
+
+You will also get an event on the SSE of type `COMPONENT_STATE_CHANGE` containing something like:
+```
+{
+    ""id"": 24,
+    ""state"": ""Started""
+}
+```",2
+4595947,2017-03-02 15:06:48.849,SU lifecycle management UI,"See #12.
+
+It should be using a PUT on /workspaces/WID/serviceunits/SUID with a body:
+```
+{
+    ""state"": ""Started""
+}
+```
+
+Note that the possible transitions are:
+- shutdown->Started
+- shutdown->Unloaded
+- stopped->Started
+- stopped->Unloaded
+- started->Stopped
+
+Note also that the CONFLICT status code will be returned if the transition is not valid.
+
+So there is no way to go directly to the shutdown state, but it is a state where an SU can be!
+
+You will also get an event on the SSE of type `SU_STATE_CHANGE` containing something like:
+```
+{
+    ""id"": 24,
+    ""state"": ""Started""
+}
+```",3
+4595825,2017-03-02 14:48:28.319,Rename released artifact with a nicer name in the CI,For example naming it `cockpit` instead of `artifact`.,1
+4575373,2017-03-01 13:21:16.289,Rework the window of workspaces list,"- Custom md-dialog
+- Add selected workspace
+- Count workspace in the list
+- Add different icon by workspace
+- Add spinner near the label workspaces when we fetch the workspaces list
+- Clear input value after submit
+
+![image](/uploads/0df0326f12fa12768fad5a5986f3269c/image.png)
+",2
+4551454,2017-02-27 15:31:26.077,bus imported : Redirect to his page,"When a bus is imported, we stay on his page and still have the import button
+
+![image](/uploads/7ec2b10c528a91d7efd8109842860547/image.png)",2

@@ -1,0 +1,225 @@
+issuekey,created,title,description,storypoints
+121256396,2023-01-04 21:40:29.574000+00:00,Add deprecation note to GitLab deprecations regarding KAS private tls,"### What is this issue about?
+
+The `gitlab.kas.privateApi.tls.enabled` and `gitlab.kas.privateApi.tls.secretName` attrs were deprecated following the linked discussion below.
+
+The following discussion from !2888 should be addressed:
+
+- [ ] @Alexand started a [discussion](https://gitlab.com/gitlab-org/charts/gitlab/-/merge_requests/2888#note_1220328090): 
+
+    > I'm not sure if deprecating `gitlab.kas.privateApi.tls.*` is the best way forward. But my reasoning was:
+    > 
+    > 1. I want to simplify the chart options. So it's probably better to have just one documentation section explaining how to enable TLS for KAS.
+    > 1. Having a global attribute to configure TLS for KAS across the chart gives us more power to automate these configurations. Right now, GitLab webservice needs KAS address (`grpc` vs `grpcs`). A configuration value that lives inside of the KAS sub-chart can't do it.
+    > 1. I can't immediately think of a reason why one would want to enable just certain KAS servers with TLS, but not others.
+    > 1. I don't think we'd need different certificates per KAS server, or any other TLS specific configuration that would be used differently for each KAS service.
+    > 
+    > _I'm leaving this thread open in case reviewer and maintainer have any thoughts regarding this._
+
+This issue is to track adding a deprecation note to https://docs.gitlab.com/ee/update/deprecations.html.
+
+### Deprecation note proposal
+
+Planned removal: GitLab 17.0 (2024-05-22)
+
+The GitLab chart provides `gitlab.kas.privateApi.tls.enabled` and `gitlab.kas.privateApi.tls.secretName` to support TLS communication between KAS pods. To enable TLS communication between KAS and all other chart components that KAS needs to communicate to, one needs to set many other extra Helm values.
+
+To facilitate enabling TLS communication between KAS and all the chart components, we've introduced the `global.kas.tls.*` Helm values. Since this is a more complete and simple approach to enabling TLS for KAS. We recommend you stop using `gitlab.kas.privateApi.tls.*` Helm values, and use `global.kas.tls.*` instead. Therefore, the `gitlab.kas.privateApi.tls.*` is deprecated and scheduled for removal in 17.0. For more information please refer to:
+
+- The [Merge Request](https://gitlab.com/gitlab-org/charts/gitlab/-/merge_requests/2888) which introduces the `global.kas.tls.*` values.
+- The [deprecated documentation](https://docs.gitlab.com/charts/charts/gitlab/kas/index.html#enable-tls-communication).
+- The new preferred documentation. (link to be added)
+
+/cc @nmezzopera @nagyv-gitlab",1
+118702762,2022-11-14 21:10:37.409000+00:00,Document how to connect KAS to Redis via SSL,"<!--
+NOTICE: This Issue tracker is for the GitLab Helm chart, not the GitLab Rails application.
+
+Support: Please do not raise support issues for GitLab.com on this tracker. See https://about.gitlab.com/support/
+-->
+
+## Summary
+
+This is a follow-up from https://gitlab.com/gitlab-org/charts/gitlab/-/merge_requests/2829
+
+KAS can do ssl communication with Redis. We should test this with the GitLab chart and document it.",2
+117046812,2022-10-17 15:34:30.083000+00:00,Improve UX to enable TLS to KAS externally and internally,"<!--
+NOTICE: This Issue tracker is for the GitLab Helm chart, not the GitLab Rails application.
+
+Support: Please do not raise support issues for GitLab.com on this tracker. See https://about.gitlab.com/support/
+-->
+
+## Summary
+
+We've recently introduced a way to mount certificate volumes into KAS pods. This enables KAS to talk internally and externally through TLS.
+
+But the implementation is only simply to use for the `privateApi` via the `privateApi.tls.enabled` attribute.
+
+We should make it also simple to other KAS endpoints to enable TLS, instead of relying on them to use `gitlab.kas.customConfig` and `privateApi.tls.enabled`.
+
+
+### Proposal
+
+Maybe a global key that tells KAS to enable it for all its components would make more sense.",3
+116890603,2022-10-14 11:35:09.122000+00:00,Improve communication regarding how to install the Agent when running GitLab with custom certificates,"## Release notes
+
+Setting up the KAS component of the agent for Kubernetes with custom certificates and using the CI/CD integration is a rather complex task. To support our users who require custom certificates, we updated the documentation for better support. The documentation touches on how to set up KAS, agentk and how to invoke `kubectl` commands from Gitlab CI/CD with custom certificates.
+
+## Proposal
+
+The following discussion from !2803 should be addressed:
+
+- [ ] @dmakovey started a [discussion](https://gitlab.com/gitlab-org/charts/gitlab/-/merge_requests/2803#note_1133710036):  (+4 comments)
+
+    > LGTM.
+    > 
+    > something for further iterations (i.e. new issues?):
+    > 
+    > Based on findings in https://gitlab.com/gitlab-org/charts/gitlab/-/merge_requests/2803#note_1133461689 it looks like mere setup of documented values is not sufficient for proper TLS function with custom CA certs, so can we:
+    > 
+    > 1. add documentation for custom (including self-signed) CA authorities or point at existing one
+    >    1. how to reuse `gitlab-wildcard-tls-ca` 
+    >    2. (optional) sort out how to add custom CA cert for `kubectl` rather than use `--insecure-skip-tls-verify` as that's not a proper solution to the problem.
+    > 
+    > @Alexand what do you think?",2
+112823192,2022-08-04 02:17:38.448000+00:00,Expose http.debug.tls settings in the registry helm chart,"## Summary
+
+In https://gitlab.com/gitlab-org/container-registry/-/issues/729+ we enabled the container registry to 
+set TLS certificates for the `http.debug` server.
+
+We should expose these settings in the charts so that they can be configured properly on GitLab.com",1
+104725197,2022-03-13 13:33:39.372000+00:00,Enable KAS by default on the GitLab chart,"The following discussion from !2436 should be addressed:
+
+- [ ] @nagyv-gitlab started a [discussion](https://gitlab.com/gitlab-org/charts/gitlab/-/merge_requests/2436#note_872540922):  (+1 comment)
+
+    > @Alexand Is this true? Did we enable `kas` by default only in Omnibus?
+
+We already have `kas` enabled by default on Omnibus. Now we need to also enable it on the GitLab chart.",2
+90352753,2021-06-11 14:25:58.344000+00:00,Spike: Scoping how to support many database configuration in CNG,CNG can have many databases configured in a similar way as by Omnibus: https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/6192.,1
+81605463,2021-03-25 05:10:09.495000+00:00,Remove non_test group specification on bundle install,"## Summary
+
+!322 introduced `non_test` group to Gemfile by @Ahmadposten (around %11.1), but very soon after it, it was removed in !404 (%11.2).
+
+## Why
+This change would eliminate unnecessary deprecation warning from the CI job log:
+
+```
+$ bundle install -j $(nproc) --without non_test
+[DEPRECATED] The `--without` flag is deprecated because it relies on being remembered across bundler invocations, which bundler will no longer do in future versions. Instead please use `bundle config set without 'non_test'`, and stop using this flag
+```
+
+https://gitlab.com/gitlab-org/charts/gitlab/-/jobs/1126027482",1
+77883116,2021-01-18 18:06:56.619000+00:00,Support deployment of gitlab-sshd (gitlab-charts),"## Summary
+
+Support the use of `gitlab-sshd` as a component within the GitLab Shell container / chart of Cloud Native Gitlab.
+
+## Details 
+
+2020-01-1 saw the merge of https://gitlab.com/gitlab-org/gitlab-shell/-/merge_requests/394, and we [can now begin integration](https://gitlab.com/gitlab-org/gitlab-shell/-/merge_requests/394#note_488121893). 
+
+`gitlab-sshd` is designed to provide a replacement to the use of `sshd` from OpenSSH, and can be the single service started by a container using it.
+
+## Work items
+
+1. Build and support configuration within `gitlab-shell` of the CNG containers
+    - binary
+    - process-wrapper / entrypoint & logging
+1. Support for configuration within `gitlab/gitlab-shell` chart",2
+70677672,2020-09-03 10:25:59.187000+00:00,Support Embedded Action Cable in Helm Charts,"<!--
+NOTICE: This Issue tracker is for the GitLab Helm chart, not the GitLab Rails application.
+
+Support: Please do not raise support issues for GitLab.com on this tracker. See https://about.gitlab.com/support/
+-->
+
+## Summary
+
+We introduced support for running Action Cable in embedded mode in Omnibus https://gitlab.com/gitlab-org/omnibus-gitlab/-/merge_requests/4407. It can be enabled by setting the `ACTION_CABLE_IN_APP` environment variable. This was enabled in docker-compose in https://gitlab.com/gitlab-org/build/CNG/-/merge_requests/504.
+
+We need to expose this environment variable via the Helm chart so that it can be set on `webservice` pods when deployed via K8s.
+
+We should also support setting the `ACTION_CABLE_WORKER_POOL_SIZE` environment variable. Both are non-secret.
+
+We've also created a [container](https://gitlab.com/gitlab-org/build/CNG/-/tree/master/gitlab-actioncable) specifically for running Action Cable in a standalone Puma server so it can be scaled independently. This is probably what will be used on gitlab.com and Helm chart work towards that is being tracked in https://gitlab.com/gitlab-org/charts/gitlab/-/issues/2284.
+
+See also: https://gitlab.com/gitlab-org/charts/gitlab/-/issues/2043
+
+## Detail
+
+#### In Omnibus
+
+- Action Cable is disabled by default;
+- Action Cable is enabled in Omnibus using the `actioncable['enabled']` setting;
+- By default, a separate Action Cable server is started that only serves WebSocket connections. To run it in embedded mode, as part of the same Puma server, the `actioncable['in_app']` setting is used, and
+- Action Cable thread pool size is configured with the `actioncable['worker_pool_size']`.
+
+#### In CNG
+
+- A separate `actioncable` container exists, which can be scaled independently;
+- Action Cable can be run in embedded mode on the `webservice` container by passing in the `ACTION_CABLE_IN_APP` envvar;
+- Max AC thread pool size is configured with the `ACTION_CABLE_WORKER_POOL_SIZE` environment variable, and
+- Workhorse accepts a `cableBackend` argument which accepts a service name and port and can proxy WebSocket requests to the correct service. It defaults to the same as the `authBackend` setting.
+
+An example of a setup proxying requests to a `webservice` container running embedded Action Cable is in the CNG [docker-compose.yml](https://gitlab.com/gitlab-org/build/CNG/-/blob/master/docker-compose.yml) file.
+
+Currently, Action Cable is only supported for the Puma server, not Unicorn.
+
+## Proposal
+
+Modify GitLab Helm chart to allow configuration of Action Cable in embedded mode.",5
+69815283,2020-08-10 14:36:04.734000+00:00,Geo - Remove FDW related config from charts,https://gitlab.com/gitlab-org/charts/gitlab/,1
+32932337,2020-04-06 10:38:37.867000+00:00,CNG: `gitlab-rails-ce`/`gitlab-rails-ee` sometimes fail at the NodeJS downloading step,"## Summary
+
+See:
+
+- https://gitlab.com/gitlab-org/build/CNG-mirror/-/jobs/499481345
+
+```
+ Step 26/63 : RUN curl -fsSL ""https://nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz""   | tar --strip-components 1 -xzC /usr/local/
+  ---> Running in 68a08e4dd34c
+ curl: (92) HTTP/2 stream 1 was not closed cleanly: INTERNAL_ERROR (err 2)
+ gzip: stdin: unexpected end of file
+ tar: Unexpected EOF in archive
+ tar: Unexpected EOF in archive
+ tar: Error is not recoverable: exiting now
+ The command '/bin/sh -c curl -fsSL ""https://nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz""   | tar --strip-components 1 -xzC /usr/local/' returned a non-zero code: 2
+```
+
+- https://gitlab.com/gitlab-org/build/CNG-mirror/-/jobs/499787651
+
+```
+ Step 27/65 : RUN curl -fsSL ""https://nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz""   | tar --strip-components 1 -xzC /usr/local/
+  ---> Running in 0580fc35e278
+ curl: (22) The requested URL returned error: 500 
+ gzip: stdin: unexpected end of file
+ tar: Child returned status 1
+ tar: Error is not recoverable: exiting now
+ The command '/bin/sh -c curl -fsSL ""https://nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz""   | tar --strip-components 1 -xzC /usr/local/' returned a non-zero code: 2
+```
+
+These are two different errors, but at the same step:
+
+
+## Current behavior
+
+Upstream codebase server issued a `500`, but the Job immediately failed
+
+## Expected behavior
+
+Fetch of upstream to retry in the event of a failure, (hopefully) allowing the rest of the job to succeed.
+
+## Versions
+
+CNG @ 3c7ef1ba18a2c361139975379f16c8b00f7156a5
+
+## Relevant logs
+
+See above.",2
+29996781,2020-01-27 19:58:19.206000+00:00,Form Validation for WIP Limits,"We need to have form validation and messages when a user inputs a non-numerical input, details found [here](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/22552#note_276193257)
+
+I think we need to validate against the following:
+- Number
+- Negative Number
+- Max wip limit? (Would this be valuable?)",2
+26520238,2019-10-31 12:33:41.840000+00:00,Allow to customize the livenessProbe for `gitlab-shell`,"In https://gitlab.com/gitlab-org/gitlab/issues/35349, we noticed that `gitlab-shell` has a lot of liveness errors in our configuration, so that would be useful to be able to customize its `livenessProbe`.",2
+20621766,2019-05-06 14:07:50.613000+00:00,Consider caching gems to make the gitlab-rails-ce job faster and more resilient when Rubygems has problems,"Rubygems seems to currently have problems, which leads to problems in our CI pipelines (e.g. https://gitlab.com/gitlab-org/build/CNG-mirror/-/jobs/207740638).
+
+If we'd cache the `vendor/ruby` folder, [similarly to how we do for the CE/EE pipelines](https://gitlab.com/gitlab-org/gitlab-ce/blob/f7bba29cb573e74b56aba7882048aac7de0d6868/.gitlab/ci/global.gitlab-ci.yml#L14) we would make the jobs faster and more resilient to Rubygems issues.",4

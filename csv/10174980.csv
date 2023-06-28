@@ -1,0 +1,763 @@
+issuekey,created,title,description,storypoints
+69522350,2020-08-06 19:11:26.833,Can't create new character,"### Summary
+
+No matter what i do, i get `Error: UNIQUE constraint failed: body.character_id`.
+
+### Steps to reproduce
+
+Create new account, try to create first character, click Create.
+
+### Relevant logs and/or screenshots
+
+![imgur-2020_08_06-21_07_43](/uploads/f6f43b8d23bea1102f0ba422ef4e55d9/imgur-2020_08_06-21_07_43.png)
+
+#### Veloren version
+
+Using latest nightly from airshipper: 0.6.0-fbac12d2/2020-08-06-16:27, connected to the default server.",10
+35164868,2020-05-29 10:10:32.517,Do not announce alias change for non-body players,"### Summary
+
+Torvus the bridge between discord and ingame server changes the alias to represent the writer on discord.
+Due to recent addition of announcing the change this gets very confusing to use the bridge.
+
+### Steps to reproduce
+
+just writing in #ingame-chat will be enough
+
+### Relevant logs and/or screenshots
+
+<details>
+<summary>Logs and/or screenshots of the issue</summary>
+![Screenshot_20200529_120855](/uploads/d05323768280a9d3149019a743da2cd1/Screenshot_20200529_120855.png)
+</details>
+
+#### Veloren version
+latest Nightly",7
+34620672,2020-05-15 20:45:18.413,Make voxygen inform the user where screenshots are saved,"Maybe this could be some text that pops up when you take a screenshot.
+Or it could push some text into the chat box.",1
+34472683,2020-05-12 21:22:21.593,Add entity count to server metrics,,1
+34469455,2020-05-12 19:30:51.576,Make level and exp public fields,"The following discussion from !970 should be addressed:
+
+- [ ] @Imbris started a [discussion](https://gitlab.com/veloren/veloren/-/merge_requests/970#note_339922643):  (+1 comment)
+
+    > since we have what appears to be direct getters and setters for `level` and `exp` maybe we should just make the fields `pub`",1
+32742962,2020-04-01 15:32:46.091,Create Slot widget,"We need a generic slot widget that can be used for armor slots, inventory slots, hotbar slots, and more.
+Ideally it would support dragging between various slots.",4
+32379016,2020-03-24 11:56:43.392,UI limits password to 20 characters,The register page allows more than 20. This has the consequence that some people with a password longer than 20 passwords can't login into a server.,7
+31368335,2020-02-28 06:15:20.685,Enable voxygen to be used as a lib for rendering characters,"Interest has been expressed in this functionality
+
+Tentative steps:  
+* [ ] expose `renderer` & `scene` in `lib.rs`  
+* [ ] determine if `scene::load` should be exposed or if it would be easier to indirectly render a character via `scene::Scene`  
+* [ ] create example that renders a character image using a headless context",3
+29298501,2020-01-04 21:18:05.807,Tracking issue for equipment/loot (TODO),,8
+29298488,2020-01-04 21:16:34.452,Tracking issue for enemies (TODO),,15
+29298291,2020-01-04 20:43:52.598,Working abilities (TODO),TODO: Add task list for all abilities here,10
+29298285,2020-01-04 20:43:01.548,Keybindings for abilities,,1
+29298280,2020-01-04 20:42:26.677,Enum for all abilities,Be sure to add doc comments for their behavior,1
+29298269,2020-01-04 20:41:35.169,Ability select UI mock-up,,4
+29298264,2020-01-04 20:40:55.637,Upgrade tree UI mock-up,,4
+29298261,2020-01-04 20:40:33.026,Block using shield,,3
+29298254,2020-01-04 20:39:49.241,Parry using weapon,,3
+29298249,2020-01-04 20:39:12.549,Secondary weapon attacks,"* [x]  Sword heavy attack with dash forward
+* [ ]  Axe hook enemy towards you
+* [ ]  Mace heavy swings
+* [ ]  Bow draw from quiver",5
+29298242,2020-01-04 20:38:05.615,Primary weapon attacks,"* [ ]  Sword triple combo
+* [ ]  Axe chop swing with speedup in very close range
+* [ ]  Mace swing loop
+* [ ]  Dagger short range stab
+* [ ]  Bow fire with power based on draw time",6
+29298228,2020-01-04 20:36:16.351,ECS system for handling conditions,* [ ]  Bleeding condition that regularly gives bleeding damage but wears off after some time,3
+29298222,2020-01-04 20:35:10.992,Function that matchese over `DamageType` to find out damage,The function should take `Stats` and `Conditions` as arguments,2
+29298210,2020-01-04 20:33:48.773,Enum for all conditions and `Conditions` component which contains a `HashSet<Condition>`,,1
+29298206,2020-01-04 20:33:14.518,Enum for all damage types,,1
+29298193,2020-01-04 20:31:11.365,Regain energy in combat based on weapon type,"* [ ]  Sword (consistency of hits)
+* [ ]  Axe (closeness to the enemy)
+* [x]  Mace (hit)
+* [x]  Dagger (hit)
+* [ ]  Bow (hit, stand still)",6
+29298181,2020-01-04 20:29:24.362,Secondary weapon attacks cost energy,Depends on #415,1
+29298175,2020-01-04 20:28:48.400,Rolling and climbing need and consume energy,,1
+29298172,2020-01-04 20:28:17.028,Energy regeneration slowly accelerates up to some limit while out of combat,,2
+29298165,2020-01-04 20:27:35.015,`Energy` as its own component,Currently it's part of stats.,1
+29298155,2020-01-04 20:25:45.455,Fitness reduces energy drain while climbing,Depends on #407,1
+29298149,2020-01-04 20:24:49.742,Willpower improves energy recovery,"Improved energy regeneration by increasing the initial energy recovery speed
+
+Depends on #406",1
+29298142,2020-01-04 20:23:35.284,Fitness improves movement speed,,1
+29298134,2020-01-04 20:21:03.745,Endurance improves damage resistance,,2
+29298129,2020-01-04 20:19:57.086,"`Endurance`, `Fitness` and `Willpower` as race based stats in `Stats` component","Each race should start with a different set of default stats (the player will be able to upgrade them later though).
+Short summary of the stats:
+- Endurance: Resist physical damage
+- Fitness: Move more quickly and efficiently
+- Willpower: Resist magic, strong mental power (will also effect energy regeneration)
+
+Races:
+    Danari,
+    Dwarf,
+    Elf,
+    Human,
+    Orc,
+    Undead,
+",1
+29227478,2020-01-02 03:45:57.454,Interpolate shadow and light positions,"Figure position is interpolated for smooth rendering, the same should be done for lights and shadows so that aren't out of sync.  
+See how figure interpolation is handled:  
+https://gitlab.com/veloren/veloren/blob/master/voxygen/src/scene/figure/mod.rs#L958  
+Shadow & light code:  
+https://gitlab.com/veloren/veloren/blob/master/voxygen/src/scene/mod.rs#L204",2
+29191697,2019-12-30 14:31:32.424,High view distance crashes server,A high view distance causes the server to run out of memory and kills it. Related to #81 ,10
+28968072,2019-12-20 21:16:40.993,Add ability to track network activity,This should allow us to determine which types of network messages are being sent often and where the majority of bandwidth usage is coming from. This will be indispensable for further networking related optimizations.,3
+27534954,2019-11-25 11:50:55.912,Music volume slider not working and sfx volume not set at startup,,3
+26544850,2019-11-01 01:39:52.065,Modding tracking issue,"This issue is created to track the current progess on a modding system design as well as technical blocks.
+
+#181 might be relevent to this",10
+25658091,2019-10-06 08:19:00.923,Switch from deprecated gfx to wgpu,"This switch promises many performance improvements and recent patches.
+Will involve some work.
+
+Imbris: ""As zest mentioned most of the things that need to be switched are in voxygen/src/render/
+conrod uses our rendering abstraction so we don't have to worry about that
+glutin is a layer on top of winit that I believe gives us our opengl context
+gf_device_gl is the opengl backend for gfx
+and gfx_window_glutin is something in between""",9
+25644380,2019-10-05 02:43:36.012,Check why CI downloads packages every time,"This might just be to check for changes, but it might also be that the folder isn't being saved externally.",1
+25641915,2019-10-04 21:44:21.735,Load worldgen structure using .ron files to define which structures to load and their offsets,"This is fairly simple and will make it much simpler to add new structures to the world.
+See https://gitlab.com/veloren/veloren/blob/master/world/src/block/natural.rs",2
+25641044,2019-10-04 20:37:57.836,Only allow benchmark CI job to run on one runner,"The CI job for benchmarking should only run on a single runner for consistency. angelonfira-laptop should be a good candidate as it's dedicated, but the internet connection might not be as reliable as the AWS runner.",1
+25609331,2019-10-04 01:06:43.028,Enable hotloading of different offsets for armors/weapons,"This can be accomplished similar to how head meshing is done.  
+For reference see:
+`HumanHeadSpec` and related code  
+https://gitlab.com/veloren/veloren/blob/master/voxygen/src/scene/figure/load.rs#L99  
+https://gitlab.com/veloren/veloren/blob/master/assets/voxygen/voxel/humanoid_head_manifest.ron",2
+25607534,2019-10-03 22:46:08.998,Separate voxygen and server CI builds,"When a branch is pushed to master, it creates a job that builds executables for both the server and the voxygen client. I'm wondering if it would be better to separate this into 2 jobs.
+
+The benefits would be:
+- The jobs are faster, better parallelization across runners
+- The runners have a smaller upload
+- Players who only want the client can just get the client (@Songtronix can you comment on this)
+
+Questions to answer:
+- Does the server need access to the `assets/` folder?
+
+It could be that this isn't a good idea, just had the thought.",1
+25589547,2019-10-03 14:23:13.761,Update libregamewiki page,"https://libregamewiki.org/Veloren
+
+This page is quite outdated, and could use some new information and pictures.",1
+25539989,2019-10-02 11:39:54.928,Would be awesome to have a Flatpak of Veloren.,Makes it easy for users to get the game and play it.,6
+25491223,2019-10-01 09:32:18.499,Crash on open,"thread 'main' panicked at 'Failed to create window!: BackendError(OsError(""wglCreateContextAttribsARB failed: OS Error -1073274731 (FormatMessageW() returned error 317) (os error -1073274731)""))', src\libcore\result.rs:999:5
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace.
+
+
+win 10 64bit
+
+hd intel graphics",2
+25477921,2019-09-30 22:44:26.517,Target stable Rust,"Hello. Right now **veloren** seems to require Rust nightly. But this hampers adoption, for example Linux distros can't include it this way. It would be great if eventually, **veloren** would work on Rust stable.",10
+25402243,2019-09-28 08:17:35.980,No Audio on Windows 10,"No Audio is playing while the config is correct and the correct audio device is found.
+Looks like audio is working fine but we don't actually play music anywhere in the code.
+Futhermore sfx footsteps are way to silent to be audible.",5
+25322153,2019-09-26 00:31:40.619,Improve scaling of pixel art in the ui,"Some improvements over nearest neighbor scaling:  
+https://colececil.io/blog/2017/scaling-pixel-art-without-destroying-it/  
+http://themaister.net/blog/2018/08/25/pseudo-bandlimited-pixel-art-filtering-in-3d-a-mathematical-derivation/  
+https://www.shadertoy.com/view/ltBGWc  
+https://www.shadertoy.com/view/MlB3D3
+
+Sourced from:
+https://discordapp.com/channels/273534239310479360/335502453371961344/626477915240005652
+
+edit: 
+https://www.youtube.com/watch?v=Yu8k7a1hQuU&start=2942
+
+edit2:
+Very nice explanation: https://csantosbh.wordpress.com/2014/01/25/manual-texture-filtering-for-pixelated-games-in-webgl/",2
+25281392,2019-09-25 01:56:59.067,Cancelling server connection,"From yosmo78 on discord:
+
+I just want to make a small suggestion when connecting to a server there should be a cancel button that appears when attempting to connect, so you can abort trying to connect to the server. The reason I suggest this is because I think I have have run into a bug. If you enter in a server address for instance veloren.mac94.de then specify a (maybe valid?) port like veloren.mac94.de:13000 it will infinitely connect and without a cancel you have to force close the game.",1
+24665064,2019-09-10 23:40:06.860,Reduce foot step sound,It's deafening.,1
+24575637,2019-09-08 23:45:19.684,Add custom cursor,A custom cursor is always nice because it keeps you immersed and not thinking about your OS.,1
+24561279,2019-09-07 18:01:25.415,Engine programming tracking issue,"This is a place to discuss ways to improve the development of the engine. Here are some of the goals that we want to achieve:
+
+- [ ] Reduce compile times by moving data out of code.
+- [ ] Allow more to be changed while the game is running or at least not recompiled.
+- [ ] Make code reusable.
+  - [ ] `Terrain`
+  - [ ] `FigureMgr`
+- [ ] Split responsibilities.
+  - [ ] There should be a single object responsible for queuing and orchestrating the meshing of chunks (or possibly meshing other things, too). That same object should *not* be responsible for deciding which chunks have to be meshed.",10
+24560795,2019-09-07 17:04:38.011,Implement server-side volumetric lighting,"At the moment, we generate lighting information by tracing blocks downward in the meshing code. This technique isn't ideal and doesn't produce physically accurate effects. Instead, we should use a similar technique to other voxel games by computing lighting based on a floodfill algorithm.
+
+Additionally, we'd like to do per-vertex lighting (smooth lighting) instead of per-face lighting in the meshing code.
+
+Once computed, we can also pass this lighting information into the character shaders.",5
+24551403,2019-09-06 20:57:29.806,Find a good way to update the toolchain and build image periodically,"The toolchain used for the repo and CI should be updated periodically. This should either be done every few weeks, or once a month, or once a version. Depending on the benefits of doing so. Also, rebuilding the image every once in a while will help CI run faster.
+
+The steps that need to be taken during this time are:
+- Make sure all of our crates work with the new toolchain
+- Make sure the toolchain has all of the Rust tools that we need
+- Change the toolchain in the main repo and the Docker image repo
+- Rebuild the image
+
+Also a few other improvements
+- The CI image should always have the toolchain that it is designed to run built-in. This means having a file that overwrites the `rust-toolchain` file during each CI run.",2
+24537476,2019-09-06 13:21:02.936,Maintain wield state when rolling,"Slipped:
+>  Now that we have different weapon equip camera controls, I'm not sure if I like how we unequip the weapon whenever you roll
+
+https://discordapp.com/channels/449602562165833758/450065020878061600/619504744683143168",1
+24533654,2019-09-06 11:35:29.298,Audio System Design,"MisterTeapot on discord has done professional work with game audio in the past. I asked him what features were high priority to implement, and this was his response: 
+
+<details>
+    <summary>MisterTeapot's response</summary>
+    <pre>
+Thanks @AᎬᏒᎾᏁᎥᏟ [UTC-5], we're super excited!  Ok, so here's a few super quick notes regarding our potential audio system. Obviously there's a ton of room for expansion and clarification here, but this is probably a decent starting point for discussion. Implementation wise, I think our audio would loosely fall into four groups:
+
+Music
+Environment SFX
+Event SFX
+Menu/GUI SFX
+
+Music
+
+-Typically streamed
+-Needs to have some sort of tagging system for jukebox, ie, ""exploring"", ""battle"", ""town"", ""dungeon""
+-Needs to be able to cross-fade or at least fade out/fade in when changing areas
+-Given how much content is already finished in this area, dynamic/procedural music is likely out of scope
+
+
+Environment SFX
+
+-Loaded into memory on area load
+-Ambient loops for each major area type, ie, gentle breeze with leaves rustling in forest, stonger wind in mountains
+-Support for positional audio such as flowing water, bird chirps
+
+Event SFX
+
+-Loaded with corresponding entity instantiation
+-Footsteps, glide loop, combat sounds, item interaction sounds (ie opening doors/chests), etc
+-Will need some very basic DSP, ie random ranged pitch for footsteps, pitch/EQ for glide loop
+
+
+Menu/GUI SFX
+
+-Tied to input triggers, (click/confirm, scroll, mouse over etc. need trigger list from UI team)
+-Usually these get loaded once, and then called from pool
+-Depending on how 'Juicy' we go with UI design, may require animation tagging (although we can probably fake it)
+-Dialog system probably fits in here as well, assuming that we're doing dialog boxes and not full voice-over
+-Dialog could be as simple as clicks/keystrokes as the words scroll, or more complex sythesis ala Animal Crossing
+    </pre>
+</details>
+
+This issue is for further discussion on the overarching audio system design.
+
+From reading his response and what I've gathered from reading on the topic, I've made a list of features that need to be implemented. As we decide we are ready to add the feature, we can make an issue, link to it, and once it is finished we can check it off.
+
+* [x] An audio description file (probably in the .ron format) (SFX: !563)
+* [ ] A way to mark audio as streaming vs. loaded into memory
+* [ ] Audio banks that can be loaded and unloaded
+* [x] Fade in, fade out, crossfade
+* [ ] Pitch shifting
+* [ ] Possibly a dynamic/procedural music engine
+* [x] A way to tag music based on the context it should be played in
+* [x] Positional audio
+
+I am ignoring the audio that should be added to the game in this issue and focusing solely on the programming.",10
+24513683,2019-09-05 22:34:39.157,Add worker for `Chunk` optimisation,"_I write this issue as if !475 has already been merged._
+
+A worker, running in the thread pool, should be implemented that _optimises_ the loaded `Chunk`s.
+Such an optimisation is comprised of:
+
+1. Finding out which is the best voxel to serve as `self.default`.
+   Usually this would be one of the following three voxels:
+   * `self.below` of the containing `Chonk`.
+   * Water.
+   * `self.above` of the containing `Chonk`.
+2. Order the groups (see !475 for the concept of a “group”) by morton order.
+   This might improve cache friendliness.
+   Having the groups sorted by morton order has no overhead because groups are accessed through a lookup table anyways. (`self.indices` is that lookup table.)",5
+24243975,2019-08-28 12:59:56.709,Stop the zip bomb in artifacts download,Having to unzip multiple times is unnecessary.,1
+23651777,2019-08-10 01:31:18.622,Update the image on arewegameyet,"The image for Veloren on www.arewegameyet.com needs to be changed. You'll have to make a PR on the repo of the site:
+https://github.com/doppioslash/arewegameyet",1
+23641363,2019-08-09 13:56:36.228,Git hosting service,"I wanted to start a discussion about the service provider we use for hosting our Git. With the announcement of Github Actions, I think it is worth looking at the pros and cons of each service. This is not to decide whether to switch, but rather discuss the differences.",10
+23421472,2019-08-02 08:13:58.971,Depend on veloren mirror of specs-idvs.,,10
+23364605,2019-07-31 23:49:23.043,Add an option to disable Multisampling,Multisampling is enabled for the entire rendering process. I would add an option for users to disable this as it is quite performance intensive.,5
+22579217,2019-07-07 23:49:26.642,build a more rugged weapon system,"As it stands, we declare 7 possible weapons with the choice to use one. To build a complete system, we would need to expand this to properly handle situations such as dual wielding, 2h weapons, mixed dual wields (sword+shield) and freedom to use left or right hands to hold weapons. This breaks down into several steps:
+
+- set up ""left weapon"" and ""right weapon"" as bones in the skeleton, as opposed to just weapon
+- set up these bones in the animation code as corresponding to left and right hands, respectively, allowing for them to sync with hands. currently we sync both hands to ""weapon"" and this won't handle 1h weapons well.
+- set up choice to place 2h weapons in either left or right hands, with the non-chosen side corresponding to: a) a secondary hand movement that is also synced to that weapon, and b) an empty weapon slot, and no weapon asset. we'll need matches set up so that equipping a 2h sword in the left slot will trigger a ""2h sword secondary"" flag in the right slot, so that the right slot can instruct the opposite hand about how to move.",5
+22494653,2019-07-03 18:06:03.435,WIP: Design modding system for Veloren with wasm support,"### READCEDRIC
+1) `rustup component add wasm-unknown-unknown`
+2) make `hello_world.wasm`
+3) put it in `assets/mods/hello_world.wasm`
+4) make ModsLoader struct in `veloren/common/src/mods_loader.rs`
+5) instantiate a ModsLoader struct as an unsynced ECS resource in `veloren/common/src/state.rs`
+    a) look around line `164`, you want to instantiate the manager just like the Terrain Map.
+    b) when created, this thing loads all of the files modules in veloren/assets/mods/ and compiles them
+6) add `wasmer_runtime` and `wasmer_runtime_core` to `veloren/common/src/Cargo.toml`
+7) for now, just use those crates to execute all of those WASM modules as soon as they're compiled, right there in the `pub fn new()` in the `mods_manager.rs`",10
+22368175,2019-06-29 15:08:19.841,Support rendering voxels without client,"This is useful for things like the main menu or other game modes where you don't connect to a server.
+Currently the rendering code depends on a client (which is connected to a server) because it needs to know the current tick (and other pieces of information). This prevents something like a 3d main menu from being created, because there will be no connection to a server at this point.
+Creating a new server just for rendering the main menu doesn't seem like the ideal solution as well.
+The rendering code should not depend on the client!",10
+22355633,2019-06-28 17:02:47.645,Make server more configurable,"Missing configuration features:
+- [ ] max View Distance
+- [ ] speed of Day/Night Cycle
+- [ ] PvP
+- [ ] Allow building
+
+Once implemented:
+- [ ] Voice
+
+Done:
+- [x] address and port (done in !277)
+- [x] Time of day the server begins to tick (done in !277)
+- [x] max players (done in !277)
+- [x] Worldseed (done in !277)
+- [x] Motd/ServerInfo (done in !277)
+- [x] Administrator Permissions (basic implementation being done in !424)
+- [x] Login-Server: (basic implementation done in !419, fully implemented in !690)
+    - [x] enable or disable option
+    - [x] custom address",5
+22278877,2019-06-26 15:34:58.581,"Add copy and paste functionality to the chat, and other input boxes",Chat and other input boxes (server name!) need an option to let the player copy and paste from/in there.,2
+22063080,2019-06-19 13:15:52.184,Stop drawing entities outside of player's VD,,8
+21947988,2019-06-16 16:13:02.153,Change how the user is addressed in informational chat messages,"Example:
+
+Zesterer died -> You died (If your alias is Zesterer)
+
+Future use: 
+Zesterer dealt 40 damage to Wolf by casting fireball -> You dealt 40 damage to Wolf by casting fireball",1
+21541158,2019-06-03 21:07:32.487,"The escape button menu's ""Logout"" button doesn't work.","When the logout button is clicked, it doesn't function. [master build 03.06.2019 (DD.MM.YYYY) ]
+
+How to reproduce:
+* Open the escpae menu, by pressing the escape key.
+* Click the logout button at the bottom",1
+21540415,2019-06-03 20:29:40.826,Text client can gain Position,"Thanks to using teleportation command, Text based Clients could gain own position and start spawning npc, enemies",2
+21504046,2019-06-02 09:50:58.140,Add value indicator for view distance in the settings,,1
+21494169,2019-06-01 09:38:18.057,Defocussing and refocussing window does not properly regrab mouse,,1
+21314530,2019-05-26 23:01:23.219,Add option to adjust mouse sensivity in UI,"Hey I know this is more of a feature request, but currently Veloren is unplayable for me with the default mouse sensivity. Everything just spins around wildy.
+
+Would be really nice to set it in 0.1 increments also allowing values lower than 1 :)",1
+21297133,2019-05-25 20:58:29.812,Pine Tree clipping,"When you stand on pine trees you tend to fall through them in weird ways.
+
+Streamable link: https://streamable.com/rmgil
+
+(This was recorded with view distance almost all the way up on a GTX 970 btw. 45-50 fps)",2
+21296752,2019-05-25 20:00:58.127,CTD when I open the application,"![Screenshot__41_](/uploads/83cda4351761ed90306507d2e50728d4/Screenshot__41_.png)
+
+Here is the log: [voxygen.log](/uploads/84dee5bef9d0c1eccc912ce9ee2f730e/voxygen.log)",2
+21296408,2019-05-25 19:17:03.781,FPS is too low,"My FPS is too low. Lowest view distance renders about 15fps.
+
+Specs:
+Void Linux, Linux 5.1.4_1 x86_64 SMP PREEMPT
+Mesa 19.0.4
+Intel Pentium N3540 2.66Ghz, 4GB RAM, Intel Baytrail iGPU",2
+21296386,2019-05-25 19:13:26.855,"UI, possibly chat, drops FPS a lot","Needs to still be looked into for the exact reason, but UI seems to be slowing down FPS",2
+21296165,2019-05-25 19:05:53.238,Hide nametags through terrain,"https://cdn.discordapp.com/attachments/449654102553788417/581906055630684164/unknown.png
+
+You are able to see the nametags of players and pets through terrain, even if the unit is not visible.",2
+21296095,2019-05-25 19:04:42.025,Add an option to change the UI size in settings,,2
+21296071,2019-05-25 19:01:53.049,Add max message length,"Ingame, the server should limit the length of messages being sent to all players. There should probably also be a check clientside as well.",1
+21295759,2019-05-25 18:46:04.733,Give username max length,"Names should have a max length of ~20 characters
+
+https://cdn.discordapp.com/attachments/449654102553788417/581915213889142832/unknown.png",1
+21289427,2019-05-25 12:00:47.505,Crash when pulse audio has an invalid audio device as default,"I've downloaded the linux artifact from the pipeline https://gitlab.com/veloren/veloren/pipelines/63117693
+and get the following error when I run the voxygen file:
+https://haste.paddsel.de/ivupeveyax.php
+
+The problem is, that pulse audio has selected a device as default that is not plugged in. This causes Veloren to select an invalid audio device which causes a crash.
+A possible solution to the problem could be a No-Audio fallback mode",1
+21286930,2019-05-25 09:27:49.194,Actually create characters and save them,"Currently, char selection menu doesnt create any new character - it is only for customizing right now.",3
+21283146,2019-05-25 01:21:05.782,CI should fail if Cargo.lock would be changed by cargo build,"For instance, if I add a new dependency, cargo will update `Cargo.lock` to include it.
+An MR that adds a dependency should also include the changes to `Cargo.lock` so that it does not appear as a change in everyone's local git repo.
+
+This might be accomplished by detecting whether `cargo build` changes the lock file.
+
+`cargo build --locked` would be useful for this",2
+21279042,2019-05-24 20:32:04.771,UI-Windows start to flicker when you hold down their shortcut key,Expected behaviour: Window stays on while continuously pushing the button.,2
+21214900,2019-05-23 10:02:16.345,server should send a shutdown message,"When server shuts down, it should send a message:
+Ideally for a wanted shutdown:
+""Server is shutting gracefully down because it was requested to do so""
+
+We could also think about a message for a crash ""Server crashed, shutting down"" but this is much more complicated. This is optional.",1
+21112693,2019-05-20 20:41:58.810,difficulty regaining mouse control,"Uncertain of the cause, but sometimes tab does not work for regaining camera control, opening and closing the pause menu (esc) fixes it  
+Could have something to do with more than 1 menu (or something else that stops camera control) being active at the same time, also probably fault of the setting for the invetory test button in config",1
+21065393,2019-05-19 17:10:58.520,implement rust-metrics for prometheus,"Give Veloren Server the possibility to track user number, tick count, network messages, ram usage and other metrics 
+Use the prometheus framework and a rulst library like: https://github.com/posix4e/rust-metrics",3
+21064443,2019-05-19 15:35:28.591,Add login and disconnect messages to the server,"When players join or leave the server, inform everybody else on the server",1
+21064425,2019-05-19 15:33:03.436,Server should only send physics updates for entities within view distance,,2
+21050353,2019-05-18 20:48:41.433,Add support for sound effects,"Currently, the AudioFrontend is only playing music. It should be able to handle multiple sounds at once, and play sound effects based on what is happening in the game.
+
+~voxygen",3
+21050340,2019-05-18 20:47:09.903,Make music relate to current environment,"There needs to be some sort of system that chooses songs based on the environment, instead of just playing random songs. The main menu can probably get away with playing any song though.
+
+~""brainpower-needed""",5
+21049878,2019-05-18 19:48:21.882,More customization options,"Currently, the Char Customization system only allows to choose chest colour, but doesnt allow for choosing boots, pants, skin color, hair, beard, eyes and race.",3
+20987547,2019-05-17 07:53:51.850,Settings file not created if the folder for it doesn't exist,(at least on windows),1
+20963288,2019-05-16 12:56:23.098,Randomize worlds by setting a different seed every time when starting up a server,"The second part is something temporary, until world saving won't be implemented.",1
+20841784,2019-05-13 13:45:15.383,Implement an inventory and equipping system,,2
+20788411,2019-05-11 18:57:58.349,Add the homogenous chunk optimisation,,2
+20788181,2019-05-11 18:40:26.936,Implement basic physics system,,3
+20766648,2019-05-10 17:52:04.735,Disconnect the player from the server instead of crashing the game when a server-side error occured,,1
+20739899,2019-05-09 19:31:31.323,Open chat with '/' to type command,It should probably clear the input field before inserting the '/'.,1
+20737347,2019-05-09 17:48:18.117,Move to custom asset paths,"Instead of  ""/voxygen/element/frames/bag.vox"" we write something like ""core.hud.buttons.bag"" for example.
+
+There are still some problems we need to discuss:
+1. How do we change the directory structure to have nice names? Currently it's ""assets/voxygen/type/name.ending""
+Not all assets are only for voxygen in the future
+2. How do we figure out file endings from the ""core.ui.backgrounds.city"" notation? This file could be a vox, a png or something else. We could figure it out in the image_ids! macro or using the Asset trait implementations, but that will require more thinking.
+3. Currently all of the image_ids!, ImageGraphic and VoxelGraphic code is in voxygen. If we want to be able to use these items we need to move them to common.",1
+20636762,2019-05-07 01:54:40.678,Create an asset organization system,"This issue is twofold, we need to build a directory style to store assets in, and also an identification system for assets that we will use for naming.
+
+The implementation here is trivial, but how we want to go about this will need to be considered, such as:
+
+- positioning assets in a way that is simple and gives us easy access
+
+- naming assets in a way that is unique, unlimited and unspecific (limiting the amount of information that is hardcoded in order to give the engine more flexibility to produce interesting outcomes)",2
+20609895,2019-05-06 08:55:22.547,Add a modular shader system in a similar manner to the old engine,`glsl-include` (https://crates.io/crates/glsl-include) will be useful in achieving this.,3
+20595731,2019-05-05 18:20:22.495,Error when clicking single player from main menu,"I'm getting this error while compiling from `cargo clean` then `cargo run --bin veloren-voxygen`. I've deleted my local repo folder and re-cloned as well, and the first time I compiled I got passed the singleplayer screen, but then got another error at the character selection screen
+
+This is the error message,
+```
+PanicInfo { payload: Any, message: None, location: Location { file: ""voxygen/src/menu/main/start_singleplayer.rs"", line: 38, col: 43 } }
+Gtk-Message: 14:06:34.727: GtkDialog mapped without a transient parent. This is discouraged.
+```
+
+The code at that location is
+```
+// Client creation
+let client = loop {
+    match client_init.poll() {
+        Some(Ok(client)) => break client,
+        // Should always work
+        Some(Err(err)) => unreachable!(), // This line threw the error
+        _ => {}
+    }
+};
+```
+
+System info
+
+Veloren version
+c96bfa6ddd458e590104245ee0fada158bcfbd9f on Master
+
+Rust toolchain version
+```
+active toolchain
+----------------
+
+nightly-x86_64-unknown-linux-gnu (default)
+rustc 1.36.0-nightly (8dd4aae9a 2019-05-04)
+```
+
+Running Ubuntu 18.04.2 LTS",2
+20573675,2019-05-03 21:28:32.616,Add Ping indicator to debug informations (settings->interface),,1
+20566800,2019-05-03 17:48:20.807,You can hop over more than 1 block,"For some reason, block hopping allows you to hop over more than one block.
+Footage:
+![F36peM8sAX](/uploads/341160e644aa2b6e76957329ae044913/F36peM8sAX.mp4)",1
+20536767,2019-05-02 17:27:18.560,Purge asset files from repo,"There are .png files that were committed in the repo before, and now, even though they have been deleted in a more recent commit, you still have to download them with new clones.",1
+20501272,2019-05-01 14:19:21.303,Grass gradient,Grass gradient,1
+20501227,2019-05-01 14:17:29.207,Find better asset storage solution,"The current asset storage solution, Git submodules, is posing a lot of issues on the current development workflow. An alternative solution needs to be found.",3
+20495210,2019-05-01 09:26:10.981,Fix terrain meshing order,"The meshing order of chunks should be fixed such that chunks with newly appearing neighbours get re-meshed so as to remove edge artifacts.
+
+Basically, all of `voxygen/src/scene/terrain.rs` needs rewriting properly.",2
+20481889,2019-04-30 19:14:10.301,Jumping and jumping animation,"Currently, players and NPC cannot jump, and I don't think this would be a good idea for it to stay like that, as jumping would allow to i.e jump over a small lava pit",2
+20444995,2019-04-29 16:39:27.993,Fetching of submodules fails,"When following the instructions on https://book.veloren.net/dl/compiling.html the updating of the submodule fails with the following message:
+``` powershell
+Submodule 'assets/voxygen' (https://gitlab.com/veloren/fresh-assets/voxygen.git) registered for path 'assets/voxygen'
+Cloning into 'D:/projects/rust/veloren/assets/voxygen'...
+error: Server does not allow request for unadvertised object cff10b010db25ce9af5edbdfb5ef0af889dd741a
+Fetched in submodule path 'assets/voxygen', but it did not contain cff10b010db25ce9af5edbdfb5ef0af889dd741a. Direct fetching of that commit failed.
+```
+
+I managed to fix it with appending ""--depth 50""
+``` powershell
+git submodule update --init --recursive --depth 50
+```
+
+I don't know if there is anything you can do about it, but you should at least update the documentation.",1
+20437954,2019-04-29 13:07:32.309,Issue in Vek crate gives compile time warnings,"When compiling, Vek throws many warnings similar to this.
+
+```bash
+warning[E0502]: cannot borrow `rows` as immutable because it is also borrowed as mutable
+    --> /root/.cargo/registry/src/github.com-1ecc6299db9ec823/vek-0.9.7/src/mat.rs:1897:31
+     |
+1897 |                 rows[3][0] += rows[0].dot(t);
+     |                 --------------^^^^----------
+     |                 |             |
+     |                 |             immutable borrow occurs here
+     |                 mutable borrow occurs here
+     |                 mutable borrow later used here
+...
+3952 |     mat_declare_modules!{}
+     |     ---------------------- in this macro invocation
+```
+
+This is a known issue on the Vek crate, and when it is fixed, we should bump Vek to the fixed version.
+The issue: https://github.com/yoanlcq/vek/issues/25",1
+20417329,2019-04-28 19:10:10.912,Change error when assets loading failed,"![image](/uploads/ff89dea75ddcf3970de4db2d852ffa94/image.png) 
+
+
+instead ``warn!`` which is as default to ``error!`` (like in this picture ^)",1
+20408236,2019-04-27 22:03:32.954,Gitlab CI runner paradigm,"So there is a rather large issue with how Gilab CI fundamentally works. Since MRs originate from the contributor's repo, Gitlab CI is run from their repo as well. This means that unless it is specially configured on their end, they will be making use of shared runners for the entirety of the MR, and only when they merge to master will their code be verified by the main repo's CI.
+
+This has always been an issue I think. As you can see [here](https://gitlab.com/zesterer/fresh/-/jobs/200371247), at the top it is using `docker-auto-scale ed2dce3a`, which is a shared runner, not our runner. This means much longer build times, as it has to compile without the cache our runners have.
+
+Gitlab has known about this problem with their paradigm for a bit, but they haven't come up with a good solution yet. You can see the current status here,
+https://gitlab.com/gitlab-org/gitlab-ce/issues/21991
+
+Currently, I see a few options.
+
+1. Give instructions to all contributors on how to disable shared runners, and enable ours. This solution is mediocre, as it has a few downsides,
+- Getting users to go through the process could be a hassle on the debugging side if something goes wrong
+- This is assuming that each contributor has an up to date version of `gitlab-ci.yaml`. If they don't, then they won't be running the same CI as the main repo, which could lead to issues after merging.
+
+2. Get contributors to make branches and work on master. Again, a mediocre solution, but I think it has more positives than negatives.
+
+|       Pros;
+- CI on MRs will always be the same
+- People can see what branches and code is being worked on
+
+|       Cons;
+- Lots of branches could clutter up the repo
+- Need to give developer access to everyone who wants to work on Veloren
+
+I haven't found any more solutions, but I'll keep reading about what other companies have done.",3
+20408081,2019-04-27 21:49:17.265,Rust compiler regression preventing Tarpaulin,"There was a regression in the Rust compiler that is stopping Tarpaulin from working with anything more than client. Until it is fixed, we will be unable to get coverage of the full system.
+
+https://github.com/rust-lang/rust/issues/58375",1
+20407039,2019-04-27 19:22:12.025,Don't create a new specs dispatcher every frame,"https://gitlab.com/veloren/veloren/blob/9dd6a9595331893b8d96fb6761cf674fe64f86c4/common/src/state.rs#L206-210
+
+`build()`ing a dispatcher creates a new thread pool with a number of threads every single tick. On Windows, thread creation is a fair bit slower, which impacts performance a lot. The dispatcher should only be created once, either by passing it to `tick` or by keeping it in a (thread local?) static.",1
+20406827,2019-04-27 19:00:51.355,Fix client crash on reconnecting to Singleplayer,"Reconnecting to Singleplayer after logging out of a Singleplayer game session (>30s playtime) crashes the game.
+
+Errors shown: 
+Failed to tick the scene (Network Error)
+Failed to create server instance",1
+20405734,2019-04-27 16:54:10.125,Gitlab CI fixes,"These are a few issues with Gitlab CI that need to be fixed
+
+* [ ]  Code coverage and pipeline status setup
+* [x]  Remove debug code that was left in
+* [x]  Runner tags needs to not include shared runners
+
+If you have anything else, feel free to tell me :)",1
+20401753,2019-04-27 11:11:17.823,Change the way NPCs are spawned,"Currently, all NPCs only spawn when starting a server, however with the implementation of WorldGen, they aren't visible as they fall to their death. This should be changed.",2
+20401674,2019-04-27 10:59:17.323,Implement a very basic combat system,"Here is what it should need:
+*  Swinging a sword
+*  Dealing damage
+*  Dying and respawning
+*  Aggresive NPCs",10
+20354932,2019-04-25 22:13:25.742,"Saveable settings, username and last server","The values of the bools determined in settings should be saved to a file so the player doesn't have to set them at every startup.
+
+Same goes for the strings of the Username and Server-Adress in the Login Window.",1
+20350548,2019-04-25 18:29:46.096,Grab and ungrab the cursor when opening or closing some windows,For example when opening or closing the settings using the shortcut,1
+20323655,2019-04-24 20:36:11.852,Create a login server,"Right now, anyone can log in with any username. There is no verification done to make sure a malicious actor doesn't try to impersonate someone. Right now this isn't really a problem, but as our playerbase grows and world state starts getting stored, it will become an issue.
+
+The login server should be separate from the game server. This will enable a central authentication server. A central authentication server will let people use one username in all game servers that subscribe to it. 
+
+To store passwords, we should use the `ring` crate's pbkf2 implementation to hash the passwords. [More info here.](https://briansmith.org/rustdoc/ring/pbkdf2/index.html)
+
+There should still be an option to run servers with no authentication being performed for basic servers run for small groups.
+
+~server ~networking",10
+20321497,2019-04-24 18:35:56.337,Work out why the networking code explodes when we try to send a lot of data at once,"`common/src/net/post2.rs`
+
+Try sending a lot of chunk data to a client, and problems start occurring.
+
+```
+DESERIALIZE ERROR: Io(Custom { kind: UnexpectedEof, error: StringError(""failed to fill whole buffer"") })
+```",4
+20253200,2019-04-22 21:45:54.605,"Save settings, worlds and characters in  files",,2
+20252043,2019-04-22 21:10:28.590,Stop singleplayer server after logging out,"Steps to reproduce:
+1. Start a single-player session and select a character
+2. Press escape and log out
+3. Try to start single-player again OR connect to localhost",1
+20245406,2019-04-22 17:50:15.435,Fix license file to match Veloren repo name,"The copyright license file still has references to ""fresh"" the name of the old repo. Both occurrences should be changed to ""Veloren""",1
+20243940,2019-04-22 16:24:57.350,Loading screen,"Currently, when the game starts there is a blue background for a few frames, until the background is loaded. When entering the character select screen this blue screen will come again for a short time.
+Instead, there should be a loading screen when starting the game, which should preload all important files.",2
+20243886,2019-04-22 16:22:27.791,Don't send empty messages.,"If the update message would be an empty vec or result in a NOOP, we should just skip the sending completly to avoid the sending overhead.
+
+For example, we used to send an empty block updates to every client every tick when no changes were made (this was fixed but there could be more spots like that).",1
+20222454,2019-04-21 18:39:32.590,Add mpsc to communicate between client thread and singleplayer thread in voxygen,"This will be used to keep the client from connecting to the server too early, and possibly more stuff in the future.",1
+20222355,2019-04-21 18:20:56.080,Delay for connecting to Singleplayer,"Add small delay to fix false Connection failed when starting singleplayer mode
+
+
+https://media.discordapp.net/attachments/449650240350453760/569587234127478794/unknown.png",1
+20221520,2019-04-21 16:04:54.631,Add way to ping sever for info,"Pinging a server should allow you to figure out how bad/good your connection is, what the server is, etc. This may need to be more than one thing.",2
+20218538,2019-04-21 08:23:45.163,"Add dropdown menu, sliders and mouseover windows",,3
+20215713,2019-04-20 22:23:24.144,Generate help text from keybindings,"In `voxygen/src/hud.mod.rs`
+Currently this:
+```rs
+Text::new(
+       ""Tab = Free Cursor       \n\
+        Esc = Open/Close Menus  \n\
+        \n\
+        F1 = Toggle this Window \n\
+        F2 = Toggle Interface   \n\
+        \n\
+        Enter = Open Chat       \n\
+        Mouse Wheel = Scroll Chat\n\
+        \n\
+        M = Map                 \n\
+        B = Bag                 \n\
+        L = Quest-Log           \n\
+        C = Character Window    \n\
+        O = Social              \n\
+        P = Spellbook           \n\
+        N = Settings"",
+)
+```",1
+20215076,2019-04-20 21:32:58.960,Implement FPS counter and add an option in settings menu to disable it.,,1
+20215034,2019-04-20 21:22:47.307,smooth out camera transition when zooming in/out,,1
+20214196,2019-04-20 18:39:52.454,Add client states,"To simplify switching between multiple client states, like Disconnected (no connection), Connected (Doesn't have access to the world), Spectator (Can look at the world) and Character (Has a character in the world) a state machine should be implemented.
+
+Proposed implementation:
+When the client sends the `RequestState` message to the server, it answers with a `StateAnswer` message, which is a `Result<ClientState, (RequestStateError, ClientState)>`.
+
+For events where the client has to provide some information in order to change state, like when connecting the Player struct which contains the player's name, a special RequestState message should be sent, in this case `Connect { player: Player} `. The server should still answer with a `StateAnswer`.",2
+20214056,2019-04-20 18:19:33.549,Implement character creation,Currently the character creation / selection menus are not considered at all for the character model.,2
+20211869,2019-04-20 13:55:47.509,Implement rich discord presence,"It can be done at any time
+This might be useful for this https://docs.rs/serenity/0.5.13/serenity/model/gateway/struct.Presence.html",2
+20211716,2019-04-20 13:33:58.410,pause the game in singleplayer when menu is opened,,1
+20211688,2019-04-20 13:29:24.710,CI: Folder font can't be found in voxygen.,"```bash
+$ rm -r -f nightly
+$ mkdir nightly
+$ cp target/debug/veloren-server-cli nightly
+$ cp target/debug/veloren-voxygen nightly
+$ cp -r assets nightly/
+$ cp -r voxygen/shaders nightly/
+$ cp -r voxygen/fonts nightly/
+cp: cannot stat 'voxygen/fonts': No such file or directory
+ERROR: Job failed: exit status 1
+```",1
+20177284,2019-04-18 18:34:20.981,Create game launcher,"Opening this to track a feature request for a game launcher.
+
+Qutrin [GMT+2] perhaps a minecraft-like launcher that lets you pick any major release of the game
+
+xMAC94x [GMT+2] good idea, but no prio currently, if anyone wants to work on something like this feel free to do so",8
+20175449,2019-04-18 16:38:25.292,'Failed to tick the client: Network(Network),"When I try to enter the game Veloren freezes for some time: ![image](/uploads/e7593a16e15afeaf044f50af4ce02e1d/image.png)
+
+And then failed with:
+```
+thread 'main' panicked at 'Failed to tick the client: Network(Network)', src\libcore\result.rs:997:5
+stack backtrace:
+   0: std::sys::windows::backtrace::set_frames
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\sys\windows\backtrace\mod.rs:95
+   1: std::sys::windows::backtrace::unwind_backtrace
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\sys\windows\backtrace\mod.rs:82
+   2: std::sys_common::backtrace::_print
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\sys_common\backtrace.rs:71
+   3: std::sys_common::backtrace::print
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\sys_common\backtrace.rs:59
+   4: std::panicking::default_hook::{{closure}}
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\panicking.rs:197
+   5: std::panicking::default_hook
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\panicking.rs:211
+   6: std::panicking::rust_panic_with_hook
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\panicking.rs:474
+   7: std::panicking::continue_panic_fmt
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\panicking.rs:381
+   8: std::panicking::rust_begin_panic
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\panicking.rs:308
+   9: core::panicking::panic_fmt
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libcore\panicking.rs:85
+  10: core::result::unwrap_failed<veloren_client::error::Error>
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\src\libcore\macros.rs:18
+  11: core::result::Result<alloc::vec::Vec<veloren_client::Event>, veloren_client::error::Error>::expect<alloc::vec::Vec<veloren_client::Event>,veloren_client::error::Error>
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\src\libcore\result.rs:825
+  12: voxygen::menu::char_selection::{{impl}}::play
+             at .\src\menu\char_selection\mod.rs:74
+  13: voxygen::main::{{closure}}
+             at .\src\main.rs:95
+  14: core::option::Option<mut alloc::boxed::Box<PlayState>*>::map<mut alloc::boxed::Box<PlayState>*,voxygen::PlayStateResult,closure>
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\src\libcore\option.rs:414
+  15: voxygen::main
+             at .\src\main.rs:95
+  16: std::rt::lang_start::{{closure}}<()>
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\src\libstd\rt.rs:64
+  17: std::rt::lang_start_internal::{{closure}}
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\rt.rs:49
+  18: std::panicking::try::do_call<closure,i32>
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\panicking.rs:293
+  19: panic_unwind::__rust_maybe_catch_panic
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libpanic_unwind\lib.rs:87
+  20: std::panicking::try
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\panicking.rs:272
+  21: std::panic::catch_unwind
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\panic.rs:388
+  22: std::rt::lang_start_internal
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\/src\libstd\rt.rs:48
+  23: std::rt::lang_start<()>
+             at /rustc/3de0106789468b211bcc3a25c09c0cf07119186d\src\libstd\rt.rs:64
+  24: main
+  25: invoke_main
+             at f:\dd\vctools\crt\vcstartup\src\startup\exe_common.inl:64
+  26: __scrt_common_main_seh
+             at f:\dd\vctools\crt\vcstartup\src\startup\exe_common.inl:253
+  27: BaseThreadInitThunk
+  28: RtlUserThreadStart
+error: process didn't exit successfully: `C:\Users\Nikita_Puzankov\workspace\personal\veloren\target\debug\voxygen.exe` (exit code: 101)
+```",1
+20171926,2019-04-18 14:08:51.763,Use character names instead of usernames in game,,1
+20171065,2019-04-18 13:37:58.921,One of Merged Request broke singleplayer mode,https://gitlab.com/veloren/veloren/merge_requests/46,1
+20159153,2019-04-18 06:30:32.195,Limit zoom so that you can't look into your head,,1
+20159129,2019-04-18 06:29:41.468,Show mouse on escape,It should show the mouse when pressing escape so you can select something from the menu and go back to the previous state closing the popup again.,1
+20146876,2019-04-17 16:44:53.117,Implement a custom panic reporting system for Voxygen,"It should contain the following:
+* Better formatted errors
+* Printing the error and backtrace to a file (it can be a .log file)
+* Possibly automatic backtracing.",2
+20123119,2019-04-17 01:15:20.661,Remove magic numbers from animation code,Make the 11.0 scaling a constant,1
+20119226,2019-04-16 20:04:56.420,Connection timeout indication and go to main menu,"Instead of crashing after a few seconds of no communication the client should instead show some indication (for example red text in the corner like ""Losing connection: (4s)"").
+
+When the time runs out, it should go to the main menu instead of crashing.",2
+20118647,2019-04-16 19:35:00.711,Add name tags to in-game characters,,1
+20115923,2019-04-16 18:07:17.365,The bag icon doesnt disappear when toggling interface,,1
+20110900,2019-04-16 15:01:18.332,Add animation interpolation,"The best way to implement this would be to do it in a way that allows all animations to be automatically interpolated. I suggest that applying an animation should apply it to a secondary skeleton state, that then gets interpolated with the current skeleton state.",2
+20110756,2019-04-16 14:56:28.498,Prevent animation state being sent every frame between client and server,"Instead, it should be sent whenever a change of state occurs.",1
+20098786,2019-04-16 10:21:59.010,Add support for controllers,The current code relies on a keyboard for input. Gamepads would be nice to have! Preferably both should work at the same time. [See this article](https://www.gamasutra.com/blogs/LarsDoucet/20170125/289904/The_Steam_Controller_Configurators_Untapped_Power.php) for why. This will touch on the input system and the settings system implemented in !30,2
+20083458,2019-04-15 20:37:57.889,Create an audio system for sound effects and music,"The old engine has an audio system in Voxygen that used `rodio`. I suggest this would be the way to go for anybody looking to implement this. We'll also be wanting to take inputs from the client such as events, as well as querying terrain attributes such as biome. These things can come in the future, however.",3
+20082527,2019-04-15 19:39:55.418,chat window is slightly cut off,"chat window seems to cut off a bit of the bottom line of text
+
+
+![image](/uploads/55da00f324b85583cce4b7607b25f5be/image.png)",1
+20079740,2019-04-15 17:31:05.673,Users timeout when connecting to the server using a debug build,"Cargo defaults to building Debug builds. Some individuals compiling and connecting for the first time will run into a client / server timeout while transitioning from the Login to the Character Selection screen.
+
+The bug is that the UI images for character selection are loaded on the main event loop. This halts client/server polling so the server times out and disconnects the client.
+
+Order of events:
+*  voxygen/src/menu/main/mod.rs: `MainMenuState::play` is handling UI events. As the player clicks Login, `CharSelectionState::new` is called to initialize the character selection UI. This is called within the UI event handling.
+*  voxygen/src/menu/char_selection/mod.rs: `CharSelectionState::new` calls `CharSelectionUi::new`.
+*  voxygen/src/menu/char_selection/ui.rs: `CharSelectionUi::new` calls `Imgs::new`.
+*  voxygen/src/menu/char_selection/ui.rs: `Imgs::new` loads 61 images. This takes some time, holding up the UI event loop and preventing the client from sending keep-alives.
+
+Possible solution:
+*  `CharSelectionState::play` handles this new window's event loop. Add code to the beginning to spawn the `CharSelectionUi::new` logic in a new thread (recommend rename of this method from new to load_async?). While CharSelectionUi is loading, alternate between polling it state for completion and handling the client. Once loading is complete, continue into the current event loop.",2
+20078797,2019-04-15 16:57:44.826,Add some server-side commands,"Examples of commands to add:
+
+- `/jump <dx> <dy> <dz>` Change position by the give amount
+- `/goto <x> <y> <z>` Teleport to the given position
+- `/alias <name>` Change the alias of the current player
+- `/tp <name>` Teleport to another player
+- `/help` Show help information",2
+20045477,2019-04-14 23:59:56.085,New Gitlab-CI system,"The new engine needs CI to test and build nightly versions of Veloren. This new CI will make use of Docker builds for multiple reasons;
+
+- Ease of use for new people wishing to contribute to the runner pool
+- Clean builds",5
+20039985,2019-04-14 13:58:22.910,Make the camera change aspect ratio upon window resize,"The functionality already exists, we just need to connect the two things up.
+
+There's the handle_input_event method in `voxygen/src/scene/mod.rs`, and also the set_aspect_ratio method in `voxygen/src/scene/camera.rs`.
+
+It should be a matter of just adding an extra match branch. Info about the `Event` type is in `voxygen/src/window.rs`",1
+20001633,2019-04-12 14:01:50.648,Use non-linear interpolation to smooth server/client physics prediction,"This might need an architectural change in Sphynx, such as allowing it to differentiate between components that need sending every frame and those that do not. We need to find a way to differentiate between the server ""forcing"" a client's physic attributes (such as during teleportation) and requesting that they be updated. The old engine solved this by having a way of forcing component updates vs suggesting them. Ideally, we'd have something similar in Sphynx.",5
+19994908,2019-04-12 12:25:54.889,Ambient occlusion on voxel models,,3
+19988142,2019-04-12 08:31:01.893,3D Rendering for Menus,"Instead of images for the menu backgrounds, we should render terrains. On the character select screen characters should be rendered as well.",2
+19970889,2019-04-11 15:10:39.520,Assets loading system,Assets Trait,2
+19947246,2019-04-11 06:27:44.701,Using Label to categorize issue,"As a developer looking to contribute, some label could help me choose which issue to work on.
+As exemple, the label ""Doc"" or ""Good first issue"" could be helpful.",1
+19947223,2019-04-11 06:25:57.104,Better README and Contrinbution Guide,"Hello, as a new developer I would like a some indication to make way around the code faster.
+This should include a better readme indicating how to build Veloren (f.e. overriding the nightly toolchain), which part of the code does what (to run the game and experiment, should I first run the server-cli?).
+
+Making this should make contribution more easy for new developer.",1
+19891001,2019-04-09 15:16:20.548,Add keybinding support,Saving and loading keybindings may be done with `.toml` config files.,1
+19890953,2019-04-09 15:14:26.361,Add a post-processing shader to the rendering pipeline,Looking at the legacy engine will be useful.,3
+19890929,2019-04-09 15:13:35.986,Make clients request terrain data from the server and update in realtime,,3
+19890920,2019-04-09 15:13:17.357,Add server-side worldgen,,5
+19890904,2019-04-09 15:12:46.532,Add a character rendering cache,"We can use a lookup table for figure models each frame, removing those that have not been in use for several frames.",2
+19890878,2019-04-09 15:11:51.695,Move the ECS to Sphynx,,2
+18759449,2019-03-03 21:16:33.092,`PostBox::to_server(a)` does not fail if the server does not exist,,1

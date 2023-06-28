@@ -1,0 +1,158 @@
+issuekey,created,title,description,storypoints
+34343651,2020-05-09 15:43:39.289,"""Password found in breach"" message for good password","# Bug Report
+<!--
+Thank you for taking the time to report a bug! Before continuing, please make
+sure the bug hasn't been reported before by searching through the other issues.
+This will save both yourself and us some time. If you're sure there isn't
+another issue, continue through the template below. All the text between
+the opening and closing arrows (HTML comments) will not be shown in the end
+result.
+-->
+
+
+
+## Platform
+<!-- When possible, please provide what version you're running. -->
+
+* Operating System: Linux Mint 19.3 Cinnamon
+* Browser: Firefox 76.0
+
+
+
+## What is happening and/or broken?
+<!-- Provide as many details as you can and if possible a little step-by-step
+guide so that we can reproduce the issue. Screenshots or a video that shows the
+problem also help immensely. -->
+I tried to change my password using an automatically-generated password from Bitwarden. I was shocked to receive the message that this password had been pwned. When I checked on https://haveibeenpwned.com/Passwords, though, it said this password has not been found in any breaches.
+
+Here it is:
+MZz7TbtdiVWW97
+
+
+## What is expected to happen?
+<!-- Explain what the expected result is if it's not clear from how it is
+broken. You can omit this if the expected result is just ""It should work"" or
+similar. -->
+Either give a message saying symbols are required or something, or allow me to use it if it's a valid password.",1
+31854870,2020-03-11 05:33:02.409,tag autocompletion doesn't work for the second tag if you type a space between the tags,"To reproduce:
+* start creating a new topic
+* enter the first characters of a tag in the tag box
+* use autocomplete to finish
+* type a space
+* type the first letters of a tag
+
+The cause wasn't apparent at first. I must have been typing a space out of habit.",2
+30698882,2020-02-13 04:17:59.888,Un-pin and upgrade Salt in Vagrantfile,"As described in [the message for the commit where I pinned the version](https://gitlab.com/tildes/tildes/-/commit/4dc99d9fda4b3282d7dc00a65e5196d8fc95b66e), a new version of Salt has been released but is currently buggy and breaks creating a Tildes dev environment since it can't handle `unless` checks.
+
+I've pinned Salt to the previous stable version for now, so this is just a reminder that it would probably be good to un-pin and upgrade eventually once the bugs are worked out.",2
+29924702,2020-01-24 18:50:14.177,Add a “Post a new topic” button into the sidebar on the group search result page,"<p>
+My current workflow when posting topics to groups always starts with
+searching if the link I am about to submit has already been submitted.
+E.g. I search withing ~music for the artist or the song name.  But after
+that, I have to either push “Back”, or navigate to the group page again,
+as the “~music” in the page header “Search in ~music: Foo My Bar
+Tonight” is not a link back to ~music (an issue of its own).  I would
+prefer if there was a “Post a new topic” button in the side-bar of the
+group search results.
+</p>",1
+26242729,2019-10-23 15:46:55.860,Remove (or replace) quotes from search view query,"When searching there is this text at the top that shows what you searched for:
+
+![image](/uploads/7f059926262637efe30b50b02b291185/image.png)
+
+And now that double quotes have actual meaning because of the search upgrades that came with Postgresql 12, when doing a quoted search it looks a little weird:
+
+![image](/uploads/ccb287d7b40b64448d8b1d9edd847914/image.png)
+
+To avoid confusion about what's actually being searched for, I think it would be good to remove these quotes (or replace them with something else).",1
+26117272,2019-10-19 11:36:38.147,Colours mixing when quoting code,"<p>
+See e.g. <a href=""https://tildes.net/~comp/igx/fortnightly_programming_q_a_thread#comment-42sg"">this comment</a>.  In
+the black theme, both <code>&lt;blockquote&gt;</code> and
+<code>&lt;code&gt;</code>/<code>&lt;pre&gt;</code> have the
+<code>background-color</code> of <code>#222</code>, which means that
+there is no distinction between the quote text and the code or
+preformatted text within this quote.  I think that <code>#444</code>
+would be a good colour for code inside quotes in the black theme, not
+sure about the rest.
+</p>",1
+25521531,2019-10-01 21:58:43.816,"Allow defining ""important tags"" for individual groups","Topic tags are hidden by default in listings pages now, but ""important"" ones are still shown. Currently, only `nsfw` and `spoiler` are considered important, but it would be useful to be able to define important tags for each group. For example, in ~news, it might be nice to always have the relevant country tag still shown on topics, but not all the other tags.",3
+25085709,2019-09-22 10:48:41.128,Add a way to view all the topics and comments you've voted on,As suggested by [this topic](https://tildes.net/~tildes/hs1/filter_by_my_own_votes).,2
+24347707,2019-08-31 13:28:19.026,Include/exclude operators for search,[Relevant comment](https://tildes.net/~tildes.official/7j9/minor_search_update_topic_tags_are_now_included_in_search#comment-224f).,3
+24175625,2019-08-26 18:20:12.972,Update marshmallow to 3.0+,"marshmallow, which Tildes uses for schema validation and some similar applications, has now released its 3.0 version, after a fairly long RC process. This will require some significant updates to the code, so I've pinned it to 2.x for now but should try to do these updates before too long, since 3.0 seems to have quite a few benefits.
+
+Here's the docs on upgrading: https://marshmallow.readthedocs.io/en/stable/upgrading.html",4
+23816183,2019-08-15 19:04:39.564,"Add a ""demo"" page for themes","It would be really nice to have a page where people can easily flip through all the themes and see what different site elements look like with them applied. It could have various ""fake"" site elements, like what a topic in listings looks like, a little fake comment tree showing how the different types of comments (e.g. exemplary, new) look, and so on, so you can get an overview of the theme in one spot.
+
+This should be fairly straightforward to implement - have a view that creates a `Topic` object, some `Comments` objects and so on (and don't add them to the database session), and then use them all in the template macros that are used to render real versions of those objects. That way the page will keep itself updated whenever any designs change, since it's using exactly the same macros and methods as other pages.",2
+23722124,2019-08-13 03:40:22.009,Change comment voting so it doesn't replace the entire comment,"Now that we have `<details>` blocks in comments, there can be some strange behavior when voting on a comment that contains them. Since voting results in the entire comment being replaced by intercooler, any `<details>` blocks in it end up getting reset back to their default expanded/collapsed state.
+
+It should be totally fine to just replace the vote button instead of the entire comment. I think originally I was replacing the entire comment because the vote count was inside it, but since it's in the button now there's not really any need to be replacing the whole comment any more.",2
+22100284,2019-06-20 15:55:58.310,"Link ""Filtered topic tags"" in user's sidebar to their respective ?tag= page","As suggested here:  
+https://tildes.net/~news/enf/this_week_in_election_night_2020_week_13#comment-3h06",2
+21827624,2019-06-12 08:02:25.081,Automatically linking /r/subreddit in comments.,"Given how often subreddits are mentioned in Tildes comments, it would be nice if they were similarly auto-linked like tildes groups.",2
+21704611,2019-06-09 01:46:16.644,"Add [Collapse Read] button to top of comment section that works like ""Collapse old comments"" feature","As suggested here:  
+https://tildes.net/~tildes/ea2/tildes_focus_a_greasemonkey_script_to_navigate_to_new_comments_on_tildes#comment-3ej3",3
+21613959,2019-06-05 21:51:51.074,Make theme easier to change when logged in.,"Which could be done by simply adding the theme switcher visible at the bottom of the page when logged out to the logged in version as well.
+
+As suggested here:  
+https://tildes.net/~tildes/e6d/suggestion_make_theme_easier_to_change_when_logged_in",1
+21571064,2019-06-04 14:27:45.646,Show link metadata on thread page as well,"Link metadata such as word count, article date and youtube channels don't appear at all on the thread page. WDYT of adding them at the top near the submitter?",4
+20949249,2019-05-16 05:13:36.341,"Searching for ""parenttag.subtag"" results in no topics being found, but searching for ""parenttag"" or ""subtag"" alone does",,3
+20827669,2019-05-13 12:05:26.950,"Add ""unfollow"" feature, allowing users to turn off notifications for replies to their comments/topics","This would allow users to more effectively disengage from arguments.  It should probably be something disabled by default and only enabled on a case-by-case basis, not a global user setting though, IMO.
+
+edit: Feature also requested again, but for a slightly different reason (avoiding getting spammed on busy topics) -  
+https://tildes.net/~tildes/dz7/suggestion_turn_off_reply_notifications_for_a_topic_or_comment_you_made",4
+20538732,2019-05-02 19:22:30.642,Split up subgroup/parent group links in the topic view too,"If you go to ~tildes.official, the header link is separated into `~tildes` and `official`, allowing you to jump to either the parent group or the subgroup. When viewing a topic in ~tildes.official, the link does not split like that, and only leads to ~tildes.official, but not to ~tildes.",1
+20403102,2019-04-27 13:03:05.691,"Bug with double clicking on a topic with ""new comments""","When using the ""mark new comments"" feature, if there's a topic with new comments and you double click on the topic to go to the comments, when it loads no comments will be marked as new. My guess is that the first click is registering as the one where it should mark the new comments and the second click as just another visit with no new comments.",4
+19201640,2019-03-18 09:36:21.478,Topic log changed links can go outside the sidebar,![image](/uploads/4a682175a9e9a282bd06ab1e8b7442fc/image.png),1
+18745477,2019-03-02 21:05:40.866,Indenting subgroups on the groups listing,"As suggested here:  
+https://tildes.net/~tildes/azr/indenting_subgroups_on_the_groups_listing",2
+18731529,2019-03-01 20:45:19.323,Add ability to bookmark topics from the front page,https://tildes.net/~tildes/ayv/feature_suggestion_bookmark_posts_from_front_page,3
+18297018,2019-02-17 13:29:10.519,Incorrect site favicons displayed,"Sometimes the incorrect favicon for a website will be displayed:
+
+![image](/uploads/f25700be1c1536752e6e00790ce677d3/image.png)
+
+![image](/uploads/886d3aa146111093a2c411dd546986aa/image.png)
+
+Presumably this is a caching issue, but reloading the page doesn't fix it, and those two screenshots are from two different devices.",2
+17187020,2019-01-08 22:51:20.268,Rework views and/or schemas to support webargs 5.0,"As mentioned in https://gitlab.com/tildes/tildes/commit/664c6f67904631443bd275dd07f1bbabe1bdcb14, webargs 5.0 no longer sets values for optional arguments: https://github.com/marshmallow-code/webargs/issues/342
+
+The above-linked commit pins webargs' version to avoid this behavior change for the moment, but to be able to upgrade will require some reworking of views/schemas to be able to handle the new approach.",4
+16586509,2018-12-11 22:30:58.002,Update annotations to take advantage of delayed evaluation,"Python 3.7 includes postponed evaluation of type annotations: https://docs.python.org/3/whatsnew/3.7.html#pep-563-postponed-evaluation-of-annotations
+
+This means that we will no longer need to write annotations as quoted strings when the type is defined later ([example](https://gitlab.com/tildes/tildes/blob/master/tildes/tildes/models/model_query.py#L43)). However, we will have to add a `from __future__ import annotations` to every file where the quoted strings were previously necessary.
+
+This change won't be possible until pyflakes updates to support it, since using it currently still causes a ""undefined name"" error from Prospector. This is the pull req that will need to be merged first: https://github.com/PyCQA/pyflakes/pull/374",2
+15732986,2018-11-11 11:33:58.075,Invalid characters in the tag query parameter results in an uninformative error page,"E.g. https://tildes.net/?tag=a-b. The current error page says ""invalid path"", which is confusing and not meaningful to most people.",1
+15152119,2018-10-22 21:02:32.059,"""Set as account default"" button disappears after page reload","I searched for ""theme"" and ""Set as account default"" but haven't found a bug about this bug. Steps:
+
+1. Go to the settings page.
+2. Click on a different theme. The ""Set as account default"" button is there.
+3. Reload the page.
+4. I expected the button to still be there, but it isn't. If I switch to another theme and then back, it does appear.",2
+15078056,2018-10-18 22:49:56.156,Upgrade PostgreSQL to 12,Version 12 should be out on October 3: https://www.postgresql.org/about/news/1975/,3
+15078026,2018-10-18 22:45:14.767,Upgrade Redis to 5.0,"Redis 5.0 has been released: https://groups.google.com/forum/#!topic/redis-db/l0OXDAlwosU
+
+I don't expect any issues with upgrading, but it'll need some testing/checking anyway.",3
+14869123,2018-10-11 19:07:58.986,Make the donate page link more prominent on the Tildes homepage.,"A more prominent link to the [Donate page](https://docs.tildes.net/donate) is probably going to be necessary at some point.  The only link to it on the site is in the footer, which practically nobody reads (or often even sees).  Adding a more prominent link in the sidebar or even on the header somewhere is probably a good idea...  Even with people potentially developing blindness to it eventually, just for sake of making people aware of the option to donate being available in the first place is worth it, IMO.",1
+14840627,2018-10-10 21:22:39.159,Hide topic-comments section when there's no comments,"Minor thing but noticed this earlier:
+
+![image](/uploads/0a83ca7a930f448142a7b0c7d7b6b589/image.png)
+
+When there's no comments, there are there 2 borders which are to separate sections like here:
+
+![image](/uploads/230cde6d508e17cde5bbdc61a443e409/image.png)
+
+However it looks weird when there's no comments, so hiding `section.topic-comments` would make it a little neater. It could be done with `display: none;` or a simple `if` check in the template.",1
+14720739,2018-10-05 15:06:01.982,Labelling a comment that's been deleted throws error in console,"Pretty much the title, when trying to label a comment that has been deleted it will throw an AJAX error in the console. This should probably be changed to showing an error near the labels.",2
+14170914,2018-09-15 08:55:27.828,Automatically collapse removed comment threads,,2
+13660773,2018-08-23 22:48:52.551,Show (OP) in Topic Log changes,Since people are now able to change other people's topics with the given permissions I think it would be nice to show if the original poster made changes more easily. You can of course just look at the topic author and then through the topic log but that makes it quite cumbersome. Having just `Author (OP)` like with the comment headers would make it a lot easier.,2
+13491096,2018-08-17 04:36:35.877,Ability for topic creators to change their titles,"With the addition of the [first stage of community moderators](https://tildes.net/~tildes.official/53r/users_can_now_be_manually_granted_permissions_to_re_tag_topics_move_them_between_groups_and_edit), a topic log now exists that tracks changes to topics as made by those with permission to do so. It'd be nice to have this be extended to topic creators in being able to edit their titles after submission. Both the log and the higher-permission users would stand in to prevent bait-and-switch style manipulation.",1
+13486046,2018-08-16 20:11:04.451,Users should be able to view their 2FA backup codes (and possibly generate new ones),"Just came to mind while I was writing the announcement about 2FA - there should be a way for users to view their backup codes after 2FA is enabled, in case they didn't initially store them. It may also be nice to have the ability to generate more, though people can always just disable and re-enable it to do that.
+
+Viewing them will need to require a 2FA check, otherwise someone with access to the logged-in account would just be able to take a backup code and bypass/disable 2FA (similar to why disabling 2FA requires it).",2
+12653502,2018-07-10 07:23:19.265,Add preference to change default comment sorting method,"Should be sufficient to just have a dropdown preference to choose between the options (currently ""most votes"", ""newest first"" , and ""order posted"").",2
+12058944,2018-06-15 17:58:03.598,Topic tag filters should still apply while viewing a single tag,"Currently I have filters disabled if the user is viewing a single tag, but that isn't correct. The single tag itself shouldn't be filtered, but other filters should still apply (for example, if I filter down to ""trailer"", that shouldn't disable a ""nsfw"" filter).
+
+This may require a bit of extra work to support both single-tag + unfiltered as well.",2
+11041654,2018-05-26 06:41:39.755,add ability to view comment source,"Not sure if I'm just not seeing it, but it looks like you can only view your own comments' markdown source using ""edit"". Would be useful to be able to just show the source for any comment, especially while markdown is still being tested from time to time.",2
+10970984,2018-05-23 00:23:06.423,Add ability to hide topics (and view/unhide ones users have previously hidden),,3

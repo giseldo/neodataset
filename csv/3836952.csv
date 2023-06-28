@@ -1,0 +1,489 @@
+issuekey,created,title,description,storypoints
+109094220,2022-05-25 10:50:48.155,SCORU: WASM: Tickify module initialization,"`Eval.init` from the WebAssembly reference interpreter needs to be tickify. It has a significant time complexity cost and must be broken up.
+
+!5552 introduces lazy vectors instead of list for the module fields, which are then converted into list in `init`, then back to lazy vectors. Tickification can remove these conversions roundtrip by directly going from lazy vector to lazy vector, and evaluate the fields as small steps.
+
+Remaining:
+- Remove all uses of to_list/concat/of_list from `Eval.init`",5
+95278232,2021-10-12 11:54:14.627,Make tezos-proxy-server honor /chains/main/block/head/header,"`Tezos Commons` is willing to use `tezos-proxy-server` in their deployment. Their main target is to use it for `run_operations`, which works already :muscle:. However, they were surprised that it is not serving `/chains/main/block/head/header` too.
+
+Indeed `tezos-proxy-server` doesn't serve it, because it is registered in a resto `Directory` in `block_directory.ml` while the proxy server serves `Plugin.RPC.rpc_services`. If we were to do this, it would go something like:
+
+```diff
+--- a/src/proto_alpha/lib_client/proxy.ml
++++ b/src/proto_alpha/lib_client/proxy.ml
+@@ -163,6 +163,28 @@ let init_env_rpc_context (_printer : Tezos_client_base.Client_context.printer)
+   initial_context proxy_builder rpc_context mode chain block >>= fun context ->
+   return {Tezos_protocol_environment.block_hash; block_header = shell; context}
+ 
++let block_services_dir (rpc_context : RPC_context.json) =
++  let open Protocol in
++  let module Directory = Resto_directory.Make (RPC_encoding) in
++  let rpc_context = new Protocol_client_context.wrap_rpc_context rpc_context in
++  let open Tezos_shell_services in
++  let path =
++    let open Tezos_rpc.RPC_path in
++    prefix Block_services.chain_path Block_services.path
++  in
++  let service =
++    Tezos_rpc.RPC_service.prefix path Block_services.Empty.S.header
++  in
++  Directory.register Directory.empty service (fun (((), chain), block) ->
++      let res =
++        Protocol_client_context.Alpha_block_services.header
++          rpc_context
++          ~chain
++          ~block
++          ()
++      in
++      assert false)
++
+```
+
+or exposing `proxy.ml`'s `proxy_block_header` function in some way.",24
+95043610,2021-10-07 13:23:36.887,"Small merge requests are encouraged, but this is not documented","There is consensus in the merge team to favor small merge requests. However, this is not stated in the documentation; and this caused confusion in the past. Also, it happened that small merge requests introducing dead code were rejected because this policy was not well known enough.",1
+126542462,2023-04-12 10:48:48.850,Gossipsub: Remove peers from the mesh and fanout on unsubscribe,"Remove peers from the topic mesh when the peer unsubscribes from the topic, as done in the [rust implementation](https://github.com/libp2p/rust-libp2p/blob/b7ba0f728633c1c0e0bc67339e5b5002bb9adb0f/protocols/gossipsub/src/behaviour.rs#L2029).
+
+Additionally, we remove the peers from the fanout on unsubscribe. This is not done in go/rust (they wait until the next heartbeat for the fanout to be cleaned) but we do it in unsusbcribe as it makese sense and is more consistent with the cleaning of mesh on unsubscribe.",100
+126049644,2023-03-31 08:28:21.264,Gossipsub: Only graft peers that subscribed to a topic,"We should have the invariant that any time a peer asked to graft us, we should know he subscribed to this topic.",100
+125947472,2023-03-29 13:17:19.167,[GS/Automaton] add a Already_published case in [`Publish] output,"Currently, we have one case for `handle_publish`: We don't check if the message is already known. We should add a case `Already_published` for the case where the message is already published",100
+125933482,2023-03-29 07:32:39.392,Gossipsub: Fix logic for publishing to direct peers,"From https://gitlab.com/tezos/tezos/-/merge_requests/8248#note_1332465561
+
+> In our implementation, the `direct` peers are only considered in the case where
+>
+> * mesh is empty for the topic.
+> * fanout is empty for the topic.
+>
+>(i.e. the `match fanout_opt with | None ->` case above)
+>
+> But in the go implementation, the message is published to the `direct` peers regardless of the `mesh`/`fanout` emptiness: https://github.com/libp2p/go-libp2p-pubsub/blob/56c0e6c5c9dfcc6cd3214e59ef19456dc0171574/gossipsub.go#L997",100
+125875704,2023-03-28 08:02:07.538,[GS Automaton] clarify/improve Heartbeat output for prune,"The automaton currently outputs values of the following type for heartbeat:
+```ocaml
+    | Heartbeat : {
+        (* topics per peer to graft to *)
+        to_graft : Topic.Set.t Peer.Map.t;
+        (* topics per peer to prune from *)
+        to_prune : Topic.Set.t Peer.Map.t;
+        (* set of peers for which peer exchange (PX) will not be proposed *)
+        noPX_peers : Peer.Set.t;
+      }
+        -> [`Heartbeat] output
+```
+
+It seems that the information contained in `to_prune` field don't allow to call `handle_prune`, which requires inputs of type:
+```ocaml
+  type prune = {
+    peer : Peer.t;
+    topic : Topic.t;
+    px : Peer.t Seq.t;
+    backoff : span;
+  }
+```
+
+In fact, fields `px : Peer.t Seq.t;` and `backoff` (per ""peer and topic"" ?) are missing
+
+See which function needs to be modified: heartbeat or prune?",100
+125648644,2023-03-22 19:13:08.113,[GS worker] implement sending messages to peers,,100
+125616372,2023-03-22 08:31:57.331,[GS worker] handle join and leave in apply,,100
+125527415,2023-03-20 10:20:55.672,[GS worker] implement worker shutdown,"See current implementation of function shutdown in gossipsub_worker.ml
+
+Also unsubscribe from callbacks when shutting down the worker?
+
+Also see discussion in https://gitlab.com/tezos/tezos/-/merge_requests/8116#note_1323535456",100
+125526330,2023-03-20 09:56:50.374,[GS Worker] implement the notion of P2P messages,P2p messages handler relies on a Codec to encode/decode messages to/from bytes. The current implementation of messages and Codec is dummy (for typechecking).,100
+125519992,2023-03-20 07:57:55.358,[GS worker] handle Received_message application,,100
+125519972,2023-03-20 07:57:11.880,[GS worker] handle Send_message application,,100
+125519939,2023-03-20 07:55:56.529,[GS worker] handle Publish_message output,,100
+125519897,2023-03-20 07:54:44.566,[GS worker] handle Disconnection output,,100
+125519879,2023-03-20 07:54:03.636,[GS worker] handle New_connection output,,100
+125519853,2023-03-20 07:53:05.747,[GS worker] handle Heartbeat output,,100
+125274294,2023-03-15 03:37:08.623,Gossipsub: get_peers should not return peers that are waiting for expiration,"In our implementation, `connection.expire` is used to keep the `connection` in the `connections` for a while after `remove_peer`.
+
+Since peers with a non-none `connections.expire` is a removed peer which is wating for being expired, we shouldn't return them in the `get_peers` function [here](https://gitlab.com/tezos/tezos/blob/de253082858204509d4e91c9c079736abaf8d440/src/lib_gossipsub/tezos_gossipsub.ml#L653).",100
+125099090,2023-03-10 12:37:12.719,Gossipsub: backoff and connection clearing,"In the Go implementation:
+* `RemovePeer` removes the peers from the state, but does not update the backoffs at all
+* the backoffs are removed independently from `RemovePeer`, based on time alone, during heartbeat
+
+In our implementation:
+* `RemovePeer` sets an expiring time for the connection, using the `retain_duration` constant
+*  the backoffs **and** the connection are possibly removed (based on their expiring times) during the heartbeat; in particular, a connection is removed only if there are no backoffs associated.
+
+I opened this issue to :
+- check that this makes sense
+- see whether there are obvious simplifications",50
+124884495,2023-03-07 14:05:02.458,Gossipsub: prepare gossip messages during heartbeat,,100
+124570375,2023-03-01 17:02:38.105,Gossipsub: Score check is missing for IHave control message,"The following discussion from !7594 should be addressed:
+
+- [ ] @linoscope started a [discussion](https://gitlab.com/tezos/tezos/-/merge_requests/7594#note_1296475507): 
+
+    > Missing score check in this `handle` too.",100
+124570310,2023-03-01 17:00:50.571,Gossipsub: Score check is missing for IWant,"The following discussion from !7594 should be addressed:
+
+- [ ] @linoscope started a [discussion](https://gitlab.com/tezos/tezos/-/merge_requests/7594#note_1296353868): 
+
+    > The score check is missing ([go implementation](https://github.com/libp2p/go-libp2p-pubsub/blob/56c0e6c5c9dfcc6cd3214e59ef19456dc0171574/gossipsub.go#L699))",100
+124570183,2023-03-01 16:57:46.456,Gossipsub: Grafting with negative score,"The following discussion from !7594 should be addressed:
+
+- [ ] @linoscope started a [discussion](https://gitlab.com/tezos/tezos/-/merge_requests/7594#note_1296319510):  (+1 comment)
+
+    > We are missing the score check ([go implmenetation](https://github.com/libp2p/go-libp2p-pubsub/blob/56c0e6c5c9dfcc6cd3214e59ef19456dc0171574/gossipsub.go#L801)). Feel free to address in a future issue, but let's be careful not to forget.",100
+124569284,2023-03-01 16:43:03.216,Gossipsub: Implement backoff for pruning,The backoff computation while pruning a peer is not done yet.,100
+123288159,2023-02-08 13:12:02.609,Node/logs: remove sections from default stdout logs,"Section are not useful to the user and still occupy a lot of place in the default stdout logs.
+Default filedescriptor sink already stores sections, so we can safely remove them from stdout logs.",1
+123015056,2023-02-03 16:05:34.443,Node logs: activate daily-logs by default on disk,,4
+122477585,2023-01-26 10:06:10.709,Remove pytest framework,,8
+122432229,2023-01-25 14:27:15.217,lib_store: higher level of verbosity for a few events,"```
+2023-01-24T14:31:21.199-00:00 [validator.blockprechecked_block] prechecked block BMHjBfXHWQs2S93kcRtVcXsMskmvSqHaaLuB8pU2rJTgwFbQQwm
+2023-01-24T14:31:21.199-00:00 [node.storestore_prechecked_block] prechecked block   BMHjBfXHWQs2S93kcRtVcXsMskmvSqHaaLuB8pU2rJTgwFbQQwm (level: 31) was stored
+2023-01-24T14:31:21.214-00:00 [node.storestore_block] block BMHjBfXHWQs2S93kcRtVcXsMskmvSqHaaLuB8pU2rJTgwFbQQwm (level: 31) was   stored
+2023-01-24T14:31:21.214-00:00 [validator.blockvalidation_success] block BMHjBfXHWQs2S93kcRtVcXsMskmvSqHaaLuB8pU2rJTgwFbQQwm validated   Request pushed on 2023-01-24T14:31:21.182-00:00, treated in 8.306us, completed in 31.838ms
+2023-01-24T14:31:21.215-00:00 [node.storeset_head] BMHjBfXHWQs2S93kcRtVcXsMskmvSqHaaLuB8pU2rJTgwFbQQwm (level: 31) set as new   head
+2023-01-24T14:31:21.216-00:00 [validator.chainhead_increment] Update current head to BMHjBfXHWQs2S93kcRtVcXsMskmvSqHaaLuB8pU2rJTgwFbQQwm   (level 31, timestamp 2022-10-13T16:06:50-00:00, fitness   02::0000001f::::ffffffff::00000000), same branch
+```
+
+Store events creates a lot of noise when treating a block. These events should probably be in `Debug` instead of `Info`.",1
+122431624,2023-01-25 14:21:36.976,File-descriptor sink: missing dot between section and event name,"fixed by https://gitlab.com/tezos/tezos/-/merge_requests/7494
+
+```
+2023-01-24T14:37:11.559-00:00 [validator.chainhead_increment] Update current head to BMHUKJJdXtPEipwTM5SsxRQCE76qbbWnsXibA75sYY6shNcsUJU   (level 10009, timestamp 2022-10-15T19:23:45-00:00, fitness   02::00002719::::ffffffff::00000001), same branch
+```
+
+```
+2023-01-25T09:49:00.128-00:00 [validator.chain.head_increment] Update current head to BMJNPjiw1DkYn3NXoo6D4UQwBpyDT3rz7zmJ2mANWwxU9YFC1wn   (level 563573, timestamp 2023-01-24T14:22:35-00:00, fitness   02::00089975::::ffffffff::00000000), same branch
+```
+
+`validator.chainhead_increment` -> `validator.chain.head_increment`",1
+122304482,2023-01-23 14:05:02.310,Logging: add an option enabling rotation of file-descriptor sinks on a daily basis,"
+Goal: cut a lot of things from the stdout logging without worrying of debugging
+
+- Add options to file-based sinks to be limited by time
+- option: `rotation-days=N`",4
+121760700,2023-01-13 17:45:12.031,Node logs: simplify bootstrap logs,"Already done in a previous [non-merged request](https://gitlab.com/tezos/tezos/-/merge_requests/2344/diffs?commit_id=1916f683d6b0ed705543b3fc42bcd249e970a122).
+
+```
+Dec  4 11:54:19.581 - node.validator.bootstrap_pipeline: fetching branch of about 10499 blocks from peer
+Dec  4 11:54:19.581 - node.validator.bootstrap_pipeline:   idqrpoSMD3XKbsN5U8wqyT2d4SLfgv in 98 steps
+```
+
+The section is extremely long and the wording is could be simplified.
+The solution could be the following one.
+
+```
+Dec  4 14:34:25.754 - bootstrap: fetching ~11741 blocks from peer ids9jAYxv8h4kWTi6swki3fXfTEUG1 in 100 steps
+```",1
+121759462,2023-01-13 17:28:30.644,lib_shell: set higher verbosity level for a few recurrent events,"Peers disconnection and precheck of blocks are seen as not useful to the user.
+We would like to put it to `info` instead of `notice`",1
+121662378,2023-01-12 13:37:18.085,Node logs: shortens request status size in various events,"```
+Jan  6 14:33:10.900 - validator.block: block BLkhtA81uak1SxxCDCVMXEnXCKsJcFLajVT84ZjrFKbxAaJUL4E validated
+Jan  6 14:33:10.900 - validator.block:   Request pushed on 2023-01-06T13:33:10.853-00:00, treated in 153us, completed in 45.531ms
+```
+
+In various places, we print the request status of some Requests to workers. It is a way to know how much time an operation took (like block validation).
+However, it is hardly understandable by the user. 
+
+- The `Request pushed` part gives no information to people with no knowledge of worker interface. 
+- It is the same for the push time, on which Hour information is by the way not consistent with the log time
+- `treated` is the time elapsed between the request submission to a worker and the beginning of its _treatment_. It doesn't seem to be of any help to someone that is not looking to debug a particular worker implementation 
+
+### Proposed solution
+
+Simplify the printing of the status in various places. Prevalidator and Block validator probably don't need the full printing and we could reduce the display to the `completed` information. In such a situation, the above display would become
+
+```
+Jan  6 14:33:10.900 - validator.block: block BLkhtA81uak1SxxCDCVMXEnXCKsJcFLajVT84ZjrFKbxAaJUL4E validated (45.531ms)
+```",3
+121662278,2023-01-12 13:35:07.037,Node logs: remove block properties (timestamp and fitness),"```
+Jan  6 14:33:10.920 - validator.chain: Update current head to BLkhtA81uak1SxxCDCVMXEnXCKsJcFLajVT84ZjrFKbxAaJUL4E
+Jan  6 14:33:10.920 - validator.chain:   (level 462824, timestamp 2023-01-06T13:33:10-00:00, fitness
+Jan  6 14:33:10.920 - validator.chain:   02::00070fe8::::ffffffff::00000000), same branch
+```
+
+In some events advertizing new blocks, some properties are seen as obscure, and can even be found from elsewhere, like the `fitness` or the `timestamp`. Also they are probably not greppable, not especially useful for a developper. (Could the fitness be replaced by priority instead ?)
+
+- timestamp
+  - _Regarding the Update current head to message, I think it worth keeping the timestamp. Indeed, it is easy to know if your node is ""up to date"" while looking at it (if last block timestamp is very recent). The level requires a third party to get the ""is my node synced"" information._
+  - we could replace by `4ms ago` which is shorter than `timestamp 2023-01-06T13:33:10-00:00
+  - we keep only one unit (year month s ms )
+  - is there a case where the timestamp is very different from the log date ?
+  - don't display timestamp if close to current date ?
+
+- fitness: ensure if useful or not (feedback: + Albin Romain), fitness can be found with the block hash.",1
+121161542,2023-01-03 12:47:13.823,Translate pytest `test_contract_opcodes.py`,Estimated translation time: 23 hours,23
+121161541,2023-01-03 12:47:13.573,Translate pytest `test_contract_onchain_opcodes.py`,Estimated translation time:53 hours.,53
+121161540,2023-01-03 12:47:13.337,Translate pytest `test_contract_macros.py`,Estimated translation time: 20 hours.,20
+121161539,2023-01-03 12:47:13.147,Translate pytest `test_contract_baker.py`,Estimated translation time:  2 hours.,2
+121161537,2023-01-03 12:47:12.316,Translate pytest `test_contract_annotations.py`,Estimated translation time:  5 hours.,5
+116884253,2022-10-14 09:39:51.788,EVM on WASM: mock host functions for store_move and store_copy,"# Goal
+
+Implement mock versions of the `store_move` and `store_copy` functions also available on the host through the WASM PVM.",3
+116884160,2022-10-14 09:38:05.683,EVM on WASM: store_move and store_copy,"## Goal
+
+Implement kernel side of `store_move` and `store_copy`. Functions already available through the WASM PVM. We need to add them to the host runtime interface in Rust.",3
+116462276,2022-10-07 12:16:54.427,Translate pytest `test_voting.py`,estimated translation time: 12 hours,12
+116462275,2022-10-07 12:16:54.326,Translate pytest `test_tls.py`,estimated translation time: 2 hours,2
+116462274,2022-10-07 12:16:54.203,Translate pytest `test_proto_demo_noops_manual_bake.py`,estimated translation time: 4 hours,4
+116462273,2022-10-07 12:16:54.094,Translate pytest `test_proto_demo_counter.py`,estimated translation time: 4 hours,4
+116462272,2022-10-07 12:16:53.995,Translate pytest `test_p2p.py`,estimated translation time: 6 hours,6
+116462271,2022-10-07 12:16:53.883,Translate pytest `test_openapi.py`,estimated translation time: ? hours,4
+116462270,2022-10-07 12:16:53.776,Translate pytest `test_nonce_seed_revelation.py`,estimated translation time: 6 hours,6
+116462269,2022-10-07 12:16:53.669,Translate pytest `test_multiple_transfers.py`,estimated translation time: 6 hours,6
+116462268,2022-10-07 12:16:53.490,Translate pytest `test_multinode_storage_reconstruction.py`,estimated translation time: 8 hours,8
+116462267,2022-10-07 12:16:53.386,Translate pytest `test_mempool.py`,estimated translation time: 4 hours,4
+116462266,2022-10-07 12:16:53.235,Translate pytest `test_many_nodes.py`,estimated translation time: 4 hours,4
+116462265,2022-10-07 12:16:53.121,Translate pytest `test_many_bakers.py`,estimated translation time: 2 hours,2
+116462264,2022-10-07 12:16:52.974,Translate pytest `test_fork.py`,estimated translation time: 4 hours,4
+116462263,2022-10-07 12:16:52.860,Translate pytest `test_forge_block.py`,estimated translation time: 2 hours,2
+116462262,2022-10-07 12:16:52.764,Translate pytest `test_cors.py`,estimated translation time: 4 hours,4
+116462261,2022-10-07 12:16:52.662,Translate pytest `test_client_without_node.py`,estimated translation time: 16 hours,16
+116462260,2022-10-07 12:16:52.507,Translate pytest `test_client.py`,estimated translation time: 2 hours,2
+116462259,2022-10-07 12:16:52.395,Translate pytest `test_binaries.py`,estimated translation time: 2 hours,2
+116462258,2022-10-07 12:16:52.287,Translate pytest `test_basic.py`,estimated translation time: 22 hours,22
+116462257,2022-10-07 12:16:52.082,Translate pytest `test_baker_operations_cli_options.py`,estimated translation time: 14 hours,14
+116462256,2022-10-07 12:16:51.981,Translate pytest `test_accuser.py`,estimated translation time: 4 hours,4
+116462255,2022-10-07 12:16:51.876,Translate pytest `test_programs.py`,estimated translation time: 4 hours,4
+116462254,2022-10-07 12:16:51.739,Translate pytest `test_liquidity_baking.py`,estimated translation time: 12 hours,12
+116462252,2022-10-07 12:16:51.614,Translate pytest `test_multisig.py`,estimated translation time: 24 hours,24
+116462251,2022-10-07 12:16:51.432,Translate pytest `test_fa12.py`,estimated translation time: 16 hours,16
+116461025,2022-10-07 11:51:11.990,"Continue ""Translate the churny pytests `test_contract.py`""","Estimated translation time: 50 hours
+
+Continuation of #3633 
+
+ - [x] `TestManager` (@arvidnl !7056)
+ - [x] `TestScriptHashMultiple` (~@linoscope !6840~, @arvidnl !7039)
+ - [x] `TestContracts` (@rdavison !6625)
+ - [x] `TestContractTypeChecking` (@rdavison !6503)
+ - [x] `TestChainId` (@rdavison !6436)
+ - [x] `TestExecutionOrdering` (@linoscope https://gitlab.com/tezos/tezos/-/merge_requests/7053/)
+ - [x] `TestNonRegression` (@xf6 !6616) 
+ - [x] `TestView` (@xf6 !6314)
+ - [x] `TestTypecheck` (@lykimquyen  !6381)
+ - [x] `TestBigMapToSelf` (@lykimquyen  !6325)
+ - [x] `TestNormalize` (@linoscope !6394)
+ - [x] `TestGasBound` (@lykimquyen !6684) 
+ - [x] `TestScriptHashOrigination` (@lykimquyen !6627)
+ - [x] `TestComparables` (@lykimquyen !6614)
+ - [x] `TestBadAnnotation` (@lykimquyen !6642) 
+ - [x] `TestOrderInTopLevelDoesNotMatter` (@linoscope !6604)
+ - [x] `TestMiniScenarios`(@lykimquyen !6711) 
+     - [x] `TestMiniScenarios` splits the test case entrypoints (@lykimquyen !6785) 
+ - [x] `TestScriptHashRegression` (@arvidnl !6636)",50
+113675088,2022-08-23 07:46:12.699,Translate the slow pytests `test_sapling.py`, estimated translation time: ~~20~~ 40 hours,40
+113675087,2022-08-23 07:46:12.580,Translate the slow pytests `test_migration.py`, estimated translation time: ~~3~~ 6 hours,6
+113675086,2022-08-23 07:46:12.496,Translate the slow pytests `test_baker_endorser.py`, estimated translation time: ~~2~~ 4 hours,4
+113675085,2022-08-23 07:46:12.416,Translate the churny pytests `test_voting_full.py`, estimated translation time: ~~4~~ 8 hours,8
+113675084,2022-08-23 07:46:12.335,Translate the churny pytests `test_rpc.py`, estimated translation time: 2 hours,2
+113675083,2022-08-23 07:46:12.248,Translate the churny pytests `test_per_block_votes.py`, estimated translation time: 4 hours,4
+113675082,2022-08-23 07:46:12.165,"Start ""Translate the churny pytests `test_contract.py`"""," estimated translation time: 48 hours (before split with #3942)
+
+ - [x] `TestTypecheckingErrors` (@jaiyalas !6536, 1hr)
+ - [x] `TestTZIP4View` (@lykimquyen  !6326) 
+ - [x] `TestSelfAddressTransfer` (@lykimquyen !6437) 
+ - [x] `TestBadIndentation` (@jaiyalas !6324)
+ - [x] `TestOriginateContractFromContract` (@linoscope: https://gitlab.com/tezos/tezos/-/merge_requests/6382)
+ - [x] `TestCreateRemoveTickets` (@linoscope !6105)
+ - [x] `TestSendTicketsInBigMap` (@linoscope !6105)",48
+113675081,2022-08-23 07:46:12.068,Translate the churny pytests `test_mockup.py`, estimated translation time: 14 hours,14
+113675080,2022-08-23 07:46:11.961,Translate the flaky pytests `test_per_block_votes.py`, estimated translation time: 4 hours,4
+113675079,2022-08-23 07:46:11.773,Translate the flaky pytests `test_injection.py`, estimated translation time: 2 hours,2
+113675078,2022-08-23 07:46:11.658,Translate the flaky pytests `test_bootstrap.py`, estimated translation time: 5 hours,5
+113675077,2022-08-23 07:46:11.520,Translate the flaky pytests `test_tenderbake*.py`,"estimated translation time: 14 hours
+
+ - [x] test_tenderbake_bakers_restart.py (~~!6320~~ !6523)
+ - [x] test_tenderbake_incremental_start.py (~~!6320~~ !6523)
+ - [x] test_tenderbake_long_dynamic_bake.py (!6300)
+ - [x] test_tenderbake_manual_bake.py (https://gitlab.com/tezos/tezos/-/merge_requests/6345/)
+ - [x] test_tenderbake.py (!5245)",14
+113413415,2022-08-17 15:41:46.804,EVM on WASM: Add TX kernel functionality to EVM kernel,"The EVM kernel must be able to handle deposits, transactions and withdrawals just like the TX kernel. Add a new transaction type, `EVMtransaction`, that encapsulates an EVM contract call. The contents of this transaction is not so important for this ticket, only that it is there and that is used to dispatch to a `handle_evm_call` function.
+
+Integrating with the TX kernel got complicated. The actual implementation of transaction _handling_ (as compared to the rest of the TX kernel structure) has been moved to issue: https://gitlab.com/tezos/tezos/-/issues/3698
+
+This ticket is about porting the structure of the TX kernel to the EVM kernel including data types and splitting and/or amending those data types where needed for EVM transaction handling. Transaction verification of TX kernel transactions is complicated by interleaved EVM transactions and moved to the issue linked above.",3
+113283576,2022-08-15 10:47:53.835,SCORU: Add tezt test that runs a large number of evaluation ticks,(disabbled by default).,1
+113283078,2022-08-15 10:31:45.563,EVM on WASM: Run time for large/long transaction on EVM,"Goal: find number of WASM instructions needed to run the largest EVM transaction.
+
+Things to figure out and do in this issue:
+- [x] How large is the ""the largest"" EVM transaction. Can we find this by looking at Ethereum history?
+- [x] How much gas was spent on said transaction?
+- [x] Write a contract that burns this amount of gas doing whatever.
+- [x] How many WASM ticks are needed to run that transaction with the EVM interpreter we integrate with `kernel_next`?
+
+Beware:
+- Running the contract is only part of the transaction. After the transaction succeeds, the result needs to be written to permanent storage.
+- Price (in WASM ticks and EVM gas) of storage interaction.",3
+113210136,2022-08-12 15:54:20.021,SCORU: Wasm: Tezt test using test kernel (computation only),"Goal: There is a tezt test that uses the L2 client to
+- Originate a Wasm SCORU
+- Load the test kernel (computation only)
+- Evaluate at least 2 `kernel_main` invocations.",1
+113210135,2022-08-12 15:54:15.537,SCORU: Wasm: Tezt test using test kernel (computation and input),"Goal: There is a tezt test that uses the L2 client to
+- Originate a Wasm SCORU
+- Load the test kernel (input feature enabled)
+- Evaluate at least 2 `kernel_main` invocations.",1
+113210047,2022-08-12 15:51:53.141,EVM  on WASM: EVM precompiled contract,"Write one precompiled contract for the EVM interpreter: the identity function. The contract should write the _call data_ to the _return data_. Also, have the contract write a message to the evm- _and_ the kernel- log.
+
+Test:
+- Have the EVM interpreter call a contract that calls the build in contract",3
+113209443,2022-08-12 15:37:12.575,EVM on WASM: common trait for encapsulating EVM interpreter,"Encapsulate SputnikVM and Geth in each their struct. Each struct should implement one common trait/interface that allows for
+- calling contracts
+- providing precompiles
+- interfacing with storage and transactions.
+- intercepting `LOGx` instruction execution so that logs are not just part of the transaction, but also written to kernel log.",1
+113206519,2022-08-12 15:19:59.581,EVM on WASM: Integrate with Geth,"Goal is to integrate with an EVM interpreter so we can check and see if it is useful for our purpose. This issue is about checking geth.
+
+Requirements:
+- supports most recent version of EVM instruction set (if it doesn't, then something is very wrong); and,
+- supports _precompiles_ in a way where we can define additional precompiles ourselves (not just the standard nine precompiles); and,
+- doesn't require features from Rust `std` that we don't already use.
+- capture execution of `LOGx` instructions.
+
+Tests:
+- some test contracts that return successfully
+- some test contracts that fail - toplevel `REVERT` or using the standard invalid instruction.",5
+113200456,2022-08-12 14:55:00.044,EVM on WASM: Integrate with SputnikVM,"Goal is to integrate with an EVM interpreter so we can check and see if it is useful for our purpose. This issue is about using SputnikVM.
+
+Requirements:
+- supports most recent version of EVM instruction set; and,
+- supports _precompiles_; and,
+- doesn't require features from Rust `std` that we don't already use.
+- capture execution of `LOGx` instructions.
+
+Alternatives:
+- original: https://github.com/ETCDEVTeam/sputnikvm (probably out of date)
+- used by polkadot: https://github.com/rust-blockchain/evm/ (fork still with active maintenance)
+- any other version of SputnikVM you can find
+
+Test:
+- run contracts with both old/original and new EVM instructions
+- some test contract calls must succeed.
+- add some test contract calls, with contracts that fail.",3
+113193382,2022-08-12 14:25:54.649,EVM on WASM: EVM kernel crate,"Add a new sub-project to the trili/kernel gitlab project. It should
+- have name `evm_kernel`; and,
+- contain a `Cargo.toml`, and a `lib.rs` file; and,
+- have a `kernel_next` function (defined using the `kernel_entry` macro); and, 
+- a ""cache"" type.",1
+113123525,2022-08-11 09:58:00.836,Add integration test for inputs,"Goal: There is a above the Protocol level test that loads a [Test kernel] that that has input feature flag enabled and feeds at least 10 inputs.
+
+For similar tests, see `src/proto_alpha/lib_protocol/test/integration/test_sc_rollup_wasm.ml`, especially `should_boot_computation_kernel` (above Protocol).
+
+Somewhat related:
+https://gitlab.com/tezos/tezos/-/merge_requests/6208",1
+112048779,2022-07-22 14:51:49.931,lib_scoru_wasm: disallow exceptions in entry-point functions,"See also [team meeting notes](https://www.notion.so/trilitech/Meeting-Notes-a744673f343b4e328bf5bf14536c614d#6bbf9ac486ad452c9e5353c85cf3bac2)
+
+Remove the mention of exceptions from `lib_scoru_wasm` `Make` signature. Add `try_with` or similar to catch exceptions and put the machine in a stuck state instead.
+
+The machine is stuck whenever there is an error state in state tree accessible from `get_info`. A stuck PVM should not advance (meaningfully) but will increment the tick counter (only).
+
+Optional: add another case to `Protocol.Sc_rollup_wasm.status` and propagate.
+
+## Context 
+
+The top-interface exposed in `lib_scoru_wasm` (e.g. `Make`) is called from the Protocol, where Ocaml exceptions are avoided by conventions. We must therefore catch and wrap Ocaml exceptions either in `Sc_rollup_wasm` or in `lib_scoru_wasm` (or both, defensively).
+
+We nonetheless need to deal with:
+
+- Non-recoverable errors caused by bugs in PVM
+- User errors such as posting a syntactically invalid kernel
+
+In the PMV 1 milestone we're not implementing a fallback mechanism, just putting the machine in a stuck state - though we should try to be future-compatible with error recovery. 
+
+Note that internally in `lib_scoru_wasm` we can still use exceptions or error return values - but they should not propagate to the top-level.",1
+111904378,2022-07-20 08:53:18.967,[DAL]: Remove the functor for the cryptographic primitive,"The functor exposed by the cryptographic primitives add a lot of complexity. Since the parameters have no type and are only constants, the functor can be replaced with an explicit state that encapsulates those constants. 
+
+This is handled in !5907
+
+\spent 2d",10
+111514659,2022-07-12 13:51:30.562,Make 1-module assumption explicit and test that it works with host functions,"The following discussion from !5744 should be addressed:
+
+- [ ] @hans.hoglund started a [discussion](https://gitlab.com/tezos/tezos/-/merge_requests/5744#note_1014886493):  (+3 comments)
+
+    > If we ever add support for >1 modules we'll need to be careful to look up the blocks in the correct module instance.
+    > 
+    > The current state is OK, but perhaps worth adding a warning somewhere.",1
+111463618,2022-07-11 15:13:59.178,[DAL]: Allow the build of a safe trusted setup into the code base,"Currently, an unsafe trusted setup is build using parameter constants. To make it safer, the trusted setup should be computed from a file (whose size is more than `100` MB). This raises several integration questions.",10
+111452870,2022-07-11 12:09:19.799,WASM: intricated typechecking during parsing and evaluation,"During parsing and evaluation, some form of validation / typechecking is done which makes the parser / evaluator convoluted and non tickifiable without tricks. The testsuite rely on these tests at this specific stage of the parsing / evaluation routine, therefore it cannot happen later. Especially, some modules in the testsuite are syntactically invalid since the test is supposed to fail during the parsing.
+
+- Decode: local variables https://gitlab.com/tezos/tezos/-/merge_requests/5610#note_1008186757
+
+- Decode: no free variables in functions
+
+- Eval: checking type equality at call site when importing module",5
+111354919,2022-07-08 09:00:24.441,"SCORU/WASM: Ensure ""unsafe"" functions are never used inside the PVM","The interpreter can rely on unsafe or unstable functions that are only used in the executable part, for the testsuite or debugging.
+
+- `Lazy_map.loaded_bindings` and `Lazy_vector.loaded_bindings` can be one of these functions (see discussion https://gitlab.com/tezos/tezos/-/merge_requests/5552#note_1017555842).
+
+- Other functions like this include `Lazy_vector.{to_string,pp}` and `Lazy_map.{to_string,pp}` and any function whose docstring says ""witness to internal mutation""
+
+- `Valid` assumes the AST is always fully loaded.
+
+- `Encode` assumes the AST is always fully loaded.
+
+- `Free` loads vectors entirely, hence would produce huge proofs if used in the PVM. It should only be part of `Valid` and never used in the PVM, except for one specific part that is used in the parser (#3387)
+
+- Various AST printing functions relies on `loaded_bindings`, and are only used by the final binary to produce debug traces.
+
+- Pretty printing of lazy containers exposes internals and should bnot be used by the PVM
+
+We need a way to ensure these functions are never called in the PVM, either by linting, tests and/or packagin. One possible suggestion can be found in https://gitlab.com/tezos/tezos/-/merge_requests/5552#note_1017690451",5
+111253699,2022-07-06 12:31:56.226,SCORU: Wasm: Show that proof size is bounded,"Goal: We have enough confidence that tick size bounds are not exceeded by Wasm PVM to enable the feature in mainnet.
+
+Needs to be supported by ""pen-and-paper"" reasoning or better (fuzz-testing alone is not enouggh).
+
+- [ ] `Decode.find_vec'` and `Decode.find_single'`, see discussion https://gitlab.com/tezos/tezos/-/merge_requests/5552#note_1013344663",5
+111183937,2022-07-05 11:42:42.880,SCORU: Increase the message size limit,"This is a change that is necessary for the WASM PVM to be supplied with so-called string chunks, targeted to be of 4,096 bytes. The size limit is itself set to 4,096 bytes, which prevents a user to supply additional information with these chunks (e.g., a signature).",1
+109663096,2022-06-06 17:21:31.968,SCORU: Wasm: Add kernel loading logic to PVM," 
+## Goal
+
+Extend the Wasm rollup state with `/parse_state/input`, which stores a Merkelized list, or `Chunked_byte_vector` and a field `booter`, storing a `Public_key_hash.t`.
+
+During origination, the originator sends the `booter` and an optional initial boot sector chunk.
+
+When the machine is in preboot, incoming inbox messages are parsed as `{ next_boot_sector_chunk : string, signature : Signature.t }`. The signature is checked and the chunk is appended to the boot sector.
+
+Whenever `next_boot_sector_chunk` is empty, the boot state is moved from `Loading` to `Parsing`, then proceeds with the normal boot process.
+
+
+## Alternative
+
+Put this logic in the SCORU protocol https://hackmd.io/ugX9U_CPTXOeB3Tk7ZPgFA?view. 
+
+Believed to be more involved due to storage.
+
+
+## Context
+During work on https://gitlab.com/tezos/tezos/-/milestones/86#tab-issues it has become clear that realistic kernels are not going to be smaller than ~2MB, which is in conflict with the (block-driven) size limits imposed in https://gitlab.com/tezos/tezos/-/issues/3054.
+
+This could be worked around with self-upgradable kernels, but this is out of scope for https://gitlab.com/tezos/tezos/-/milestones/83#tab-issues, hence we lack the capability to test realistically sized kernels. We here work around this by adding ""append boot sector"" logic in the Wasm rollup itself.
+
+On finishing https://gitlab.com/tezos/tezos/-/milestones/83#tab-issues this logic can be moved from L1 to Kernel code if desired.
+
+### Data structure
+We need lazy append. That is (append M N) where proof size is O(log M*N), and better than O(N).
+
+Merkle list might be tricky, because consuming from the front means rewriting the entire KV structure for that list within the tree. Morally you need a reverse-linked merkle list.
+
+You can't use Irmin move opeerations, as with the set/get pattern, indeed you risk not recognizing the shallow move in set and rewriting the entire structure. The easiest solution is probably an indexed map of pages, boxed with an offset for the parser state.",0
+109644533,2022-06-06 11:55:49.434,SCORU: Wasm PVM: Handle the right number of inputs per commitment,"Goal: The Wasm PVM handles the right number of inputs per commitment.
+
+A commitment period is split into L parts, each corresponding to an inbox level with a non-zero amount of messages.
+
+For each part of the commitment period, `kernel_next` may be called up to N (tbd) times.
+After which, the PVM defaults to consecutively reading inputs from L1 until reading an input from a subsequent inbox level. The loop continues after that. 
+
+This means each section of the commitment period, has a phase to process the previously accumulated and a phase to gather inputs for the next loop.",3
+109443263,2022-06-01 12:38:59.185,Wasm PVM: Test for booting/computing and checking size,"Goal: Add tests on top of `Sc_rollup_wasm` that
+
+- Boots and computes the VM using a predefined boot sector and input.
+- Runs the VM to some point, providing input.
+- Generates proofs and check that they fit within the size limit",3
+109313844,2022-05-30 12:39:53.486,Wasm PVM: Remove duplication in input proofs,"The following discussion from !5416 should be addressed:
+
+- [ ] @hans.hoglund started a [discussion](https://gitlab.com/tezos/tezos/-/merge_requests/5416#note_964475159): 
+
+    > ```suggestion:-4+0
+    >     (* TODO:
+    >        The tree proof contains enough information to derive given and requested.
+    >        Get rid of the duplication by writing the projection functions and
+    >        removing the [given] and [requested] fields.
+    >     *)
+    > ```
+
+This should improve the size of input proofs by a factor of ~2.",1

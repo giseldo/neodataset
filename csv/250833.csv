@@ -1,0 +1,262 @@
+issuekey,created,title,description,storypoints
+110480239,2022-06-21 14:20:47.897,Refactor the creation of the job temporary file path,"## Summary
+
+This issue is extracted from https://gitlab.com/gitlab-org/gitlab/-/issues/29407
+
+From the comments https://gitlab.com/gitlab-org/gitlab/-/issues/29407#note_947110258 and https://gitlab.com/gitlab-org/gitlab/-/issues/29407#note_989127953
+
+| Step | Status |
+| ------ | ------ |
+| 1. GitLab: Stop expanding file variables when sending to Runner | https://gitlab.com/gitlab-org/gitlab/-/issues/365859 |
+| **2. Runner: Refactor the creation of the job temporary file path** | :point_left: You are here |
+| 3. Fix file variables in Runner | https://gitlab.com/gitlab-org/gitlab/-/issues/29407 |
+
+## Technical proposal
+
+from: https://gitlab.com/gitlab-org/gitlab/-/issues/29407#note_935276800
+
+Extract creation of the job temporary file path from the `ShellWriter` interface.
+
+The path depends on the job data. Until it needs to be printed, there is nothing shell-dependent that needs to be considered.
+
+I think that we should have the code that creates that path moved to the `common.Build` structure, and the `ShellWriter` implementations should focus on how to present the path and how to prepare the environment during the script execution for file creation there (like calling a shell/os dependent command to create a directory where temporary files are stored).",3
+46310187,2020-06-17 08:32:48.164,[UI/UX] Add option in CI/CD settings for variable expansion,"## Description
+
+In the .gitlab-ci.yml file, a user can define a variable and use it in another variable definition within the same `.gitlab-ci.yml` file. gitlab-org/gitlab-runner#1809
+
+Users also need to be able to allow nested variables through the applications' UI.
+
+## Proposal
+
+**[:star: SEE PROTOTYPES ON FIGMA :star:](https://www.figma.com/file/TNu09pr4KX4dqxtQ1Tslvs/Runner-Usability-improvements?node-id=406%3A767)**
+
+* Under project `Settings > CI/CD > Variables`, we will add an option for users to enable/disable nested variables in the ci file.
+* ~frontend - A checkbox button is added to the section.
+  * The option is **not** selected by default.
+* ~frontend - Users need to click the `save changes` button to apply their option.
+  * A feedback notification is displayed using the ~""component:toast"" - https://design.gitlab.com/components/toast/
+  * https://design.gitlab.com/product-foundations/saving-and-feedback
+* ~""Technical Writing"" - The ~""UI text"" of the Variables section will also be updated.
+
+### Permissions and Security
+
+Permissions should be consistent with the existing permissions structure regarding which roles can access project settings https://docs.gitlab.com/ee/user/permissions.html#project-members-permissions
+
+* [ ] Members with no access (0) should not be able access the project settings
+* [ ] Guest (10) members should not be able to access the project settings
+* [ ] Reporter (20) members should not be able to access the project settings
+* [ ] Developer (30) members should be able to access the project settings
+* [ ] Maintainer (40) members should be able to see and interact with the option in the project settings
+* [ ] Owner (50) members should be able to see and interact with the option in the project settings
+
+### Documentation
+
+We should update https://docs.gitlab.com/ee/ci/variables/
+
+## Links to related issues and merge requests / references
+
+gitlab-org/gitlab-runner#1809
+
+gitlab-org/gitlab-runner#26345",2
+45170631,2020-06-16 12:33:07.895,Pass `multi_build_steps` as a Runner Feature when requesting a job,"Issue https://gitlab.com/gitlab-org/gitlab/-/issues/199250 exposes a new `.gitlab-ci.yml` syntax for creation of releases, using the [releaser-cli](https://gitlab.com/gitlab-org/release-cli). 
+
+```yaml
+release_job: {
+  stage: 'release',
+  only: 'tags',
+  script: ['make changelog | tee release_changelog.txt'],
+  release: {
+     name: 'Release $CI_COMMIT_SHA',
+     description: 'Created using the release-cli $EXTRA_DESCRIPTION',
+     tag_name: 'release-$CI_COMMIT_SHA',
+     ref: '$CI_COMMIT_SHA'
+  }
+```
+
+The Runner then calls the `releaser-cli` with this command line:
+
+```bash
+release-cli create --name ""Release $CI_COMMIT_SHA"" --description ""Created using the release-cli $EXTRA_DESCRIPTION"" --tag-name ""release-$CI_COMMIT_SHA"" --ref ""$CI_COMMIT_SHA""
+```
+
+
+The Runner has already been extended with [this MR](https://gitlab.com/gitlab-org/gitlab-runner/-/issues/6409). An additional change in required to pass the supported runner features to Rails.
+
+A new feature called `multi_build_steps` has been created, and this needs to be passed to the `POST /api/v4/jobs/request` endpoint, populating the `:features` field.
+
+Please also see this note https://gitlab.com/gitlab-org/gitlab/-/merge_requests/27810#note_361591716
+
+> Runner is passing features supported when requesting a job - https://gitlab.com/gitlab-org/gitlab/-/blob/df71d756e4955b98bbb4add5cf43cd27c09cc6c7/lib/api/runner.rb#L101 and then `Ci::RegisterJobService` is checking can the runner support the selected job - https://gitlab.com/gitlab-org/gitlab/-/blob/df71d756e4955b98bbb4add5cf43cd27c09cc6c7/app/services/ci/register_job_service.rb#L104. In case it's not the job is dropped with *""Your runner is outdated, please upgrade your runner""* failure reason.",1
+33554642,2020-04-21 06:30:35.845,Add integration test for Docker executor to check each step is executed,"### Overview
+
+In https://gitlab.com/gitlab-org/gitlab/-/issues/215037 we had a ~regression where the `after_script` was not running inside of the docker executor. This has shown a test gap in out integration tests for the Docker executor, we aren't making sure that each section/stage of the job is being executed.
+
+### Proposal
+
+Update tests like [`TestDockerCommandSuccessRun`](https://gitlab.com/gitlab-org/gitlab-runner/-/blob/dae4647d17825dd2b43c0d6a1e7ad919150be88a/executors/docker/docker_command_test.go#L68-77),  [`TestDockerCommandBuildFail`](https://gitlab.com/gitlab-org/gitlab-runner/-/blob/dae4647d17825dd2b43c0d6a1e7ad919150be88a/executors/docker/docker_command_test.go#L215) and validate that each stage runs:
+
+- before_script
+- script
+- after_script
+
+Other steps should be validated in a follow-up issue https://gitlab.com/gitlab-org/gitlab-runner/-/issues/26839",2
+17857428,2019-01-31 17:45:13.383,Implement session endpoint to proxy build services requests,"As a part of https://gitlab.com/gitlab-org/gitlab-ee/issues/5276 we need to implement extend the build session and add a new endpoint that will be able to proxy requests coming from Rails-Workhorse to a specific service running in the build.
+
+The endpoint will be something like `/session/uuid/proxy/<build|or|service-name>/<port>/<requested-uri>`.
+
+This proxy mechanism should be able to be bi-directional. In this situation, we would need to handle websocket connections automatically. If the request is not a websocket one the proxy would act as an unidirectional reverse proxy.",3
+13138276,2018-07-31 14:41:17.460,Add support for interactive web terminal to Docker executor,"## Description
+
+So far we have added support in the interactive web terminal for `kubernetes` and `shell` executors; this issue adds support for the `docker` executor, which is used both by onsite installations on extensively on gitlab.com. This is purely a limitation of the runner and no other systems should be involved.
+
+## Proposal
+
+Have the docker executor implement the `InteractiveTerminal` and `Conn` interface from the `terminal` package. Use [`gitlab-terminal`](https://gitlab.com/gitlab-org/gitlab-terminal) to proxy connection to the WebSocket, issue for [`gitlab-terminal`](https://gitlab.com/gitlab-org/gitlab-terminal) to add support can be found in gitlab-org/gitlab-terminal#3
+
+### Keep container runner when terminal attached 
+
+By design, docker will stop the container when the pid 1 is finished. Meaning when the script has finished running it will stop the container, which is not what we want if the user is connected to the terminal, we want to keep the container running. Doing this requires behavioural changes to the docker executor inside of the runner, which are listed blow.
+
+#### Add `tail -f /dev/null`
+
+Adding `tail -f /dev/null` at the end of the script will keep the container running forever and then the runner is responsible of stoping the container either when the user closes the terminal connection, or the main script as finished. 
+
+Pros:
+
+- Don't change current runner behaviour
+
+Cons:
+
+- If `tail` is not present in the container this will not work
+- Will be quite hard to know when to kill the container if the user is connected, or if the script is still running (since the script will run forever)
+
+### Run container in detached mode 
+
+For certain containers, it is possible to keep the container running by doing the following `docker run -t -d centos` this will the container running since the default command is `bash`. After we start the container like that we will execute the script via `docker exec` and then stop the container when the `exec` is done or when the terminal connection is closed/timed out
+
+Pros:
+
+- Cleaner solution
+- No hacks
+- Same flow as the kubernetes executor
+
+Cons:
+
+- Changing workflow of runner 
+
+## Limitation of Docker executor
+
+For the Docker executor, as soon as the build script is finished (meaning what the user specified to run in `.gitlab-ci.yml`) the terminal will close. So:
+
+- Build starts
+- User connect to terminal, build script is running at the same time
+- Build script finished
+
+Now, normally what would happen is the timeout countdown starts ticking (this works for k8s and shell executors). For Docker, this will close immediately. The reason for that is a technical one on how docker behaves by default.
+
+As direct result it would be, for the Docker executor, the terminal is only available while the build is running.
+
+This will be resolved via https://gitlab.com/gitlab-org/gitlab-runner/issues/3605, giving users a way to enable this behavior.
+
+## Links to related issues and merge requests / references
+
+gitlab-org/gitlab-ce#25990
+
+gitlab-org/gitlab-terminal#3",5
+8275481,2017-12-19 12:43:15.648,Updates for Documentation - Autoscaling,"Based on https://gitlab.com/gitlab-org/gitlab-runner/blob/master/docs/install/autoscaling.md
+
+## docs/install/autoscaling.md
+
+* The link at `GitLab Runner installation documentation` goes to the GitLab repository (not relevant here), but should go to https://docs.gitlab.com/runner/install/
+* Docker Registry and Cache Server may not only be relevant when running in autoscaling. I would suggest to move it to a separate page
+
+Original issue: https://gitlab.com/gitlab-org/gitlab-runner/issues/2531",1
+5786639,2017-06-20 12:49:00.678,/cache volume is always added to volumes list,"### Summary
+
+When adding additional volumes via `register --docker-volume`, /cache is still added, even if a different volume for /cache is submitted.
+
+### Steps to reproduce
+
+run the register command in --non-interactive mode and append `--docker-volumes /srv/gitlab-runner/cache:/cache`
+
+check the created config.toml
+
+`volumes = [""/srv/gitlab-runner/cache:/cache"", ""/cache""]`
+
+
+### What is the current *bug* behavior?
+
+see ""steps to reproduce""
+
+### What is the expected *correct* behavior?
+
+gitlab-runner either automatically detects that /cache is already provided in a volume and doesn't add it a second time, or (since this might be hard to detect) at least offers a switch that disables automatically adding this volume, maybe with a warning attached that the user then must provide the volume mount point manually.
+
+### Relevant logs and/or screenshots
+
+The offending code seems to be at
+https://gitlab.com/gitlab-org/gitlab-runner/blob/master/commands/register.go#L108
+
+`s.Docker.Volumes = append(s.Docker.Volumes, ""/cache"")`
+
+There are no checks if it is even necessary and no way to disable this.
+
+### Possible fixes
+
+- Manually edit the config file after generation, removing the ""/cache"" entry (my current workaround, not a good solution)
+- Add a switch to give a more precise location for the ""/cache"" volume.
+- Add a switch to disable automatically adding ""/cache"" to the volumes list.
+- Automatically detect if a ""/cache"" volume is provided already by --docker-volumes and don't add ""/cache"" in these cases.",1
+5742599,2017-06-17 21:06:07.098,Updates for Documentation - Docker,"Based on https://gitlab.com/gitlab-org/gitlab-runner/blob/master/docs/install/docker.md
+
+## docs/install/docker.md
+
+* mounting docker containers as data volume is not anymore state of the art. Use `$ docker volume` to create a volume
+* The syntax for docker `$ docker run` is outdated (as of version `17.03`) Use `$ docker container run`
+* Mounting docker sockets: you mention the same `$ docker run` command twice in the chapter `## Docker image installation and configuration`
+",1
+3950176,2017-01-12 16:49:58.305,allow access at registration time  to be able to the runner active: false,"## Description
+
+We should add another improvement that will set active: false attribute for a registered Runner on GitLab's side. But this would need first an update in GitLab CI API in here https://gitlab.com/gitlab-org/gitlab-ce/blob/v8.15.0/lib/ci/api/runners.rb#L32.
+
+## Proposal
+
+--active=false or --active=true ( default)
+
+## Links to related issues and merge requests / references
+
+> Please paste a link of the related issues or/and merge requests",2
+2554342,2016-07-01 10:00:35.715,Aliases for services docker images,"We're really enjoying using GitLab CI with the container registry feature. However, we are struggling to use the ""services"" feature with our internally-defined docker images (from the GitLab container registry and another registry).
+
+We need to be able to use services where the image names are long and complicated, e.g.:
+
+```yaml
+job:
+    image: git.example.com:9999/group/project-a:latest
+    services:
+        - other-registry.example.com:9999/group/project-b:1.0
+        - git.example.com:9999/group-b/project-c:develop
+```
+
+It would really help if we could specify network aliases for each of these services (docker-compose allows something like this) e.g.:
+
+```yaml
+job:
+    image: git.example.com:9999/group/project-a:latest
+    services:
+        - backend:git.example.com:9999/group/project-b:1.0
+        - db:git.example.com:9999/group-b/project-c:develop
+    script:
+        - curl http://backend
+        - curl http://db
+```
+",9
+1176191,2016-02-09 00:03:09.346,"If cache was enabled once, disabling has no effect","We're using 1.0.2 runners. When I had `cache` enabled for a job it **always** restores the cache, even if I remove the cache setting from the job.
+
+Looks like the runner finds the cache and restores it, no matter what.
+
+Only workaround for me: Move the project to a new runner.",2
+675385,2015-11-15 18:08:07.441,"When to use register, verify, restart, and install","If I make changes to `/etc/gitlab-runner/config.toml` what do I need to do to make sure the runner
+picks up these changes?
+
+Also, the first time I start the runner, do I just need to use `gitlab-ci-multi-runner register -c /etc/gitlab-runner/config.toml`?",3

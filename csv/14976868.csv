@@ -1,0 +1,2471 @@
+issuekey,created,title,description,storypoints
+28778832,2019-12-16 17:04:35.927,Automatically delete clones after N hours of inactivity,"Goal
+===
+When a clone is inactive during N hours (should be configurable; default: 2), it has to be destroyed unless it is marked as ""protected from deletion"".
+
+""Inactive"" here means:
+
+- no new connections,
+- no SQL requests.
+
+""during N hours"" here means ""at least N hours"". It may be several minutes more. N is ""global"" for Database Lab instance.
+
+TODO / How to implement
+===
+:question: implementation details are not defined, first we need design proposal and discussion.
+
+On a separate note, do we need to tell the user somehow (in Database Lab API responses?) what is the current value of N?
+
+Acceptance criteria
+===
+As a user, I know that if I don't use a clone, it will be deleted after N hours. I also know that if I mark it ""protected"" it will never get deleted.",1
+28690420,2019-12-14 19:57:46.668,Bug: Endless wait if not enough privileges,"Goal
+===
+
+TODO / How to implement
+===
+![Screenshot_2019-12-14_at_22.58.15](/uploads/fe961ceb6ff1e1c2dd8d8b27c6bae3f0/Screenshot_2019-12-14_at_22.58.15.png)
+![Screenshot_2019-12-14_at_22.58.10](/uploads/9a5d5fb0bf27d59304e55066c375613a/Screenshot_2019-12-14_at_22.58.10.png)
+
+Acceptance criteria
+===",1
+28757360,2019-12-13 16:58:14.563,Use the real password,"1. [x] reset all the password for all existing users @NikolayS 
+1. [x] when creating a clone, use the DB username/password provided by a user @anatolystansler",4
+28316793,2019-12-11 15:25:10.689,Run DB Lab as a service,"Goal
+===
+Reliable launch of DB Lab.
+
+TODO / How to implement
+===
+- Docker `restart` option
+- Orchestration?
+- Nginx like?
+
+Acceptance criteria
+===",1
+28144424,2019-12-09 17:04:33.595,"Review all timestamps (db_state_at and others), clarify the meanings","Goal
+===
+`db_state_at` corresponds 
+
+- [x] UI @dmius 
+- [x] the platform reads the value from DB Lab API @dmius 
+- [ ] at snapshotting time on DB Lab instance, we need to determine `db_state_at` and store it somewhere
+    - [x] how do we get the timestamp if the originally we work with a replica? @NikolayS 
+    - [ ] how do we get time timestamp if we deal with a master? @NikolayS 
+    - [x] we do we store it? ---> in case of ZFS: zfs snapshot annotation, in other cases – depending on implementation (may be just files)
+- [ ] dblab API to provide the data @anatolystansler 
+- [ ] review texts
+
+TODO / How to implement
+===
+Review all timestamps, clarify the meanings. The time of the latest available database state seems to be not correct (too fresh). UI expects db_state_at, if there is no such field, we show ""unknown"".
+
+The logic for snapshots list exposure is needed. If a corresponding API call is made, we need to scan all existing snapshots, choose the proper ones according to some mask (should it be configurable?), and reply with list to the API call. Don't worry about long lists. Instead, consider providing a warning if the list exceeds 50 items (""The list of available snapshots exceeds 50, clean up some old ones not to waste of disk space and avoid potential performance degradation"").
+
+Acceptance criteria
+===",5
+28144256,2019-12-09 16:58:58.914,Speed up cloning in the case of continuous WAL replay,"Goal
+===
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",4
+28143021,2019-12-09 16:29:23.339,Declare Swagger and run it with DB lab instance,"Goal
+===
+Provide a clear insight to DB Lab API with Swagger specification and run Swagger UI with DB Lab.
+
+TODO / How to implement
+===
+- [x] Generate YAML file (API description for Swagger)
+- [ ] Add Swagger to the project, decide on URL (may be `/`)
+- [ ] (optional) Demo setup -- point to in in the docs (API reference)
+
+
+Acceptance criteria
+===
+As a DB Lab API user I am able to quickly see API reference provided by Swagger and I can experiment with API in the browser.",6
+28138900,2019-12-09 14:31:35.170,Postman collection for DBLab,"Goal
+===
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",1
+28138881,2019-12-09 14:31:05.565,DBLab+GUI+Platform - in kind or minikube,"Goal
+===
+Provide an ability to launch platform and DB lab on user's machines using Docker or Kind.
+
+TODO / How to implement
+===
+
+Acceptance criteria
+===
+",10
+26711487,2019-11-05 12:05:05.063,"If Postgres fatal error is not “DB is not starting up”, then we notify user about such a fatal, with details","1) if cannot connect to 6xxx port (""connection refused"" or so) – wait (but not more than 1min; after 1min give up and report an error),
+
+2) FATAL ""the database system is starting up"" – this is normal. Wait. (Can take long in case of PITR)
+
+3) any other FATALs -- give up immediately, report an error.",2
+26240323,2019-10-23 14:47:36.924,DB Lab agent,"
+- [x] Update README
+- [x] Prepare Postila data for demo 
+- [x] Move provision part of Joe to DB Lab as is
+- [ ] First version of REST API (see number 3 API Commands).
+- [ ] Joe works with REST API
+- [ ] Divide DB Lab in 2 parts: agent and control (orchestration) instance
+- [ ] Improve code (including AWS provision according to review done by Andrew)
+- [ ] 443 port? SSL configuration (Let's Encrypt certificates)
+
+1. Binary or container image
+1. API -- token
+1. API – commands:
+
+    - clone create (timestamp)
+    - clone reset (id)
+    - clone list 
+    - clone destroy (id)
+    - status of DB Lab instance",15
+29301033,2019-10-16 15:05:07.583,Refactoring after code review,"Fix issues from code review:
+- [x] Use dep <s>or modules</s>
+- [x] Go modules https://gitlab.com/postgres-ai/database-lab/issues/34
+- [x] Add comments to exported functions
+- [x] Missed error processing https://goreportcard.com/report/gitlab.com/postgres-ai/joe#L278
+- [x] golint and misspell warning from the same link (@NikolayS: I suppose there are multiple tools around – various linters – are we sure with our choice? let's discuss in this issue)
+- [x] Use absolute path of package instead of dots in imports, e.g. ""../ec2ctrl"". Different in modules https://stackoverflow.com/a/53016796/319692
+- [ ] Short write is possible here https://gitlab.com/postgres-ai/joe/blob/master/src/provision/aws.go#L323 better to do it like here https://golang.org/src/io/ioutil/ioutil.go?s=2534:2602#L69 or use lib functions (@Nikolays: this was written before moving the DB Lab code to a separate repository; so, the link is to `joe` repository. We need to start with applying changes in `database-lab` first because Joe code will eventually be based on it as well)",4
+29194118,2019-09-11 13:22:51.667,Postgres connection by unix sockets for management,"Goal
+===
+
+TODO / How to implement
+===
+Use unix sockets instead of TCP/IP to make Postgres connection. Better from security perspective and doesn't require port allocation. 
+
+Switch to work via Unix socket (can be `trust`) for everything (management tasks) except the end-user connections. End user connections can (should?) be via TCP socket, but with the password required. (Currently `md5`, but we will need to support `ldap` as well, enterprise users need it 100%).
+
+Acceptance criteria
+===",10
+90458722,2021-07-18 17:35:11.981,"""logical"": support restoring from a plain-text file","Goal
+===
+Currently, restore is working using pg_restore -- it means that plain-text format is not supported (when we need to use psql). We need to work with any format of dump, including plain-text
+
+- auto-detect that we deal with plain-text format (might be compressed - is it possible to automatically handle popular compression formats too?)
+- check if parallelization is not requested. If it is, print an error and exit (for plain-text files, we are going to support only single thread)
+- use psql to load the file
+
+TODO / How to implement
+===
+- Detect plain text format:
+  - only work with plain text format
+  - use `pg_restore -l dump.sql`
+  - extract `dbname` - how to do it reliably :question: 
+    - Parse database name from a dump file
+    - Consider dumps made by `dumpall`
+    - As a fallback (unless otherwise worked), we can use filename and convert (purify) it to a valid database name (manage the filename length and replace spaces, punctuation to underscore).
+https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+- Validate configuration (parallel jobs)
+- Build a psql restore command depends on format of a dump file:
+  - partial restore is not supported
+- Review and fix the docs:
+  - keep in mind potential configuration changes
+  - create a ""how-to"" guide to restore from plain-text files
+
+Acceptance criteria
+===
+As a DLE admin, I can use any popular dump formats, including plain text files.",16
+90389245,2021-07-16 12:14:52.690,Clean up a custom Docker network on DLE failure,"Goal
+===
+DLE creates its own Docker network. On a retrieval error, the Docker network continues to exist.
+
+If there are too many networks on the machine, an error occurs:
+```
+[ERROR] Error response from daemon: could not find an available, 
+non-overlapping IPv4 address pool among the defaults to assign to the network
+```
+
+TODO / How to implement
+===
+On DLE retrieval failure:
+- disconnect containers from a custom Docker network
+- clean up custom Docker networks
+
+Acceptance criteria
+===",2
+90089887,2021-07-12 03:33:13.181,DLE API/CLI– extend to support multiple volumes,"Goal
+===
+DLE API/CLI need to support the case of ""logical"" (dump/restore) data provisioning when we have 2 or more volumes and some rotation logic:
+- which snapshot belongs to which volume
+- which clone belongs to clone volume
+- what volume is active
+- what are the characteristics of each volume (disk space used, etc)
+- do we have spare volumes or all volumes are ""busy"" so we won't be able to perform next refresh unless we delete some clones (perhaps, this should be a warning of the global state of DLE)
+- each volume is supposed to have a single snapshot – `dataStateAt` is also an attribute of a volume?
+
+TODO / How to implement
+===
+
+TBD – @akartasov please add details here
+- Add a new field `Pool string` to the `Snapshot` struct
+- Clone contains a link to a snapshot that will contain a mention of the pool
+- Add to the `GET /status` response an active pool
+- Add to `GET /status` disk space metrics 
+  - Return ""N/A"" if data cannot be provided, e.g. files-related details on LVM. 
+  - Use both physical and logical sizes (`Used` and `LogicalReferenced`) for clones and snapshots.
+
+
+Acceptance criteria
+===
+As an admin or user of DLE, I can see the info about all volumes available. Particularly, I can understand the details of data refresh policy and what to expect during the next refresh attempt.",5
+88006822,2021-06-01 03:15:58.013,Provide config and diagnostic details in API,"Goal
+===
+Be able to discover important (or all non-secret) configuration options and other valuable details.
+
+TODO / How to implement
+===
+* [x] Uptime (time from control container start) - `/status`
+* [x] Current file system (aka thin clone manager)  - `/status`
+* [x] Compression ratio (in addition to disk size/usage) - `/status`
+* [x] Clone size (in list)  - `/status`
+* [x] Snapshot size (in list) - `/snapshots`
+* [x] Total size of clones  - `/status`
+* [x] Total size of snapshots  - `/status`
+* [x] Docker image (used for clones, see the global config)  - `/status`
+
+Return ""N/A"" if data cannot be provided, e.g. files-related details on LVM.
+
+Use both physical and logical sizes (`Used` and `LogicalReferenced`) for clones and snapshots.
+
+See also: https://gitlab.com/postgres-ai/platform/-/issues/156#data-thats-being-used
+
+Example
+```json
+{
+    ""status"": {
+        ""code"": ""OK"",
+        ""message"": ""Instance is ready""
+    },
+    ""fileSystem"": {
+        ""mode"": ""zfs"",
+        ""sizeHR"": ""192 MiB"",
+        ""freeHR"": ""164 MiB"",
+        ""usedHR"": ""28 MiB"",
+        ""dataSizeHR"": ""121 MiB"",
+        ""usedBySnapshotsHR"": ""183 KiB"",
+        ""compressRatio"": 4.53
+    },
+    ""expectedCloningTime"": 0,
+    ""numClones"": 0,
+    ""clones"": [],
+    ""pools"": [
+        {
+            ""name"": ""oldest5"",
+            ""mode"": ""zfs"",
+            ""dataStateAt"": """",
+            ""status"": ""active"",
+            ""cloneList"": [],
+            ""disk"": {
+                ""size"": 201278976,
+                ""free"": 171785728,
+                ""used"": 29493248,
+                ""usedBySnapshots"": 187392,
+                ""usedByChildren"": 244224,
+                ""dataSize"": 127020544,
+                ""compressRatio"": 4.53
+            }
+        }
+    ],
+    ""retrieving"": {
+        ""mode"": """",
+        ""status"": ""finished"",
+        ""nextRefresh"": ""2021-08-26T12:15:00Z"",
+        ""alerts"": {
+            ""refresh_skipped"": {
+                ""level"": ""warning"",
+                ""message"": ""Pool to perform full refresh not found. Skip refreshing"",
+                ""lastSeen"": ""2021-08-26T12:10:00.001036446Z"",
+                ""count"": 1
+            }
+        }
+    },
+    ""provisioner"": {
+        ""dockerImage"": ""postgresai/extended-postgres:11"",
+        ""containerConfig"": {
+            ""shm-size"": ""256MB""
+        }
+    },
+    ""startedAt"": ""2021-08-26T12:09:50Z""
+}
+```
+
+Acceptance criteria
+===",6
+87991548,2021-05-31 17:33:27.777,Add more details about snapshots,"Goal
+===
+Increase snapshots observability.
+
+TODO / How to implement
+===
+- [x] Snapshot size
+- [x] Number of clones which use the snapshot
+
+Return ""N/A"" if data cannot be provided, e.g. details on LVM.
+
+Acceptance criteria
+===",4
+77064826,2021-01-12 06:17:21.719,Basic clone observability,"Goal
+===
+To detect dangerous DDL and slow queries and describe reasons for it, DBLab should provide more data about DB migrations and EXPLAIN plans
+
+
+TODO / How to implement
+===
+- [x] Add an additional mount point to store observation artifacts - 2h
+- [x] Define artifacts structure and provide artifact management - (6-8h)
+  ```
+  /observer/
+    clone_id/
+        session_id/
+            pg_stat_statements/
+                statements.csv
+            pg_stats/
+                pg_stats_database.csv
+                pg_stat_bgwriter.csv
+                pg_stat_user_tables.csv
+                objects_size.csv
+            summary.json
+   ```
+   
+   **summary.json**
+   ```
+    {
+      ""session_id"": 1,
+      ""clone_id"": ""c0nta38hmvj68nrgn7jg"",
+      ""duration"": {
+        ""total"": ""35s"",
+        ""started_at"": ""2021-02-19T15:11:23.508Z"",
+        ""finished_at"": ""2021-02-19T15:11:59.106167994Z"",
+        ""max_query"": ""239ms""
+      },
+      ""db_size"": {
+        ""total"": ""7.7 MiB"",
+        ""diff"": ""10 B"",
+        ""objects_stat"": {
+          ""count"": 62,
+          ""row_estimate_sum"": 23232,
+          ""total_size_bytes_sum"": 8101888,
+          ""table_size_bytes_sum"": 4218880,
+          ""indexes_size_bytes_sum"": 3244032,
+          ""toast_size_bytes_sum"": 638976
+        }
+      },
+      ""locks"": {
+        ""total_interval"": 4,
+        ""warning_interval"": 0
+      },
+      ""stats"": {}
+    }
+   ```
+- [x] Collect data during observation sessions and store observation results as files - (14-18h)
+  - dangerous locks detected (consider as an artifact)
+  - duration
+    - duration in Lab
+    - estimated duration for prod
+  - pg_stat_statements - as an “amount of work” - buffers read/hit/dirtied/written
+  - pg_stat_*** standard views:
+    - op/tuple stats
+    - pg_stat_bgwriter (checkpointer, bgwriter, backend buffer stats)
+    - WAL written
+  - DB and its objects sizes and changes (similarly to L001 in postgres-checkup)
+  - dead tuples and bloat: should we analyze them?
+    - autovacuum settings – so far we didn't take care of them! (match prod)
+  - summary: ???? (what should be there - discuss and decide)
+- [x] Serve results via DLE API - (8-10h)
+  - GET `/observation/results/{clone_id}/{session_id}` - returns a session summary
+  - GET `/observation/results/{clone_id}/{session_id}/list` - returns a list of session result files
+  - GET `/observation/results/{clone_id}/{session_id}/file?path=pg_stat_activity/activity.csv` - download a session result file
+- [x] Clean up artifacts when destroying a clone - 2h
+
+
+Acceptance criteria
+===",36
+75901463,2020-12-10 13:21:24.082,Add an ability not to reset passwords of existing users in clones,"When a clone creates, an additional superuser is added and all passwords for current users are reset.
+
+There are some cases when the DB instance has several dozen users with different privileges which are significant. In such conditions, it is not possible to test the difference in privileges. 
+
+So, we need an additional setting to avoid resetting the existing user passwords:
+
+``` yaml
+   provision: 
+     keepUserPasswords: true
+```",3
+75795142,2020-12-09 02:58:56.079,Clean up service containers on DLE failure,"Goal
+===
+On a DLE error, the service containers continue to run. 
+
+If we use the restart on failure option for DLE, it creates another service container that can lead to data corruption.
+
+TODO / How to implement
+===
+Catch DLE error and stop service containers
+
+
+Acceptance criteria
+===",2
+74483400,2020-11-17 09:07:58.563,Allow running DLE with empty Platform configuration,"Goal
+===
+Empty Platform configuration leads to an error:
+```
+2020/11/17 09:04:35 [FATAL] invalid config of Platform Client given: URL and AccessToken must not be empty
+```
+
+TODO / How to implement
+===
+Make Platform configuration parameters optional
+
+Acceptance criteria
+===",2
+74482576,2020-11-17 08:54:59.079,Do not override user-defined configs in clones,"Goal
+===
+Do not override user-defined configs in clones
+
+TODO / How to implement
+===
+Apply only additional configs when creating a clone.
+
+Acceptance criteria
+===",2
+74406099,2020-11-16 03:50:06.542,Run sync instance asynchronously,"Goal
+===
+Run sync instance asynchronously not to wait while the database system is ready to accept connections
+
+TODO / How to implement
+===
+Run sync instance asynchronously as a separate goroutine
+
+Acceptance criteria
+===",4
+74405995,2020-11-16 03:44:16.389,"Automatically start PostgreSQL in a sync instance  + ""merge"" two Postgres images into one","Goal
+===
+To have an ability restart sync container manually
+
+TODO / How to implement
+===
+- prepare extended sync instance: add wal-g
+- adjust PostgreSQL configuration before start container
+- tune health checks, make sure it works
+- use one container to run them all
+- get rid of sync instance image
+
+Acceptance criteria
+===",8
+74233890,2020-11-12 03:19:08.474,Stuck clones on reset,"Goal
+===
+Fix the case when a clone is stuck on the reset operation 
+
+TODO / How to implement
+===
+Do not reset the clone and do not change the clone status if it is not started yet
+
+Acceptance criteria
+===",1
+74190289,2020-11-11 09:30:57.518,Build latest images for minor commit tags,"Goal
+===
+To have the latest image of minor versions including bugfixes
+
+TODO / How to implement
+===
+Build latest images for minor commit tags.
+Example: tag `2.0.1` additionally produces
+- `dblab:2.0-latest`
+- `dblab-server:2.0-latest`
+- `dblab-swagger-ui:2.0-latest`
+
+Acceptance criteria
+===",2
+74180456,2020-11-11 04:51:27.707,Use an actual PostgreSQL port to check idleness of clones,"Goal
+===
+The clone activity checker gets an error with the default PostgreSQL port and can stop idle clones.
+
+TODO / How to implement
+===
+Use the actual port to check active query.
+
+Acceptance criteria
+===",1
+74064557,2020-11-09 07:10:56.199,Refactor output of service containers,"Goal
+===
+Since we use CSV logs by default, we cannot rely on Docker logs:
+- rewrite health checks for:
+  - starting a sync instance on physical restore
+- retrieve important output of commands:
+   - error logs on fail
+   - `InspectCommandResponse` and `ExecCommand` for operations while physical restore: 
+      - running Postgres
+      - promotion Postgres
+      - restore command
+      - chown pgdata
+
+TODO / How to implement
+===
+- use `pg_isready` for health checks
+- forward output and errors
+
+
+Acceptance criteria
+===",6
+74053554,2020-11-09 04:48:45.172,Show human-readable GiB/MiB/... numbers in API responses,"Goal
+===
+Right now, we show disk usage, DB size, cloneDiffSize, etc in bytes, such as:
+
+```
+""cloneDiffSize"": 4792320
+```
+
+For humans, it is much more convenient to see it in human-readable form.
+
+Especially it makes sense for CLI.
+
+TODO / How to implement
+===
+In addition to raw numbers, show human-readable string values (with TiB / GiB / MiB / KiB)
+
+
+Acceptance criteria
+===
+As an API or CLI user, I can quickly understand the disk usage, object sizes.",1
+74053443,2020-11-09 04:42:59.349,Stop all dependent containers when DLE is stopped,"Goal
+===
+We need to stop (or even remove) the dependent containers when we stop the DLE's container.
+
+TODO / How to implement
+===
+- handle termination signals (os.Interrupt, syscall.SIGTERM)
+- stop processes inside control containers (PostgreSQL for sync instance)
+- remove control containers 
+
+Acceptance criteria
+===",8
+74053377,2020-11-09 04:39:57.590,Report DLE version in API responses,"Goal
+===
+As an API or CLI user, I want to know the DLE version.
+
+TODO / How to implement
+===
+
+- create a new CLI command `dblab instance version`
+- make a request `GET /healthz` from CLI
+
+```
+dblab instance version
+{
+    ""version"": ""2.0.3-1-ga9f501c-20201119-0417""
+}
+
+```
+
+
+Acceptance criteria
+===
+Working with DLE, I can always learn what DLE version it is.",1
+74052706,2020-11-09 04:11:22.438,"When DLE is restarted, do not lose clones","Goal
+===
+It's quite inconvenient that we lose all the close when restart is needed.
+
+A restart is needed when:
+- we need to change the config
+- during upgrades
+
+A restart might also happen unexpectedly (e.g., the machine rebooted).
+
+In all these cases, we risk losing some important work. That's why thin clones need to survive DLE restarts (and machine reboots).
+
+TODO / How to implement
+===
+
+- reload configuration https://gitlab.com/postgres-ai/database-lab/-/issues/134
+- upgrade:
+  - choose serialization format - 2
+  - handle an incoming signal - 2
+  - back up the state of running instances to file(?) on SIGUSR1 - 6
+    - InstanceID
+    - clone wrapper list (including clones, sessions)
+    - instance status
+    - port pool
+  - restore the state of backup instances - 12
+    - read serialized data
+    - initialize the state
+  - handle running processes inside DLE - 4
+  - add a configuration option to ignore restore file - 1
+  - merge existing configuration parameters with new ones - 6
+
+Acceptance criteria
+===
+As a DLE admin, I can restart DLE not losing clones, so people do not lose their work.",33
+74052618,2020-11-09 04:07:47.985,"On engine start, if there are some snapshots already, skip creation of the initial snapshot","Goal
+===
+When we start/restart the engine, if we have some snapshots already, it doesn't make sense to create another one immediately (and wait many minutes till opening the 2345 port). We can simply start working, and create snapshots on schedule.
+
+However, there is a question: what if we **need** to create a new snapshot? There is no API handler yet (related: https://gitlab.com/postgres-ai/database-lab/-/issues/65), and there are no other means for the DLE admin to initiate snapshot creation. -- Let's understand what to do with this before implementing this issue.
+
+TODO / How to implement
+===
+
+- disable creation of the initial snapshot by default
+- create the initial snapshot only if there are no available snapshots
+
+Acceptance criteria
+===
+As a DLE admin, I can start DLE much quicker (initial snapshot is not created if there are existing snapshots already).",1
+73968034,2020-11-06 11:27:27.276,Review default sync instance (and other Postgres containers) configuration,"Goal
+===
+To make sync instance running is more reliable and observable, including but not limited to:
+
+- all log_*** (e.g., we need `log_checkpoints = on`, autovacuum logging)
+- set `hot_standby = 'on'` explicitly (because it's off in 9.6 and older)
+
+For clones, we also need `track_io_timing = 'on'`.
+
+TODO / How to implement
+===
+
+- [x] Review and correct default configuration files for a sync instance: https://gitlab.com/postgres-ai/database-lab/-/tree/master/configs/postgres
+- [x] Make a configuration plan for each stage (how, which, and where we can configure a PostgreSQL instance):
+   - Default adjustment
+   - Sync Instance
+   - Promote instance
+   - Database snapshot
+   - User clone
+- [x] Provide an ability to configure `recovery.conf`
+- [x] Provide an ability to configure sync and promotion instances
+- [x] Create a configuration manager to make easy customization for each stage, use include directives
+   ```
+   include_if_exists postgresql.dblab.postgresql.conf
+   include_if_exists postgresql.dblab.pg_control.conf
+   include_if_exists postgresql.dblab.sync.conf
+   include_if_exists postgresql.dblab.promotion.conf
+   include_if_exists postgresql.dblab.snapshot.conf
+   include_if_exists postgresql.dblab.user_defined.conf
+   ```
+- [x] Config management optimization(do not override basic configs if they are already initialized)
+
+
+Acceptance criteria
+===",10
+73710986,2020-11-02 04:21:29.976,CI observer: Allow regexp filtering for Postgres logs before sending to the Platform,"Goal
+===
+As a DLE admin, I can set up regexp rules for Postgres logs. These rules are applied *before* sending the logs to the Platform, to ensure that personal data is masked properly.
+
+TODO / How to implement
+===
+- Extend database Lab configuration
+   ```yaml
+   observer:
+     replacementRules: 
+       ""regex"": ""replace""
+   ```
+- Build a map of processing fields 
+   ```
+   Processed Fields:
+      - message
+      - detail
+      - hint
+      - internal_query
+      - query
+   ```
+- Replace matched strings
+
+   Regex syntax: https://github.com/google/re2/wiki/Syntax
+- Add regex tests
+- Add docs
+
+
+Acceptance criteria
+===
+As a DLE admin, I can set up rules to avoid sending personal log-data (Postgres logs) to the Platform.",8
+73347487,2020-10-26 05:15:14.028,Improve preprocessing script experience,"Goal
+===
+For now, it's quite difficult to run SQL-command in a preprocessing script because the PostgreSQL instance is not running
+
+TODO / How to implement
+===
+Allow users to run a preprocessing script during the promotion stage when PostgreSQL is running and ready to receive commands
+
+- I am able to execute SQL scripts without thinking of where to connect
+- I am able to execute Bash scripts too
+- <s>I am able to use env variables inside SQL scripts</s>
+- Add docs
+- Parallelization: alphabet order; if scripts are placed in a folder, run them simultaneously. For example,
+   ```
+   - abc.sql
+   - init.sql
+   parallel/
+     - example.sql
+     - new_script.sql
+     - run.sql
+   - test.sql
+   - wrap.sql
+   ```
+
+
+### Example
+```yaml
+    physicalSnapshot:
+      options:
+...
+        # Promote PGDATA after data fetching.
+        promotion:
+...
+          # It is possible to define pre-precessing SQL queries. For example, ""/tmp/scripts/sql"".
+          # Default: empty string (no pre-processing defined).
+          queryPreprocessing:
+            # Path to SQL pre-processing queries.
+            queryPath: ""/sql-scripts""
+
+            # Worker limit for parallel queries.
+            maxParallelWorkers: 2
+```
+Acceptance criteria
+===",10
+72966456,2020-10-19 14:53:13.174,Fix DLE tests,"Goal
+===
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",3
+72250146,2020-10-06 11:30:19.969,DLE API for automatic checks of DB migrations,"Goal
+===
+Create an API to provide automatic checks of DB migrations
+
+TODO / How to implement
+===
+`database-lab`: `observer-start`/`observer-finish` using API, async (16h)
+* `observer-start` - starts dblab session and starts observing 3h
+  * create session on the platform
+  * session ID generated on the side of dblab (\~UUID)
+* `observer-finish` - finished dblab session, makes summary, reports to the Platform 10h
+  * change clone status (OK -> EXPORTING -> OK)
+  * update session on the platform (upload meta)
+  * upload logs (single request, what is file size limit :question:; multipart upload/gzip on NGINX)
+* do not idle delete clone in EXPORTING status 1h
+* CLI, API initiate the processes that is being executed on DLE side, async 2h
+
+https://gitlab.com/postgres-ai/database-lab/-/issues/171#note_424320002
+
+Acceptance criteria
+===",16
+72231631,2020-10-06 06:02:08.774,Design API contract for automatic checks of DB migrations,"Goal
+===
+Design API contract
+
+* start/finish on dblab
+* upsert session (or create and update session) and upload logs
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",4
+71878288,2020-09-29 14:19:53.451,Synchronize max_connections parameter on restore,"Goal
+===
+Synchronize `max_connections` parameter to avoid errors on start:
+```
+2020/09/29 03:59:37 [INFO]   Running container: dblab_phr_btpb29m7graql4bukts0. ID: 62db8684e45f2dce119552f7aba9b123a1229e96a56901a7508a86176e914eda
+2020/09/29 03:59:37 [INFO]   Running restore command:  pgbackrest --process-max=4 --type=immediate restore
+2020/09/29 04:01:03 [INFO]   Restoring job has been finished
+2020/09/29 04:01:03 [DEBUG]  Configuring Postgres...
+2020/09/29 04:01:04 [INFO]   Running refresh command
+k2020-09-29 11:01:04.661 +07 [32]: [1-1] db=,user= (,) LOG:  listening on IPv4 address ""0.0.0.0"", port 5432
+�2020-09-29 11:01:04.663 +07 [32]: [2-1] db=,user= (,) LOG:  could not create IPv6 socket for address ""::"": Address family not supported by protocol
+y2020-09-29 11:01:04.664 +07 [32]: [3-1] db=,user= (,) LOG:  listening on Unix socket ""/var/run/postgresql/.s.PGSQL.5432""
+�2020-09-29 11:01:04.906 +07 [39]: [1-1] db=,user= (,) LOG:  database system was interrupted; last known up at 2020-09-29 01:21:08 +07
+y2020-09-29 11:01:05.037 +07 [39]: [2-1] db=,user= (,) LOG:  starting point-in-time recovery to earliest consistent point
+n2020-09-29 11:01:05.052 +07 [39]: [3-1] db=,user= (,) LOG:  restored log file ""00000024.history"" from archive
+v2020-09-29 11:01:05.128 +07 [39]: [4-1] db=,user= (,) LOG:  restored log file ""0000002400000149000000DB"" from archive
+�2020-09-29 11:01:05.149 +07 [39]: [5-1] db=,user= (,) FATAL:  hot standby is not possible because max_connections = 300 is a lower setting than on the master server (its value was 2000)
+�2020-09-29 11:01:05.150 +07 [32]: [4-1] db=,user= (,) LOG:  startup process (PID 39) exited with exit code 1
+2020-09-29 11:01:05.150 +07 [32]: [5-1] db=,user= (,) LOG:  aborting startup due to startup process failure
+Y2020-09-29 11:01:05.175 +07 [32]: [6-1] db=,user= (,) LOG:  database system is shut down
+2020/09/29 04:01:05 [INFO]   Removing container ID: 62db8684e45f2dce119552f7aba9b123a1229e96a56901a7508a86176e914eda
+2020/09/29 04:02:05 [INFO]   Container ""62db8684e45f2dce119552f7aba9b123a1229e96a56901a7508a86176e914eda"" has been removed
+2020/09/29 04:02:05 [FATAL]  Failed to run the data retrieval service: failed to refresh data: database instance is not running
+```
+
+TODO / How to implement
+===
+Before Postgres starts (on a physical restore step), retrieve the `max_connections` parameter and set it to the configuration file.
+Use `pg_controldata`:
+```bash
+$ sudo -u postgres /usr/lib/postgresql/11/bin/pg_controldata -D /var/lib/postgresql/11/main | grep max_connections
+max_connections setting:              100
+```
+
+
+Acceptance criteria
+===",3
+71424955,2020-09-21 04:14:00.429,Dynamically allocated port,"Let's implement what is proposed in https://gitlab.com/postgres-ai/database-lab/-/merge_requests/127: use dynamically allocated port inside containers, to allow using `show port;` in applications
+
+(which currently is returning `5432` always, introducing confusions and caveats -- this is a problem in certain scenarios).",2
+71424756,2020-09-21 04:05:21.824,Support PostgreSQL 13,"Goal
+===
+Support PostgreSQL which is to be released on September 24.
+
+TODO / How to implement
+===
+- [ ] Carefully read release notes: https://www.postgresql.org/docs/release/13.0/
+- [-] <s>Prepare extended Postgres image https://gitlab.com/postgres-ai/custom-images/-/issues/2</s>
+- [x] Carefully test
+    - [ ] physical mode
+    - [ ] logical mode
+- [ ] add tests for 13
+- [-] <s>Pay attention to changes in `pg_stat_***` – there are new columns, and we may benefit from having them</s>
+- [-] <s>Consider using `pg_stat_progress_basebackup` to show progress of running `pg_basebackup` for physical initialization mode https://www.postgresql.org/docs/13/progress-reporting.html#BASEBACKUP-PROGRESS-REPORTING</s>
+
+Acceptance criteria
+===
+Database Lab Engine can be used for Postgres 13.",5
+71424625,2020-09-21 03:58:45.997,Full refresh without losing clones,"Goal
+===
+Allow performing full refresh in ""logical"" provisioning mode, without interruptions, not losing the existing clones and snapshots.
+
+TODO / How to implement
+===
+
+
+- [x] reorganize FS configuration
+   - create mountpoint configuration structs
+- [x] refactor FS pool managers
+   - create zfs and lvm filesystem managers
+- [x] retrieval pool rotation
+   - detect the next pool to update
+   - pool switching
+   - reload service configuration
+- [x] running an actual retrieval chain
+   - reproduce retrieval job execution
+- [x] running a refresh scheduler
+   - create a timetable
+   - cancel nested snapshot schedulers
+- [x] cloning with different fs pools
+   - provide fs managed pools to the cloning service
+   - adopt cloning operations
+- [x] idle timeouts
+   - detect clone idleness for all managed pools
+
+----
+The problem is that normally, we refresh the instance fully. To do that, we need to erase PGDATA.
+
+A possible solution would be using a separate volume / ZFS pool (most convenient in clouds: EBS volume on AWS, PD disk on GCP, etc.), and performing initialization of PGDATA there, not interrupting the work of the existing Database Lab Engine.
+
+Next, once new PGDATA is initialized, we have options/ideas: 
+- straightforward reload. Cons: disk space overhead. We can try to use ZFS deduplication in order to avoid the negative effect. Steps:
+   - remove existing PGDATA
+   - load new PGDATA
+   - create a new snapshot
+
+- rsync or copy the new data to the ""main"" disk overwriting the existing data, and create a new snapshot (there are risks that deviation will be so significant in terms ""delta"" of data blocks, that it will ""eat"" disk space significantly -- thorough testing is needed); This solution is based on assumption that oids do not change. If the schema has changed, fully refresh of PGDATA might be required
+
+- use ""baseline"" snapshot to reduce the delta:
+    - when performing a fresh setup, create an ""initial"" ZFS snapshot, when there is no PGDATA yet,
+    - always keep this snapshot,
+    - before fetching a fresh PGDATA to a new volume, mirror from that snapshot first somehow (using a temporary clone on the ""main"" zpool, or using `zfs send)
+    - once new PGDATA on a temporary zpool is ready, mirror it back to the ""main zpool"",
+    - then create a new snapshot on the main zpool,
+    - destroy a temporary zpool / disk / volume.
+
+For clouds (e.g., in the case of AWS / RDS), it is important to implement an automated provision of a temporary disk (AWS: EBS volume), which needs to be auto-deleted at the end of the refresh operation.
+
+Again, first, thorough testing is required to explore the possibilities and resolve possible issues with the approach described.
+
+Acceptance criteria
+===
+As a Database Lab Engine administrator, I can set up a workflow in which periodical refreshing in ""logical"" provisioning mode does not lead of temporary downtime and losing the existing clones – I just need an additional disk space (in clouds – temporarily).",42
+72712637,2020-09-17 16:58:08.019,postgres on zfs benchmarking,"Goal
+===
+
+TODO / How to implement
+===
+- [x] create benchmarks for zfs performance (create, write, read, delete files), how it depends on:  
+  - [x] record size
+  - [x] compression
+  - [x] deduplication
+
+
+Acceptance criteria
+===",3
+71122546,2020-09-14 15:50:24.618,Database Lab terraform module,"Goal
+===
+- Deploy to AWS on EC2 instances
+- (?) Deploy to GCP
+
+TODO / How to implement
+===
+- Create AMI
+- Tests
+
+
+Acceptance criteria
+===",13
+71119438,2020-09-14 14:50:03.735,Create custom CI runner for tests,"Goal
+===
+Be able to automatically launch tests of Database Lab using runners. We want to be able to use ZFS, that's why we probably need a CI runners on our machine with special configuration.
+
+TODO / How to implement
+===
+- [x] Create custom runner
+- [x] Launch test scripts and check that everything works
+
+Acceptance criteria
+===",8
+70185553,2020-08-24 02:33:22.262,logical provisioning: support  pg_dump_anon,"Goal
+===
+We need to be able to use an alternative to pg_dump, for example [pg_dump_anon](https://postgresql-anonymizer.readthedocs.io/en/stable/anonymous_dumps/)
+
+TODO / How to implement
+===
+We already have postgres_anonymizer in our extended docker image.
+
+But pg_dump is hard-coded. Allow substituting it by pg_dump_anon.
+
+pg_dump_anon doesn't support `-j`, and it supports only `plain` format right now.
+
+Acceptance criteria
+===
+I'm able to refresh Database Lab from production or another Database Lab with configured masking based on postgres_anonymizer, so no PII reaches my non-production environments.
+
+When testing: ensure that some masking is working: define a masking rule for some column/username pair, see https://postgresql-anonymizer.readthedocs.io/en/stable/dynamic_masking/ -- on the destination, we must see the masked value.",4
+69804746,2020-08-13 13:41:57.380,Automated setup: automatic pull and remove Docker images,"Goal
+===
+Automatically pull and remove Docker images to improve retriever user experience
+
+TODO / How to implement
+===
+- automatically pull absent images
+- stop and remove unused images for physical restore (`retriever_physical_restore`)
+
+
+Acceptance criteria
+===",2
+69768241,2020-08-12 15:28:34.736,Postgres config management in the case of physical data retrieval,"Goal
+===
+Currently, during physical data retrieval, we rely on postgresql.conf that comes with backup or is brought by pg_basebackup. This is not reliable because such a config may contain various unexpected actions.
+
+We aim to control postgresql.conf fully. (And later, in a separate issue, pg_hba.conf as well).
+
+For that, we want to start from a default postgresql.conf always, and apply transformations needed for Database Lab's work.
+
+TODO / How to implement
+===
+- [ ] always start with the default postgresql.conf. We need to have them as a starting point. To get it, use `initdb -D /path`.
+- [ ] set shared_buffers to some small value that will be enough for maintenance tasks and sync instance activity (should be configurable in dblab config; `100MB` should be enough)
+- [ ] apply adjustments that user configures in the main dblab config – we'll ask to provide 3 things:
+    - [ ] `work_mem` and all the planner settings such as `effective_cache_size`. We'll ask user to get it using the following query with regexp:
+    ```sql
+    select format($$%s = '%s'$$, name, setting)
+    from pg_settings
+    where name ~ '(work_mem$|^enable_|_cost$|scan_size$|effective_cache_size|^jit|^geqo|default_statistics_target|constraint_exclusion|cursor_tuple_fraction|collapse_limit$|parallel|plan_cache_mode)';
+    ```
+    - [ ] apply `shared_preload_libraries` that user configured in the main dblab config (default is `pg_stat_statements`, its our minimum)
+    - [ ] apply extensions-related params, if any
+- [ ] take care of `log_***` settings
+
+Acceptance criteria
+===
+As a user, I know what I need to provide in the main dblab config to configure and use Database Lab with automated ""physical"" data retrieval. This process doesn't depend on the fact if or if not `postgresql.conf` is prese in PGDATA on the source.",3
+69383391,2020-08-03 19:55:08.784,Automatic setup: snapshot schedule and retention policy,"Goal
+===
+Configure snapshot creation schedule and retention policy (autodeletion).
+
+TODO / How to implement
+===
+- create a new `snapshot` stage
+- provide stage configuration. For example,
+    ```yaml
+    snapshot:
+      jobs:
+        - name: snapshotting
+          options:
+            schedule: ""0 */6 * * *""
+            retention:
+              snapshotLimit: 4
+    ```
+- snapshot creation 
+  - parse schedule
+  - run a task to create a snapshot
+- autodeletion - periodically run a task to remove old snapshots. Check `scripts/cleanup_zfs_snapshot.sh`
+  - detect old snapshots
+  - remove detected snapshots
+
+Acceptance criteria
+===",12
+69347728,2020-08-03 04:56:21.205,Sync instance: add a separate stage and configuration,"Goal
+===
+Run sync instance in order to keep data from physical backup up-to-date
+
+TODO / How to implement
+===
+- options:
+    - arbitrary `restore_command` or `primary_conninfo`
+    - use WAL-G for the first step
+- integrate as an option to existing stages
+- prepare stage configuration(docker images, credentials, volumes)
+
+Acceptance criteria
+===",8
+69329748,2020-08-01 21:20:31.070,Automated setup: always recalculate statistics when restored from a dump,"Goal
+===
+When we use ""logical"" data provisioning, restoring from a dump, initially, there are no actual stats in the database. As the last step for the restore job, there should be stats recalculation.
+
+Without stats, the optimizer chooses sub-optimal plans.
+
+TODO / How to implement
+===
+After running pg_restore, always run `vacuum analyze freeze;` in the target database.
+
+Acceptance criteria
+===
+As us user, using ""logical"" data retrieval approach (for example, for an RDS database as a source), I get the result with up-to-date stats, so the performance, the SQL execution plans are good.",2
+69029156,2020-07-27 15:51:41.663,"Automated setup: extend ""extended-postgres"" – more Postgres extensions","Related: https://gitlab.com/postgres-ai/database-lab/-/issues/138
+
+Goal
+===
+Add most of all popular Postgres extensions to `extended-postgres`.
+
+TODO / How to implement
+===
+- [x] define and review the list of the most popular extensions @NikolayS @fomin.list :four: 
+    - RDS and others
+    - github activity
+    - search: any ratings?
+    - we expect ~20-30
+- [x] extend ""extended-postgres"" :ten:
+    - most are installed via `apt-get install` or `apk add` (if -alpine)
+    - we must support 9.6, 10, 11, 12
+    - some require compilation (should we take them at all?) -- 80/20 rule
+- [x] ensure it's published on Docker Hub https://hub.docker.com/r/postgresai/extended-postgres
+- [ ] docs: describe the list of supported Postgres extensions :two: 
+
+Acceptance criteria
+===
+As a user, I don't do any additional actions to launch my first Database Lab for my real database (extensions I use are already supported by Database Lab, in 99%).",16
+69028872,2020-07-27 15:43:22.874,Automated setup: basic Postgres configuration (physical & logical),"Goal
+===
+Simplify configuration when setting up Database Lab.
+
+TODO / How to implement
+===
+- [x] first, we take the default `postgresql.conf`
+- [x] MAIN: `shared_buffers`: 200M for sync instance and 1/N (or constant; pre-defined in config) of RAM for clones 
+- [x] MAIN: override all params required for Database Lab: logging connections, etc
+- [x] planner params, `effective_cache_size`, to match production -- we support changing it right in the main Database Lab configuration file (but we don't edit them automatically)
+- [x] pg_hba.conf - only changes required for Database Lab – same principle (allow to extend it)
+- [x] review what's happening to config during snapshotting
+
+
+### Config suggestions
+
+from prod:
+```
+# Use values from the source (production) to make the planner work similarly
+effective_cache_size = ..
+seq_page_cost = ..
+random_page_cost = ..
+work_mem = ...
+maintenance_work_mem = ...
+# ... and the other 'planner' settings, see https://www.postgresql.org/docs/current/runtime-config-query.html
+```
+
+this we need to enforce (same as  log_***)
+```
+min_wal_size = '1GB'
+max_wal_size = '16GB'
+checkpoint_timeout = '15min'
+checkpoint_completion_target = 0.9
+```
+
+For the docs
+```
+select format($$%s = '%s'$$, name, setting)
+from pg_settings
+where name ~ '(work_mem$|^enable_|_cost$|scan_size$|effective_cache_size|^jit|^geqo|default_statistics_target|constraint_exclusion|cursor_tuple_fraction|collapse_limit$|parallel|plan_cache_mode)';
+```
+
+Acceptance criteria
+===
+As a user, I just edit the main config (paying attention to: `shared_buffers`), launch Database Lab, and it works, without requiring to change any config params.",10
+69028672,2020-07-27 15:37:24.947,Automated setup: create the first snapshot (physical case),"Goal
+===
+Right after retrieval/refresh of PGDATA the very 1st snapshot should be created automatically. :warning: This issue is only about physical retrieval.
+
+TODO / How to implement
+===
+- [x] adjust pre-snapshot configs
+- [x] promote database
+- [x] keep metadata to a file
+- [x] customize a snapshot script 
+- [x] add an ability for custom pre-processing
+
+Acceptance criteria
+===
+TBD
+
+Related #139",14
+43299080,2020-06-15 04:42:49.278,Reload configuration without downtime,"Goal
+===
+Reload configuration without stopping the service
+
+TODO / How to implement
+===
+Handle the `SIGHUP` signal to reload service configuration
+
+
+Acceptance criteria
+===",6
+43295900,2020-06-15 04:37:37.534,Synchronization or port allocation statuses.,"Goal
+===
+Port may be allocated twice, resulting in an error
+
+TODO / How to implement
+===
+Don't allocate the same port simultaneously. It's necessary to add a synchronization mechanism.
+
+There is an issue in the StartSession function(pkg/services/provision/mode_local.go):
+
+```
+	// TODO(anatoly): Synchronization or port allocation statuses.
+	port, err := j.getFreePort()
+	if err != nil {
+		return nil, errors.New(""failed to get a free port"")
+	}
+...
+	err = j.setPort(port, true)
+	if err != nil {
+		return nil, errors.Wrap(err, ""failed to set a port"")
+	}
+```
+Acceptance criteria
+===",2
+49913552,2020-06-05 14:51:06.723,"API returns the list of clones without specific order (was: ""UI: Order list of clones"")","Goal
+===
+Currently, the list of clones on the page of DB Lab instance (https://postgres.ai/console/XXXX/instances/XXXX) is without a specific order. This is inconvenient. We need a predefined order.
+
+TODO / How to implement
+===
+- This must be implemented at the Database Lab API level. `instance status` and `clone list` – they both have to return the list of clones ordered by creation time, desc (the newest is the 1st).
+
+
+Acceptance criteria
+===
+As a user, if I refresh the page, the list of clones doesn't change the order.",2
+35053542,2020-05-27 09:31:42.723,Add error details to the status message on failure,"Goal
+===
+Set a specific error message instead of a default message on failure: `Cloning failure.`
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",4
+34407435,2020-05-11 15:28:46.416,Port visibility,"Goal
+===
+Limit access to control port to local network interface by default.
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",2
+34311004,2020-05-08 11:58:50.536,Make a cleanup script more reliable,"Goal
+===
+If the creation of a snapshot is being failed during a few days, the cleanup script can eventually remove all snapshots
+```
+0 4 * * *   ZFS_POOL=""zpool""   PGDATA_SUBDIR=""/postgresql/data""   MOUNT_DIR=""/var/lib/dblab/clones""   SUDO_CMD=""sudo -u postgres""  bash /home/ubuntu/database-lab/scripts/create_zfs_snapshot.sh | logger --stderr --tag ""create_zfs_snapshot""
+0 6 * * * sudo zfs list -t snapshot -o name | grep -v clone | grep -v NAME | head -n -3 | xargs -n1 --no-run-if-empty sudo zfs destroy -R 2>&1  | logger --stderr --tag ""cleanup_zfs_snapshot""
+```
+
+TODO / How to implement
+===
+- Do not remove the last snapshot: 
+    - use `head -n -NUM` because the command option with the leading `-` prints all except the last NUM lines of the input
+- ~~Do not remove the snapshot from which a clone was created~~ **Update**: clone will not be removed:
+   ```
+     $ sudo zfs destroy -R dblab_pool_replica/clone_pre_20200611092119
+     cannot destroy 'dblab_pool_replica/dblab_clone_6000': dataset is busy
+   ```
+- Restart sync instance even on failure the snapshot script
+
+
+Acceptance criteria
+===",1
+33914235,2020-04-28 17:02:03.258,Improve create_zfs_snapshot script,"Goal
+===
+- [x] Define variable `dockerImage`: `postgres:${pg_ver}-alpine`
+- [x] Better comments from `pgdata_subdir=${PGDATA_SUBDIR:-""""}`. Like: `export PGDATA_SUBDIR=""/<dir name, but not full path, and dont forget '/'>""`
+- [x] Set default value for `datastateat` if it's empty
+- [x] [Separate issue?] `docker run -it --rm  -v /etc/passwd:/etc/passwd:ro -e POSTGRES_PASSWORD=mysecretpassword -d postgres`
+
+```
+# diff create_zfs_snapshot.sh create_zfs_snapshot.sh.base 
+32c32
+< container_pgdata_dir=""/var/lib/postgresql/data""
+---
+> container_pgdata_dir=""/var/lib/postgresql/pgdata""
+41c41
+< sudo_cmd=${SUDO_CMD:-""sudo -u postgres""} # Use `sudo -u postgres` for default environment
+---
+> sudo_cmd=${SUDO_CMD:-""""} # Use `sudo -u postgres` for default environment
+57,59d56
+< pg_ver_full=$(${sudo_cmd} cat ${clone_pgdata_dir}/PG_VERSION)
+< 
+< image_name=${IMAGE_NAME:-""postgres:${pg_ver}-alpine""}
+80,81d76
+< sed -i 's/^\\(.*stats_temp_directory\\)/# \\1/' ${clone_pgdata_dir}/postgresql.conf
+< sed -i 's/^\\(.*include_dir\\)/# \\1/' ${clone_pgdata_dir}/postgresql.conf
+130d124
+<   --volume /etc/passwd:/etc/passwd:ro \
+131a126
+>   --user postgres \
+133c128
+<   ${image_name}
+---
+>   postgres:${pg_ver}-alpine
+182c177
+<   sudo docker exec ${container_name} ${sudo_cmd} /usr/lib/postgresql/${pg_ver_full}/bin/pg_ctl -D ${container_pgdata_dir} -W promote
+---
+>   sudo docker exec ${container_name} pg_ctl -D ${container_pgdata_dir} -W promote
+```
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",3
+33509919,2020-04-20 10:46:27.238,Incorrent clone size in metadata,"Goal
+===
+- CloneSize -> CloneDiffSize in API (console, database lab, update specification)
+- Are we sure that data size is correct?
+
+Following the tutorial, when you do `psql ... -c '\l+'`, it shows correct size, as expected (\~1.5 GiB), but when you do `dblab clone list`, it shows weird size something like ~200,000:
+
+```
+        ""metadata"": {
+            ""cloneSize"": 217088,
+            ""cloningTime"": 1.344037454,
+            ""maxIdleMinutes"": 20
+        },
+```
+
+`cloneSize` seems to be diff size, needs renaming
+
+Current values:
+- CLI: `""cloneSize"": 218112`, 
+- GUI: `Data size: 2.504 GiB`, 
+- psql is correct: `1503 MB`
+
+```
+$ zfs list -po name,used,mountpoint,compressratio,available,type,origin,creation,referenced,logicalreferenced,logicalused,dblab:datastateat -S dblab:datastateat -S creation -t filesystem
+NAME                              USED  MOUNTPOINT                              RATIO        AVAIL  TYPE        ORIGIN             CREATION        REFER      LREFER       LUSED  DBLAB:DATASTATEAT
+dblab_pool/dblab_clone_6000     440320  /var/lib/dblab/clones/dblab_clone_6000   2.10  33532292608  filesystem  dblab_pool@initdb  1587380790  532452352  2688620544      592384  -
+dblab_pool                   533844480  /var/lib/dblab/data                      5.17  33532292608  filesystem  -                  1587325346  532447232  2688612864  2689524224  -
+```
+
+
+TODO / How to implement
+===
+Fix clone size in CLI, GUI and Database Lab API response
+
+Data size is correct:
+```
+/var/lib/dblab/data# du -h --apparent-size | sort -rh | head -10
+2.5G	.
+1.5G	./base/16384
+1.5G	./base
+1.1G	./pg_wal
+7.8M	./base/13423
+7.7M	./base/13422
+7.7M	./base/1
+623K	./global
+17K	./pg_multixact
+14K	./pg_stat
+```
+
+
+Acceptance criteria
+===",4
+33507178,2020-04-20 09:47:05.518,"Define health check endpoint + add ""signature"" to 404 errors","Goal
+===
+To easily make sure that service is running and describe its status
+
+TODO / How to implement
+===
+- add `GET /healthz` endpoint
+- log incoming requests to this endpoint
+- add version and build time to response
+
+
+Acceptance criteria
+===",2
+33506723,2020-04-20 09:38:06.204,Provide cross-platform CLI artifacts,"Goal
+===
+Curl installation of CLI tool wouldn't work on non-Linux systems. We need MacOS, Windows and FreeBSD versions as well.
+
+TODO / How to implement
+===
+- Build binaries for: linux, darwin, freebsd, windows in CI
+- Improve the cli_install script to automatic downloading CLI binaries
+
+MR: https://gitlab.com/postgres-ai/database-lab/-/merge_requests/98
+
+Acceptance criteria
+===",4
+33505717,2020-04-20 09:14:36.455,Refactoring API response errors,"Goal
+===
+To add more details, hints for errors and specify `INTERNAL_ERROR` (it should be used only for *unpredicted* errors).
+For example, in GUI:
+```
+Something went wrong. clone with such ID already exists 
+Full response: 
+{""error"": {}, 
+""content"": {""code"": ""INTERNAL_ERROR"", ""hint"": """", ""detail"": ""clone with such ID already exists"", ""message"": ""Internal server error.""}, 
+""message"": ""Internal Server Error"", 
+""status_code"": 500}
+```
+
+TODO / How to implement
+===
+- check the relevance of API responses, adjust if needed
+- prepare list of code errors for the docs.
+
+
+
+Acceptance criteria
+===",6
+33505314,2020-04-20 09:05:09.241,Change the default port to 2345,"Goal
+===
+To avoid possible conflicts, change the default server port of the Database Lab to 2345
+
+TODO / How to implement
+===
+
+- change the default value of server port: `3000` to `2345` for Database Lab instances
+- take into account the documentation
+
+
+Acceptance criteria
+===",1
+31922345,2020-03-12 14:56:08.567,Database Lab - Telemetry,"Goal
+===
+
+As a Database Lab user I want to be able to collect performance metrics about a clone (e.g. for verifying of database migrations).
+
+Implement basic support with following artefacts collection:
+- [x] Telemetry collection duration;
+- [x] Locks monitoring.
+- [x] CI/CD: how can we understand if it fails?
+
+TODO / How to implement
+===
+Original idea:
+New client CLI commands:
+- `dblab telemetry start` - starts collection of metrics (deletes previously collected artefacts);
+- `dblab telemetry stop` - stops collection of metrics, interval services, executes additional scripts;
+- `dblab telemetry status` - gets short summary about migration status;
+- `dblab telemetry download` - downloads artefacts from Database Lab machine to a user's machine.
+
+Implement corresponding API handles.
+
+Usage:
+```
+dblab clone create ...
+dblab telemetry start
+
+sqitch  deploy
+
+dblab telemetry stop
+dblab telemetry download
+```
+
+Suggestions from standup call:
+- Use Prometheus format for export of time series data
+- `dblab clone observe -f CLONE_ID`
+- Use `start`, `stop` or not?
+
+Improved idea:
+- Collect telemetry and expose it in Prometheus format or use https://github.com/wrouesnel/postgres_exporter.
+- Collect telemetry all the time for all clones.
+- Use `dblab clone observe -f CLONE_ID` to retrieve current telemetry for the clone.
+- Use `dblab clone start-observe CLONE_ID` and `dblab clone stop-observe CLONE_ID` to get aggregated statistics about duration and locks and the end of a DB migration test.
+
+Fastest implementation:
+- Execute monitoring queries from Database Lab CLI itself, do not change server or its API.
+- Use `dblab clone observe -f CLONE_ID` to start observing and `dblab clone stop-observe CLONE_ID` to stop observing and show aggregated metrics.
+
+
+Acceptance criteria
+===",13
+31576111,2020-03-05 03:32:55.892,"Cannot delete a ""failed"" clone","There is a clone:
+
+```
+$ dblab clone list
+...json
+    {
+        ""id"": ""joe-bpfrfqt4h85p27j6426g"",
+        ""snapshot"": {
+            ""id"": ""zpool/clone_pre_20200304065541@snapshot_20200304065541"",
+            ""createdAt"": ""2020-03-04 06:58:12 UTC"",
+            ""dataStateAt"": ""2020-03-04 06:55:33 UTC""
+        },
+        ""protected"": false,
+        ""deleteAt"": """",
+        ""createdAt"": ""2020-03-04 14:15:07 UTC"",
+        ""status"": {
+            ""code"": ""FATAL"",
+            ""message"": ""Cloning failure.""
+        },
+        ""db"": {
+            ""connStr"": """",
+            ""host"": """",
+            ""port"": """",
+            ""username"": ""XXX"",
+            ""password"": """"
+        },
+        ""metadata"": null,
+        ""project"": """"
+    },
+...
+]
+```
+
+If I try to delete it with `clone destroy` I get the following:
+
+```
+$ dblab clone destroy joe-bpfrfqt4h85p27j6426g
+2020/03/05 03:27:19 [DEBUG]  Database Lab request error: Code ""INTERNAL_ERROR"". Message: Internal server error. Detail: clone is not started yet Hint: 
+url: http://localhost:3000/clone/joe-bpfrfqt4h85p27j6426g
+request-dump: DELETE /clone/joe-bpfrfqt4h85p27j6426g HTTP/1.1
+Host: localhost:3000
+Verification-Token: XXXX
+2020/03/05 03:27:19 failed to get response: Code ""INTERNAL_ERROR"". Message: Internal server error. Detail: clone is not started yet Hint: 
+```
+
+Then I see that status is changed to DELETING and the clone eventually is deleted -- however, the initial response looks like a bug.
+
+UPDATE: after deletion attempt, the status indeed changed to DELETING, but it **has not been deleted** after 5 minutes of waiting:
+
+```
+    {
+        ""id"": ""joe-bpfrfqt4h85p27j6426g"",
+        ""snapshot"": {
+            ""id"": ""zpool/clone_pre_20200304065541@snapshot_20200304065541"",
+            ""createdAt"": ""2020-03-04 06:58:12 UTC"",
+            ""dataStateAt"": ""2020-03-04 06:55:33 UTC""
+        },
+        ""protected"": false,
+        ""deleteAt"": """",
+        ""createdAt"": ""2020-03-04 14:15:07 UTC"",
+        ""status"": {
+            ""code"": ""DELETING"",
+            ""message"": ""Clone is being deleted.""
+        },
+        ""db"": {
+            ""connStr"": """",
+            ""host"": """",
+            ""port"": """",
+            ""username"": ""XXX"",
+            ""password"": """"
+        },
+        ""metadata"": null,
+        ""project"": """"
+    }
+```",1
+31227667,2020-02-25 07:32:34.363,CLI: allow choosing snapshot when creating a clone,"Goal
+===
+Allow choosing snapshot when creating a clone  
+
+TODO / How to implement
+===
+
+EE feature?
+
+dblab clone create --snapshot-id
+
+Acceptance criteria
+===
+
+As a user, I can choose a snapshot to work with.",3
+31131974,2020-02-21 15:25:08.152,LVM tutorial and ZFS tutorial updates,"Goal
+===
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",3
+30907882,2020-02-17 07:46:17.823,"Extended Docker with Postgres (9.6, 10, 11, 12)","Goal
+===
+Provide an ""extended"" Postgres docker image, with additional extensions -- for cases, when we don't want (don't have time) to work on a custom image.
+
+TODO / How to implement
+===
+
+- @anatolystansler please provide an example
+- CI/CD pipelines have to rebuild it
+- it is published to our Docker Hub
+
+Acceptance criteria
+===
+As a user, I can choose 1 from 3 options:
+
+- use minimalistic (official) image from Docker Hub
+- use ""extended"" image, with various additional extensions
+- build a custom image",10
+30718483,2020-02-13 14:08:25.509,Base of LVM provision mode,"Goal
+===
+Basic implementation of LVM provision mode.
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",8
+30691122,2020-02-12 20:18:51.893,Determine idle clones by connections and logs,"Goal
+===
+Currently we detect idle clone only by statement logs. It means that we will destroy clones with long running queries, in order to enhance working with clone we should also take into account active connections.
+
+TODO / How to implement
+===
+```
+select * from pg_stat_activity where query not like 'autovacuum: %' and pid <> pg_backend_pid()
+```
+
+Acceptance criteria
+===",4
+30658174,2020-02-12 05:24:51.746,Create a lightweight method for checking of a clones status,"Goal
+===
+If we try to request `GET /clone/cloneID` during reset:
+```
+	err = ZfsDestroyClone(j.runner, j.config.ModeZfs.ZfsPool, name)
+	if err != nil {
+		return errors.Wrap(err, ""failed to destroy clone"")
+	}
+	err = ZfsCreateClone(j.runner, j.config.ModeZfs.ZfsPool, name, snapshotID,
+		j.config.ModeZfs.MountDir, j.config.OSUsername)
+	if err != nil {
+		return errors.Wrap(err, ""failed to create a clone"")
+	}
+```
+
+there is a probability to receive a false-negative result
+```
+2020/02/12 02:46:38 [DEBUG]  Run(Local): ""zfs destroy -R zpool/dblab_clone_6000""
+2020/02/12 02:46:39 [INFO]   ->  GET /clone/joe-bp1l0454h85sr82l6fo0
+2020/02/12 02:46:39 [DEBUG]  Run(Local): ""zfs list -po name,used,mountpoint,compressratio,available,type,origin,creation,referenced,logicalreferenced,logicalused,dblab:datastateat -S dblab:datastateat -S creation -t filesystem -r zpool""
+2020/02/12 02:46:39 [DEBUG]  Failed to get clone: failed to get a session state: cannot get session state: specified ZFS pool does not exist
+2020/02/12 02:46:39 [DEBUG]  Response: Code ""NOT_FOUND"". Message: Not found. Detail: Requested object does not exist. Hint: Specify your request.
+2020/02/12 02:46:39 [DEBUG]  Not found
+2020/02/12 02:46:39 [DEBUG]  Run(Local): ""zfs clone -o mountpoint=/var/lib/dblab/clones/dblab_clone_6000 zpool/clone_pre_20200211092040@snapshot_20200211092040 zpool/dblab_clone_6000 && chown -R root /var/lib/dblab/clones/dblab_clone_6000""
+2020/02/12 02:46:40 [DEBUG]  Run(Local): output """"
+2020/02/12 02:46:40 [DEBUG]  Starting Postgres...
+```
+
+
+TODO / How to implement
+===
+- Create a new method for retrieving a clone status without a session state.
+- Use this method in API for reset and delete methods
+
+OR Alternative: 
+
+- skip the session state error, use default clone size
+
+
+Acceptance criteria
+===",1
+30593117,2020-02-10 16:18:47.415,Data retrieval - RDS,"Goal
+===
+
+TODO / How to implement
+===
+Work with Amazon API
+
+Configuration:
+- Amazon credentials
+- Instance IDs
+
+Logic:
+Retrieve instance connection params and pass it to data retrieval pipeline.
+
+Blocked by #93 
+
+Acceptance criteria
+===",8
+30592283,2020-02-10 15:56:17.520,Automated data retrieval (declarative database lab initialization),"Goal
+===
+
+```plantuml
+
+frame ""Validation"" {
+ [Config]
+}
+
+cloud ""Infrastructure\n(optional)\n"" {
+component Provision [
+**Provision machine**
+
+- Create an instance
+- Configure environment
+- Pre-install software
+- Set up extensions
+]
+}
+
+  component Initialize[
+**Initialize**
+
+  - physical copying 
+  - logical copying
+
+  - masking ?
+  - cleaning data
+  - configuration
+  
+  - WAL shipping (bg)
+  - streaming replication (bg)
+  - logical replication (bg)
+]
+
+frame ""Snapshotting"" {
+  component Snapshot[
+**Snapshots**
+
+- masking
+- extra data manipulation 
+- snapshotting
+]
+
+
+[Config] --> [Provision]: run provisioning
+[Provision] -> [Initialize] : start import
+[Initialize] --> [Snapshot] : prepare a snapshot
+[Snapshot] -> [Snapshot]: schedule/retention \nmanagement
+
+```
+
+TODO / How to implement
+===
+
+**Config example**
+```yaml
+retrieval:
+  stages:
+    - initialize
+
+  spec:
+    initialize:
+      jobs:
+#        - name: logical-restore
+#          options:
+#            dumpFile: /tmp/db.dump
+#            forceInit: false
+#            dbName: test
+#            partial:
+#              tables:
+#                - test
+        - name: physical-restore
+          options:
+            tool: walg
+            dockerImage: ""postgresai/sync-instance:12""
+            envs:
+              WALG_GS_PREFIX: ""gs://{BUCKET}/{SCOPE}""
+            walg:
+              storage: gcs
+              backupName: LATEST
+              credentialsFile: /tmp/sa.json # optional
+      
+```
+
+-----
+---- OLD
+Implementation:
+- [ ] Stage interface (data retrieval, promotion, mask, etc) 5h
+  - Clones/snapshot usage
+  - Docker container provision
+  - Each stage running in separate container
+
+- [ ] Pipeline:
+  - [dump/restore | WAL-G | barman -> PGDATA] -> [PGDATA master/replica -> master -> remove PII -> snapshot]
+  - [import] -> [promote] -> [mask]
+
+  - Stage 1: [import] 
+    - Configuration 2h
+      - snapshot TTL
+      - mode
+      - dockerImage
+      - dump/restore
+        - connection params
+        - plain-text, directory, custom (-Fc -Fd)
+    - Experiments/Preparations 6h
+      - Massive diff (!)
+        - Delete previous clone snapshots
+    - Logic 6h
+      - dump/restore
+      - set statement timeout to 0
+  - Stage 2: [promote]
+    - Can be optional. As we want to give SRE an ability to manually promote their clone.
+    - Configuration 1h
+      - dockerImage
+    - Logic 6h
+  - Stage 3: [mask] OUT-OF-SCOPE 
+
+- [ ] Pipeline scheduling (run data retrieval on interval) 4h
+
+Documentation:
+- [ ] Notify users about autovacuum pause 1h
+- [ ] Pipelines docs 6h
+  - Configs
+  - How it works
+  - How to extend
+
+
+Acceptance criteria
+===",40
+30562668,2020-02-10 05:48:47.278,Choose the latest snapshot by default on the creation of a new clone,"Goal
+===
+There are 3 snapshots:
+```
+$ ./bin/dblab snapshot list
+[
+    {
+        ""id"": ""zpool/clone_pre_20200210022148@snapshot_20200210022148"",
+        ""createdAt"": ""2020-02-10 02:23:26 UTC"",
+        ""dataStateAt"": ""2020-02-10 02:21:43 UTC""
+    },
+    {
+        ""id"": ""zpool/clone_pre_20200210021941@snapshot_20200210021941"",
+        ""createdAt"": ""2020-02-10 02:21:34 UTC"",
+        ""dataStateAt"": ""2020-02-10 02:19:33 UTC""
+    },
+    {
+        ""id"": ""zpool/clone_pre_20200207071546@snapshot_20200207071546"",
+        ""createdAt"": ""2020-02-07 07:16:57 UTC"",
+        ""dataStateAt"": ""2020-02-05 07:53:51 UTC""
+    }
+]
+```
+The latest is created at `2020-02-10 02:21:43 UTC`
+However, we get `""dataStateAt"": ""2020-02-05 07:53:51 UTC""` for the new clone:
+```
+$ ./bin/dblab clone list
+[
+    {
+        ""id"": ""joe"",
+        ""snapshot"": {
+            ""id"": ""zpool/clone_pre_20200207071546@snapshot_20200207071546"",
+            ""createdAt"": ""2020-02-07 07:16:57 UTC"",
+            ""dataStateAt"": ""2020-02-05 07:53:51 UTC""
+        },
+        ""protected"": false,
+        ""deleteAt"": """",
+        ""createdAt"": ""2020-02-10 02:24:53 UTC"",
+        ""status"": {
+            ""code"": ""OK"",
+            ""message"": ""Clone is ready to accept Postgres connections.""
+        },
+      ...
+    }
+]
+```
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",2
+30553629,2020-02-09 18:20:29.720,Rich configuration options,"Goal
+===
+Improve configuration options for Postgres (and other engines in the future). 
+
+Currently we support configuration of two files: `pg_hba.conf` and `postgresql.conf`. `pg_hba.conf` in PGDATA being substituted with the the presented file. And in case of `postgresql.conf` lines being appended to the end of files.
+
+Discuss with @NikolayS 
+
+TODO / How to implement
+===
+```yaml
+files:
+  - path: pg_hba.conf
+    replaceWithPath: ./configs/postgres/pg_hba.conf 
+  - path: postgresql.conf
+    append:
+      - listen_addresses = '*'
+      - log_destination = 'stderr'
+    remove:
+      - logging_collector
+      - data_directory
+    comment:
+      - ssl
+    commentWith: ""#""
+  - path: standby.signal
+    delete: true
+
+# Move to separate issue. Would be nice to have an option to configure such configuration substitute logic and configure custom script that will be launched at different provision stages.
+# Requires discussion.
+scripts:
+  - runner: pg
+    script:
+      - select 1;
+      - select 2;
+  - runner: bash
+    script:
+      - chown user file.txt
+  - runner: bash
+    fromFile: ./scripts/prepareClone.sh
+```
+
+Acceptance criteria
+===",8
+30524872,2020-02-07 22:36:45.672,LVM snapshots/clone as an alternative to ZFS,"Goal
+===
+Sometimes, ZFS cannot be used. In this case, let's provide an alternative way: LVM. 
+
+Cons:
+
+- We expect that this method will be less performant (especially, for large number of snapshots and/or having old snapshots with continuously working ""sync"" Postgres instance).
+
+Pros:
+- Some people cannot use ZFS so they will be able to choose LVM
+- In the case of LVM, the filesystem is ""usual"", ext4 or xfs.
+- Might be the only in managed Kubernetes setups.
+
+TODO / How to implement
+===
+
+Example:
+
+```bash
+sudo su -
+mkdir /opt/{one,two,test}
+pvcreate /dev/nvme0n1
+vgcreate testgroup /dev/nvme0n1
+pvscan
+vgs
+lvmdiskscan
+lvcreate -L 29G -n test testgroup
+mount /dev/testgroup/test /opt/test
+echo 12345 > /opt/test/xoxo
+lvcreate -L 12m  -s /dev/testgroup/test -n test_snap1
+mount /dev/testgroup/test_snap1 /opt/one
+cat /opt/one/xoxo
+echo 11111 > /opt/one/xoxo
+df -hT
+cat /opt/one/xoxo
+cat /opt/test/xoxo
+```
+
+```bash
+# Create LV.
+sudo su -
+mkdir /var/lib/dblab-lvm/clones/{1,2,3,4}
+pvcreate /dev/disk/by-id/google-dblab-dev1-lvm1
+vgcreate testgroup /dev/disk/by-id/google-dblab-dev1-lvm1
+lvcreate -l 50%FREE -n test testgroup
+mkfs.ext4 /dev/testgroup/test
+
+# Mount to initial dir.
+mount /dev/testgroup/test /var/lib/dblab-lvm/clones/1
+echo 12345 > /var/lib/dblab-lvm/clones/1/xoxo
+
+# Create snapshot.
+lvcreate -l 10%FREE -s /dev/testgroup/test -n test_snap1
+mount /dev/testgroup/test_snap1 /var/lib/dblab-lvm/clones/2
+cat /var/lib/dblab-lvm/clones/2/xoxo
+echo 11111 > /var/lib/dblab-lvm/clones/2/xoxo
+
+df -hT
+
+cat /var/lib/dblab-lvm/clones/1/xoxo
+cat /var/lib/dblab-lvm/clones/2/xoxo
+```
+
+```bash
+# Remove LV.
+umount /dev/testgroup/test
+lvremove /dev/testgroup/test
+```
+
+Extend/reduce:
+```bash
+lvreduce -L -2.5G -r /dev/vg00/vol_projects
+lvextend -l +100%FREE -r /dev/vg00/vol_backups
+```
+
+https://www.tecmint.com/manage-and-create-lvm-parition-using-vgcreate-lvcreate-and-lvextend/
+
+One more example: http://www.voleg.info/lvm2-clone-logical-volume.html
+
+Good reference for lvs: https://www.systutorials.com/docs/linux/man/8-lvs/
+
+```
+lvs --reportformat json --units b
+```
+About snapshot oversize:
+![Screenshot_2020-02-18_at_23.57.29](/uploads/44d9d9cbaa2c1d016440eac28c6a6977/Screenshot_2020-02-18_at_23.57.29.png)
+https://www.golinuxhub.com/2017/09/understanding-lvm-snapshots-create.html
+
+![Screenshot_2020-02-18_at_23.59.11](/uploads/8b37629bd942aa6f6c0b94ec8387899c/Screenshot_2020-02-18_at_23.59.11.png)
+
+https://serverfault.com/questions/41020/is-this-how-lvm-snapshots-work
+
+Thin-clones on LVM (using dd for snapshots mostly suggested):
+- http://www.andybotting.com/how-do-you-clone-an-lvm-partition
+- https://serverfault.com/questions/702971/cloning-lvm-partitions
+- http://www.voleg.info/lvm2-clone-logical-volume.html
+
+TODO:
+- [ ] Separate ZFS ""lib"" package
+- [ ] Docker container volumes works fine with LVM (?)
+- [ ] Determine volume size. It's required option to create a LVM clone.
+- [ ] Clone removal policies (?) (e.g. can we stop removal of clone on volume size exceed?)
+
+Depends on #92 
+#95 #96 #97 #98
+
+Acceptance criteria
+===
+
+As a user, I can choose a method for thin cloning, ZFS (default) or LVM.
+
+As a developer, I know that the abstraction interface/layer is mature and when needed, I can implement my own thin cloning method.",1
+30524794,2020-02-07 22:30:58.023,"Client CLI: ""--insecure"" in configuration","Goal
+===
+Currently, if I need to work with a self-signed certificate, I need to use `--insecure` option every time. It's a little bit inconvenient -- I would prefer to configure it once.
+
+TODO / How to implement
+===
+
+Allow specifying ""insecure"" flag in the configuration for a particular Database Lab instance.
+
+
+Acceptance criteria
+===
+
+As a user, I configure the ability to work with a self-signed certificate just once (for each Database Lab instance) and then I don't need to use `--insecure` in CLI at all.",2
+30516591,2020-02-07 16:08:26.788,Fix data race,"Goal
+===
+Fix data race on baseCloning: `clones  map[string]*CloneWrapper`
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",2
+30480515,2020-02-06 17:39:01.681,Explain how to extend Postgres containers,"Goal
+===
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",2
+30479162,2020-02-06 17:01:07.390,Publish artifacts to external storage,"Goal
+===
+Latest artifacts might be unaccessible on GitLab during pipelines. Also, currently for client CLI we use latest binaries from master which can be unstable. We should upload only stable releases to our server, not GitLab, to improve reliability.
+
+TODO / How to implement
+===
+
+Use GCS (Google buckets):
+- [x] Use private bucket for temprorary CI build and transfer of artifacts between stage
+- [x] Use public bucket for storage of the latest release binaries for CLI download
+
+Previous ideas (Nexus, not actual)
+===
+<s>We can use Nexus: https://www.sonatype.com/nexus-repository-oss</s>
+
+- OSS
+
+- Self-hosted
+
+- Supports different formats:
+  - Raw files (suitable for binary artifacts): https://help.sonatype.com/repomanager3/formats/raw-repositories
+    
+    ```
+    curl -v -u ${NEXUS_USER}:${NEXUS_PWD} --upload-file dblab ${NEXUS_URL}/repository/dblab-cli/${TAG}/dblab
+    wget -O dblab ${NEXUS_URL}/repository/dblab-cli/{$VERSION}/${TAG}/dblab
+
+    For example: https://{NEXUS_URL}/repository/dblabcli/ce/0.2.3/dblab
+    ```
+
+  - Docker images: https://help.sonatype.com/repomanager3/formats/docker-registry.
+    ```
+    docker push <nexus-hostname>:<repository-port>/<image>:<tag>
+    docker pull <nexus-hostname>:<repository-port>/<image>:<tag>
+    ```
+
+- Flexible user access(based on priveledges and roles) with an ability to grant and revoke permissions: https://help.sonatype.com/repomanager3/security
+
+- Supports S3-compartible blob stores: https://help.sonatype.com/repomanager3/high-availability/configuring-blob-stores#ConfiguringBlobStores-AWSSimpleStorageService(S3)
+
+But it could be too difficult and long to implement that. Try to upload artifacts to external storage.",5
+30479150,2020-02-06 17:00:44.336,"Do not update ""latest"" tag on Docker Hub on ""rc"" git tags","Goal
+===
+
+TODO / How to implement
+===
+Don't update tags in format ""v0.2.2"".
+
+Acceptance criteria
+===",1
+30404511,2020-02-05 08:57:07.961,Customize postgres user for initial unix socket connection,"Goal
+===
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",2
+30276816,2020-02-03 02:13:51.637,create a new struct to update clones - CloneUpdateRequest,"Goal
+===
+It allows to avoid extra checks on updates
+
+TODO / How to implement
+===
+```
+// CloneUpdateRequest defines a struct for clone updating.
+type CloneUpdateRequest struct {
+    Protected bool   `json:""protected""`
+}
+```
+
+
+
+Acceptance criteria
+===",2
+30174581,2020-02-01 03:41:04.885,"Ask to give a star in README, in the documentation, and in CLI (init, help)","Goal
+===
+Collect more gitlab stars.
+
+TODO / How to implement
+===
+Ask to give a star
+
+- [x] in README
+- [ ] in the documentation
+- [x] in CLI (init, help)
+
+Acceptance criteria
+===
+Basic places are covered with our ask to give a star, and we are collecting stars constantly.",1
+30154586,2020-01-31 14:04:53.499,Build and push Docker images,"Goal
+===
+Build and push Docker images of Database Lab server and CLI tool to Docker Hub on release tag.
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",10
+30144055,2020-01-31 10:31:48.492,Provide clone metadata,"Goal
+===
+For idle management and clone describing we have to provide an idle timeout for created clones in API response.
+
+TODO / How to implement
+===
+Add a new field `Metadata` in the `Clone` struct
+
+Acceptance criteria
+===",2
+29986436,2020-01-27 15:44:37.692,Use Docker containers in create snapshot script,"Goal
+===
+Remove Postgres dependency.
+
+Additionally: get rid of:
+```
+2020-01-13 11:53:51.405 UTC [9702]: [1-1] db=,user= (,) FATAL:  could not connect to the primary server: could not connect to server: No such file or directory
+                Is the server running locally and accepting
+                connections on Unix domain socket ""/var/run/postgresql/.s.PGSQL.5432""?
+```
+
+TODO / How to implement
+===
+
+- [x] Use DBLab container 
+- [x] Script remains in bash
+
+Acceptance criteria
+===
+
+As a user I don't need git clone, and I use only docker exec to create a new snapshot.",6
+29986192,2020-01-27 15:40:38.642,Manage only Database Lab containers,"Goal
+===
+Currently Database Lab stops and removes all Docker containers on start. We need to label our containers and work only with them to not abuse user's machine.
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",4
+29960073,2020-01-27 02:57:46.097,Clear CLI output,"Goal
+===
+Clear and clarify CLI output
+
+TODO / How to implement
+===
+The task might be more complicated than expected. Probably we have to use a custom type of errors and redeclare the default error writer. Need investigation to clarify details.
+
+In addition, it worth to make sure that the standard flags check will not be missed after that.
+
+- [x] add the `ERROR` label before an error message
+- [x] change a CLI help message
+
+
+Acceptance criteria
+===
+
+```
+$ ~/database-lab/bin/dblab init --url http://localhost:3000 --token some_token --environment_id dev
+2020/01/26 23:19:46 ERROR: Environment ""dev"" is already initialized.
+```",2
+29920275,2020-01-24 15:47:22.542,SDK: Add synchronous clone methods,"Goal
+===
+Methods: 
+- Create
+- Reset
+- Delete
+
+
+TODO / How to implement
+===
+Add to CLI and SDK
+Add a flag to make requests asynchronous
+
+Acceptance criteria
+===
+Docs?",8
+29885801,2020-01-23 14:29:07.347,"Show ""unchanged"" message","Goal
+===
+```
+ ❯ ./bin/dblab config update dev1
+The ""dev1"" environment is successfully updated.
+```
+
+In this case show:
+```
+Config unchanged. Set options to update.
+```
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",2
+29774736,2020-01-20 17:18:21.600,CI for API reference deployment,"Add API references to the docs.
+
+@akartasov do you remember in which MR you've described CLI commands?
+
+#10 We can use Swagger as initial API reference
+
+Generate mock from Swagger specification? Use plugin to disable ""try out"" functionality (https://github.com/swagger-api/swagger-ui/issues/3725)?
+
+Deploy from database-lab or load config from gitlab.com?",2
+29752301,2020-01-20 08:07:10.122,Change the verification token flag for a Database Lab server,"Goal
+===
+`-v` is usually ""print version""
+https://gitlab.com/postgres-ai/database-lab/merge_requests/27#note_273789327
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",1
+29576214,2020-01-14 08:20:24.894,Database Lab CLI configuration,"Goal
+===
+Single CLI can control multiple Database Lab instances
+
+TODO / How to implement
+===
+Store CLI configs in the user's home directory.
+
+Acceptance criteria
+===
+```
+// CLI management
+dblab config create ENVIRONMENT_ID
+dblab config update ENVIRONMENT_ID
+dblab config status ENVIRONMENT_ID
+dblab config list
+dblab config switch ENVIRONMENT_ID
+dblab config remove ENVIRONMENT_ID
+
+// Getting started
+dblab init
+```",8
+29576185,2020-01-14 08:19:32.432,Design Database Lab CLI,"Goal
+===
+Create a CLI tool for using Database Lab API.
+
+TODO / How to implement
+===
+Suggest the next design of the Database Lab CLI:
+
+```
+// Clone management
+dblab clone list
+dblab clone create
+dblab clone destroy CLONE_ID
+dblab clone reset CLONE_ID
+dblab clone get CLONE_ID
+
+// Instance management
+dblab instantce status
+
+// Snapshot management
+dblab snapshot list
+
+// CLI management
+dblab config create ENVIRONMENT_ID
+dblab config update ENVIRONMENT_ID
+dblab config view [ENVIRONMENT_ID]
+dblab config list
+dblab config switch ENVIRONMENT_ID
+dblab config remove ENVIRONMENT_ID
+
+// Getting started
+dblab init
+
+```
+
+Moreover, we are going to change a compiled filename of the Database Lab server from `dblab` to `dblab-server`.
+So, the `dblab` name will become free and will be used for the CLI binary.
+
+
+Acceptance criteria
+===",12
+29576151,2020-01-14 08:18:12.481,Database Lab API SDK,"Goal
+===
+Create a client to make HTTP requests to Database Lab API
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===
+There is an SDK for following methods:
+* get a clone list
+* create a new clone
+* destroy a clone
+* get an instance status
+* get a snapshot list",6
+29549417,2020-01-13 16:01:23.938,"Do not use psql in Go, connect to Postgres using a library for Postgres.","Goal
+===
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",5
+29541140,2020-01-13 12:14:49.665,"""No standby"" case during snapshot creation","Goal
+===
+```
+2020-01-13 11:53:51.405 UTC [9702]: [1-1] db=,user= (,) FATAL:  could not connect to the primary server: could not connect to server: No such file or directory
+                Is the server running locally and accepting
+                connections on Unix domain socket ""/var/run/postgresql/.s.PGSQL.5432""?
+```
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",1
+29529332,2020-01-13 06:44:09.850,Run Postgres servers in containers,"Goal
+===
+Start using containers to run Postgres, it will help to manage clones better:
+- the same paths internally (logs, etc)
+- easier to stop/start
+- permissions
+- binaries, libraries -- unified paths and permissions
+
+
+Additionally, the ability to extend Postgres setups: we provide basic container images for 9.6, 10, 11, 12, but we are going to allow choosing an alternative docker image, where the user can use some custom image, with custom extensions, etc.
+
+TODO / How to implement
+===
+design stage, details are needed + discussion
+
+Images have to be minimalistic.
+
+Are we going to use Ubuntu 18.04? Or smaller templates?
+
+Are we going to use Docker? Or podman?
+
+Acceptance criteria
+===
+As a user, I can extend the default Dockerfile for my Postgres version, add additional libraries/extensions tools, FTS dictionaries, etc, and then use it for clones.",12
+29391172,2020-01-08 04:28:42.516,Check suppressed linter warnings,"Goal
+===
+After a while check suppressed warnings for linters such as:
+* golint
+* gosec
+* gocritic
+* goimports
+* gonmd
+* revive
+* stylecheck
+* wsl
+
+Also:
+- remove the `new-from-rev` configuration option from `.golangci.yml`
+- fix linter warnings
+
+Acceptance criteria
+===
+There are no linter exclusions in configs.
+There are no warnings after the check is running.",4
+29386359,2020-01-07 21:48:15.076,Instance control CLI,"Goal
+===
+Create console application to control Database Lab instance with REST API, like `kubectl` or `gcloud`.
+
+TODO / How to implement
+===
+- [x] Single CLI can control multiple Database Lab instances
+- [x] Verification tokens can be at config files and environment variables.
+- [x] Create an API SDK.
+- [x] Ability to list snapshots
+- [x] Ability to fetch instance status
+- [x] Ability to create, stop, reset, list clones
+
+Extra issues
+- [x] Add changes to the docs repository(https://gitlab.com/postgres-ai/docs/merge_requests/12)
+- [x] Parse API error responses
+- [x] Add an option to ignore a self-signed certificate error
+- [x] Ability to update clones
+- [x] Fix initialization without existing config
+
+Acceptance criteria
+===",26
+29333372,2020-01-06 14:34:36.733,Panic while cloning of a database,"Fix an index out of range error
+
+Request example:
+```
+POST /clone
+{
+  ""project"": ""proj1"",
+  ""db"": {
+    ""username"": ""pg"",
+    ""password"": ""postgres""
+  },
+  ""username"": ""postgres"",
+  ""name"": ""test""
+}
+```
+
+Log output:
+```
+2020/01/06 12:39:04 [DEBUG]  AddUser: CREATE ROLE
+panic: runtime error: index out of range
+
+goroutine 46 [running]:
+_/home/agneum/database-lab/src/cloning.(*baseCloning).CreateClone.func1(0xc00012c1c0, 0xc000054780, 0xc0000d4e80)
+	/home/agneum/database-lab/src/cloning/mode_base.go:126 +0x57b
+created by _/home/agneum/database-lab/src/cloning.(*baseCloning).CreateClone
+	/home/agneum/database-lab/src/cloning/mode_base.go:99 +0x3a3
+```
+
+https://gitlab.com/postgres-ai/database-lab/blob/master/src/cloning/mode_base.go#L126",1
+29200287,2019-12-30 23:54:20.612,Human-readable timestamp for DATASTATEAT,"The following discussion from !7 should be addressed:
+
+- [ ] @NikolayS started a [discussion](https://gitlab.com/postgres-ai/database-lab/merge_requests/7#note_265447842):  (+4 comments)
+
+    > Why unix timestamp @anatolystansler?
+    > 
+    > I think we need to avoid using it. The format `YYYYMMDDhhmmss.XXX` is much better because it's human-readable.",3
+29195117,2019-12-30 17:34:38.186,Clone without PGDATA,"Goal
+===
+Kill Postgres on revert in case of connection failure.
+
+TODO / How to implement
+===
+On connection refused clone ZFS mount being deleted without stopping probably running Postgres instance. Stop Postgres instance on failure first.
+
+```golang
+err = PostgresStart(j.runner, j.getPgConfig(name, port))
+if err != nil {
+  ZfsDestroyClone(j.runner, j.config.ModeZfs.ZfsPool, name)
+}
+```
+
+Acceptance criteria
+===",3
+29194360,2019-12-30 16:42:22.577,"Configurable HTTP server: SSL cert, network address & port","Goal
+===
+
+TODO / How to implement
+===
+- SSL certificates
+- Listen addresses
+
+Acceptance criteria
+===",10
+29193873,2019-12-30 16:09:43.539,Binaries and install script,"Goal
+===
+- [x] Set up CI to automatically upload binaries to GitLab (?).
+- [x] Write simple install script to use like `curl ... | bash`.
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",10
+29193841,2019-12-30 16:07:51.283,Containerize,"Goal
+===
+Containerize? If so, publish an image. (The main question: what to do with ZFS?) Otherwise, if we decide to live without containers for a while (I rather not), then:
+
+* [ ] polish the installation process for Ubuntu
+* [ ] polish the installation process for CentOS / RHEL (this won't be needed if we switch to containers; only ZFS part will remain OS-specific)
+* [ ] have a better script to install all the software (Postgres if needed, Golang, OpenSSL, etc)
+* [ ] consider not installing Go but rather using binaries. In this case, we need to publish them (see how WAL-G has it).
+
+TODO / How to implement
+===
+We need to find the best way to containerize Database Lab.
+
+How to manage ZFS from docker container?
+
+- Docker ZFS driver
+- Daemon
+- Is it possible to manage from the inside?
+
+Acceptance criteria
+===",20
+29010389,2019-12-23 16:28:40.881,Test and document creation of a new snapshot,"Goal
+===
+
+TODO / How to implement
+===
+
+
+Acceptance criteria
+===",1

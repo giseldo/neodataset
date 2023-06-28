@@ -1,0 +1,1199 @@
+issuekey,created,title,description,storypoints
+72212208,2020-10-05 19:42:04.830,Remove ObjectBase and put code generation in the GLXNIMATE_OBJECT macro?,,2
+72179206,2020-10-05 10:04:01.503,Open raster images,,3
+72176548,2020-10-05 09:30:21.982,use QUiLoader for plugins instead of settings,,6
+72152252,2020-10-04 21:11:48.023,drop bezier-dragging code in the select tool,,3
+72152098,2020-10-04 21:03:26.416,"keep selection and editors separate in the scene, and have each tool toggle editors as it sees fit.",,5
+72137051,2020-10-04 11:28:40.245,Node context menu,,2
+72135067,2020-10-04 09:26:56.972,Bezier editing doesn't create undo commands,,2
+72114509,2020-10-03 15:31:24.698,Select Groups,,2
+72017987,2020-10-01 13:17:41.400,show/hide layer based on first/last frames,,2
+72016959,2020-10-01 12:59:20.681,fix make_release links,,1
+71897376,2020-09-29 21:46:15.749,consider removing layers,"The main reason they exist is for Lottie compatibility but they add a bunch of restrictions.
+
+The only feature they provide is to have parenting that is not hierarchical.
+
+Could just use group shapes and if they are on the top level, they could have this feature enabled.",20
+71896586,2020-09-29 21:23:15.028,Masks,,10
+71894927,2020-09-29 20:43:05.232,Increase selection precision,,5
+71879423,2020-09-29 14:37:53.894,Bound property values,,5
+71806437,2020-09-28 14:34:04.894,Color Substitution plugin,,2
+71804599,2020-09-28 14:10:21.620,Use the last used NamedColor when creating shapes,,3
+71804446,2020-09-28 14:07:55.212,Native Windows Build,,5
+71804413,2020-09-28 14:07:24.063,Copy/Paste support for document swatch colors,,3
+71803723,2020-09-28 13:58:01.233,Undoing sometimes adds spurious keyframes,,1
+71759799,2020-09-27 16:26:06.559,Clicking with draw tools should select / switch to select tool,,2
+71742484,2020-09-26 21:07:45.226,Fix dock widget icons on windows,,3
+71737838,2020-09-26 16:30:51.535,Fix palette save path,,2
+71587727,2020-09-23 19:42:16.444,Gradient Support,,8
+71587682,2020-09-23 19:41:10.967,Color Picking tool,,5
+71587400,2020-09-23 19:32:35.158,I/O Support for inkscape stars,,2
+71519401,2020-09-22 16:49:26.503,Edit widgets aren't updated when the current frame changes,,2
+71497546,2020-09-22 10:14:25.095,Crash on new shape without layer,,3
+71494220,2020-09-22 09:22:46.728,Layer drag uses the wrong transform,,3
+71494153,2020-09-22 09:21:19.855,Bezier animation seems broken,,4
+71456202,2020-09-21 15:03:10.208,Resize dialog,,3
+71437983,2020-09-21 09:59:55.374,Precompositions,,20
+71437958,2020-09-21 09:59:29.113,Document metatada dialog,,6
+71407312,2020-09-20 09:46:14.888,Freehand Drawing,,5
+71407304,2020-09-20 09:44:53.235,Refactor I/O messages,"Use app::log Info/Warning etc.
+Also log on serialize/unserialize.
+
+Would also be nice to expose logging to python.",5
+71405884,2020-09-20 08:12:22.624,Crash when keyframe recording is on,,4
+71391204,2020-09-19 10:36:31.150,icons not being packaged properly in the appimage,,3
+71391157,2020-09-19 10:34:05.785,select tool movement is odd,,4
+71391149,2020-09-19 10:33:38.420,Lock Keyframes in the animation container range,,10
+71356600,2020-09-18 10:24:53.542,Bezier editing handles is a bit weird,,4
+71344780,2020-09-18 07:23:11.633,Apply transform to the draw tool previews,,4
+71342758,2020-09-18 06:53:09.351,Implement Fill Rule,,2
+71342286,2020-09-18 06:42:03.801,transform anchor point handle of item with a rotated parent doen't work,,3
+71341379,2020-09-18 06:08:17.056,subclass QIODevice for gzip read/write,,3
+71330749,2020-09-17 20:31:59.109,Minimal tgs validation (size/fps),,2
+71328609,2020-09-17 19:37:54.297,Trace bitmaps,,20
+71328600,2020-09-17 19:37:16.024,Render to Mp4,,7
+71328595,2020-09-17 19:36:56.543,Render to Gif,,5
+71328587,2020-09-17 19:36:37.755,Render to WebP,,5
+71328555,2020-09-17 19:35:06.755,Animated SVG Export,,10
+71328545,2020-09-17 19:34:43.967,Animated SVG Import,,10
+71328536,2020-09-17 19:34:22.734,Nicely splitting easing curves when adding keyframes,,5
+71327996,2020-09-17 19:16:40.758,Add a QUndoView dock,,2
+71323684,2020-09-17 17:29:02.976,Star Shape,,2
+71323529,2020-09-17 17:26:08.488,Ungroup shapes action,,3
+71311618,2020-09-17 13:08:33.620,Move to new parent action,,3
+71264106,2020-09-16 18:38:10.707,"Some way of hiding ""useless"" bezier handles",,7
+71263864,2020-09-16 18:29:30.607,Drag and drop in the layers widget,,5
+71261509,2020-09-16 17:06:05.742,Move/Reorder commands,,10
+71258764,2020-09-16 15:48:21.387,"""Group shapes"" action",,4
+71250764,2020-09-16 13:37:01.548,Implement reload functionality,,2
+71232012,2020-09-16 06:53:49.123,fill style widget applies style to the last selected item even when it has been deselected,,2
+71230810,2020-09-16 06:16:27.535,Layer visibility isn't propagated correctly to the graphics view,,2
+71229967,2020-09-16 05:41:07.080,SVG parent layer name,,1
+71229949,2020-09-16 05:39:47.849,Ensure graphics view is centered on maximised startup,,3
+71229783,2020-09-16 05:30:46.957,SVG use,,3
+71218711,2020-09-15 21:01:07.213,Check SVG import transforms,,5
+71218698,2020-09-15 21:00:45.206,Use the all files filter on the open dialog by default,,1
+71209627,2020-09-15 16:48:55.873,Image layers,,10
+71209520,2020-09-15 16:45:47.073,Import/Export plugins,,15
+71207817,2020-09-15 16:11:06.671,Save visible/locked status,,1
+71207736,2020-09-15 16:09:16.929,Ensure all the unimplemented features are disabled in the UI,,3
+71207716,2020-09-15 16:08:43.651,Multiple handle selection / transformation for the edit tool,,7
+71207682,2020-09-15 16:07:27.630,Recursively inspect selected group and select the paths with the edit tool,,4
+71183079,2020-09-15 08:10:42.411,Improve mime serialization infrastructure,,3
+71135194,2020-09-14 19:28:45.625,timeline property view doesn't update on double click,,3
+71111279,2020-09-14 12:45:33.383,Implement opacity,,3
+71104439,2020-09-14 10:32:29.768,Fill style widget creates suprious recolor commands,,1
+71068945,2020-09-13 09:48:11.021,Try Setting up Travis builds for win,,4
+71068566,2020-09-13 09:01:33.197,Delete from select tool,,2
+71068348,2020-09-13 08:45:04.345,Try setting up travis builds,,4
+71067512,2020-09-13 07:49:28.072,scene / treeview selection seems to get out of sync,,2
+71062179,2020-09-12 20:13:08.713,Try Setting up Travis builds mac,,3
+71060992,2020-09-12 18:20:24.047,rename add_command to push_command,,1
+71060978,2020-09-12 18:19:19.753,"Clipboard ""cut""",,2
+71060972,2020-09-12 18:19:03.844,Expose beginMacro/endMacro to Python,,2
+71060519,2020-09-12 17:59:50.229,Node edit tool should be able to select paths,"Maybe also  if a group is selected, show the editors for all of its (direct) child path shapes",5
+71060515,2020-09-12 17:59:16.397,Select tool should be able to drag,,2
+71057936,2020-09-12 15:52:29.554,bezier bounding box sometimes isn't correct,,2
+71056883,2020-09-12 14:37:16.833,Ensure locked objects can't be modified,,10
+71049484,2020-09-12 04:52:31.090,Static SVG import,Add Import/Export and mime deserialization,10
+71021251,2020-09-11 10:45:54.342,Inkscape SVG export,,3
+71010846,2020-09-11 06:48:57.184,Clipboard,,15
+71010021,2020-09-11 06:25:54.048,Canvas Context menu,,2
+70996958,2020-09-10 19:40:45.774,Undoing RemoveShape causes a segfault,,10
+70989607,2020-09-10 16:02:38.199,Truncate floats on tgs export,,2
+70989592,2020-09-10 16:02:13.765,"When importing shapes without a name, give them a default name",,1
+70989187,2020-09-10 15:51:31.056,Convert between layers and shape groups,,5
+70967404,2020-09-10 08:52:02.620,Context menu on the layer widget,,2
+70967384,2020-09-10 08:51:34.566,Editor handles don't respect parent transformations,,5
+70948892,2020-09-09 20:11:40.508,Document tools and editors,,15
+75420077,2020-12-01 11:39:20.736,Dragging a keyframe past another messes up the keyframe selection,,3
+75381880,2020-11-30 18:49:22.116,Decouple ip/op from composition,,3
+75370093,2020-11-30 15:22:02.233,Image comparison in the trace dialog,,3
+75321621,2020-11-29 20:56:34.889,Implement k-medoids,,5
+75309635,2020-11-29 10:38:09.106,Make the current composition an invalid value for precomplayer > composition in properties,,2
+75309626,2020-11-29 10:37:07.018,Double clicking on a precomp layer should probably switch to the composition tab,,2
+75309515,2020-11-29 10:32:07.748,Copy/paste layers doesn't update the layer tree view correctly,,3
+75227049,2020-11-28 21:37:53.993,flip view option,,3
+75162642,2020-11-28 18:42:26.674,Load insane precomp stickers,,4
+75143690,2020-11-28 15:24:39.143,Update screenshots,,2
+75142060,2020-11-28 13:54:35.505,SVG animate in/out,,3
+75141769,2020-11-28 13:37:33.458,"View showing a list of assets, with drag/drop support",,7
+75141601,2020-11-28 13:30:43.964,Proper UI for start/stretch,,7
+75090976,2020-11-27 08:19:22.530,Check building/running on debian,,5
+75081707,2020-11-27 01:35:13.656,Is python a prerequisite on windows ?,"#### Steps to reproduce
+
+<!-- Describe what you did (step-by-step) so we can reproduce: -->
+
+* Execute the vbs file
+
+#### Result
+this: ![image](/uploads/69d3ee8c3df56e52aff05977b9df399a/image.png)
+
+What it says in french is it cant find python 38 dll. Do we need python to be preinstalled and on PATH ?
+#### Version
+Both the stable and experimental version had this issue.
+<!-- List Operating System and Glaxnimate version
+From Glaxnimate you can go to ""Help > About... > System"" and click ""Copy""
+then paste here the information -->
+
+<!-- Example file:
+Attach a sample file (or files) highlighting the issue, if appropriate. -->",3
+75071368,2020-11-26 18:36:57.297,Right click on composition in the document node tree -> show add layer menu,,3
+75054895,2020-11-26 15:04:49.424,Please add /usr/include/ffmpeg and /usr/lib64 to FindLibav.cmake,"Please add /usr/include/ffmpeg to Libav_${comp_short}_INCLUDE_DIR search paths and /usr/lib64 to Libav_${comp_short}_LIBRARY search paths in cmake/modules/FindLibav.cmake.
+
+Fedora-based distros use this paths for ffmpeg includes and for 64bit libraries.
+
+Thank you.",1
+74905845,2020-11-24 11:50:31.801,Update download links for release,,1
+74869071,2020-11-23 21:50:05.859,Find an alternative to bintray,,5
+74863854,2020-11-23 19:38:31.142,Layer bounding boxes not being updated... again,,3
+74858495,2020-11-23 17:19:08.429,Paste keyframe on the keyframe menu too,,2
+74848470,2020-11-23 14:35:45.707,copy/paste keyframes,,4
+74810896,2020-11-22 19:18:03.293,make the timeline ui less cluttered,,3
+74807569,2020-11-22 16:18:44.785,"""Import to Composition"" menu action",,2
+74783972,2020-11-21 16:02:03.163,Fix window/controller API,,5
+74747875,2020-11-20 14:54:10.751,Clicking on the main composition doesn't show its edit item,,3
+74745815,2020-11-20 14:23:20.574,Check SVG gradient import,,4
+74736711,2020-11-20 11:00:07.972,Expand/collapse objects in the timeline,,4
+74736572,2020-11-20 10:59:04.889,Add visual properties to the timeline,,2
+74688785,2020-11-19 21:08:39.103,Multiple objects un the timeline view,,5
+74688761,2020-11-19 21:07:58.145,Make the property model support multiple objects,,3
+74556789,2020-11-18 10:44:39.544,Fix snap,,3
+74544451,2020-11-18 07:31:31.545,Clean up IO registry API,,3
+74501547,2020-11-17 12:31:47.446,Scaling issue,"#### Steps to reproduce
+
+* open Glaxnimate
+* load the appended file
+* Go to Document > Resize
+* try to resize document with either arrows or typing in a size (there might be different behaviour when appending a number to delting the contents of the textbox and writing in a new one)
+
+#### Result
+
+* the width for example does only go high to 703 and then flips back to 700 (I suppose it is rounding float values in the back, that is why I can do up to 3)
+* I expected it to be able to go to my target resolution of 1280px
+
+#### Version
+
+```
+Glaxnimate: 0.3.0-41-g998e16d
+System: Windows 10 Version 2004
+Kernel: winnt 10.0.19041
+CPU: x86_64
+Application Qt: 5.15.1
+System Qt: 5.15.1
+ZLib: 1.2.11
+Potrace: potracelib 1.16
+```
+
+
+#### Example file:
+
+![Information_Model.svg](/uploads/2bb88d7cf66ddeb7e204670a4c1ab8e3/Information_Model.svg)",2
+74487788,2020-11-17 09:51:07.776,Change release process,,3
+74384721,2020-11-15 09:34:01.597,Some icons are missing on Windows,,7
+74384551,2020-11-15 09:19:06.497,trace dialog ok/cancel,,2
+74384406,2020-11-15 09:05:34.905,Lottie canvas export,,2
+74378379,2020-11-14 22:18:46.237,title tag on svg export based on main()->name,,1
+74369155,2020-11-14 13:39:18.496,Python related Issues on Windows,"#### Steps to reproduce
+
+Download and start Glaxnimate for Windows
+
+Start a Python based Plugin like Hello World and Recolor
+
+#### Result
+
+Python based plugins like Hello World and Recolor are crashing the application without a crashlog, log, or any other notice
+
+#### Version
+
+```
+Glaxnimate: 0.2.0-77-g893d668
+System: Windows 10 Version 2004
+Kernel: winnt 10.0.19041
+CPU: x86_64
+Application Qt: 5.15.1
+System Qt: 5.15.1
+ZLib: 1.2.11
+Potrace: potracelib 1.16
+```",10
+74368048,2020-11-14 13:00:28.394,Windows: Dark Mode issues,"#### Steps to reproduce
+
+downloaded v0.3.0 for Windows and opened it.
+Changed theme to dark one in Edit > Preferences > Widget Theme > System Default -> Dark
+hit apply
+
+#### Result
+
+The Dark Theme does not get applied correctly. A few fields are white; making it hard to read.
+
+#### Version
+
+```
+Glaxnimate: 0.2.0-77-g893d668
+System: Windows 10 Version 2004
+Kernel: winnt 10.0.19041
+CPU: x86_64
+Application Qt: 5.15.1
+System Qt: 5.15.1
+ZLib: 1.2.11
+Potrace: potracelib 1.16
+```
+
+### Example File
+
+![dark-mode](/uploads/31cef7bff294ba2d546e1bd54222d6fa/dark-mode.PNG)",5
+74367962,2020-11-14 12:54:55.679,Can't Install v0.3.0 on Arch Linux (Arch based OS. via AUR glaxnimate-bin),"#### Steps to reproduce
+
+following the instructions from the homepage: 
+git clone https://aur.archlinux.org/glaxnimate-bin.git
+cd glaxnimate-bin
+makepkg -rsi
+
+#### Result
+
+error with wrong sha occures.
+[glaxnimate_sha1sums_error.txt](/uploads/2b085fffa69f4d55061dc64214492f6f/glaxnimate_sha1sums_error.txt)
+
+correcting the sha zu the correct one from the downloaded debian package results in the following error:
+[glaxnimate_error.txt](/uploads/b7285f5fb4ad8b6f03e23cd7e1af5aec/glaxnimate_error.txt)
+
+the second one seemingly correspondents to the issue: #194 maybe the first one, too.
+
+#### Version
+
+```
+uname -a
+Linux _PCNAME_ 5.9.2-arch1-1 #1 SMP PREEMPT Thu, 29 Oct 2020 17:01:28 +0000 x86_64 GNU/Linux
+glaxnimate v0.3.0
+```",4
+74367654,2020-11-14 12:37:03.258,Can't Install v0.3.0 on Kali Linux (Debian Based OS),"#### Steps to reproduce
+
+downloaded the debian package from the stable downloads section: https://glaxnimate.mattbas.org/download/#stable-releases
+downloading that file: https://gitlab.com/mattbas/glaxnimate/-/jobs/artifacts/release/raw/build/glaxnimate.deb?job=linux%3Adeb
+running sudo apt install ./glaxnimate.deb in the downloads Folder
+
+#### Result
+
+this error Log occurs:
+```
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+Note, selecting 'glaxnimate' instead of './glaxnimate.deb'
+The following additional packages will be installed:
+  libpotrace0
+The following NEW packages will be installed:
+  glaxnimate libpotrace0
+0 upgraded, 2 newly installed, 0 to remove and 111 not upgraded.
+Need to get 26.2 kB/9,977 kB of archives.
+After this operation, 55.9 MB of additional disk space will be used.
+Do you want to continue? [Y/n] 
+Get:1 /home/kali/Downloads/glaxnimate.deb glaxnimate amd64 0.3.0+deb-893d668b [9,951 kB]
+Get:2 http://kali.download/kali kali-rolling/main amd64 libpotrace0 amd64 1.16-2 [26.2 kB]
+Fetched 26.2 kB in 1s (35.3 kB/s) 
+Selecting previously unselected package libpotrace0:amd64.
+(Reading database ... 277166 files and directories currently installed.)
+Preparing to unpack .../libpotrace0_1.16-2_amd64.deb ...
+Unpacking libpotrace0:amd64 (1.16-2) ...
+dpkg: warning: parsing file '/var/lib/dpkg/tmp.ci/control' near line 2:
+ 'Depends' field, reference to 'libpotrace0':
+ implicit exact match on version number, suggest using '=' instead
+Selecting previously unselected package glaxnimate.
+Preparing to unpack .../kali/Downloads/glaxnimate.deb ...
+Unpacking glaxnimate (0.3.0+deb-893d668b) ...
+dpkg: error processing archive /home/kali/Downloads/glaxnimate.deb (--unpack):
+ unable to create '/usr/share/glaxnimate/glaxnimate/lib/python-lottie/addons/blender/lottie_io/lottie/__init__.py.dpkg-new' (while processing './usr/share/glaxnimate/glaxnimate/lib/python-lottie/addons/blender/lottie_io/lottie/__init__.py'): No such file or directory
+dpkg-deb: error: paste subprocess was killed by signal (Broken pipe)
+Errors were encountered while processing:
+ /home/kali/Downloads/glaxnimate.deb
+E: Sub-process /usr/bin/dpkg returned an error code (1)
+```
+
+#### Version
+
+```
+uname -a
+Linux kali 5.7.0-kali1-amd64 #1 SMP Debian 5.7.6-1kali2 (2020-07-01) x86_64 GNU/Linux
+```
+glaxnimate version 0.3.0",4
+74365769,2020-11-14 10:42:50.509,Removing a keyframe should adjust transitions,,3
+74365496,2020-11-14 10:23:31.267,Deleting the current object should remove it from the selection,,2
+74325176,2020-11-13 13:35:52.244,Web preview SVG/Lottie,,3
+74301831,2020-11-13 07:23:26.806,"When duplicating shapes, select the duplicates",,3
+74301708,2020-11-13 07:17:57.315,Flood fill tool,,4
+74270075,2020-11-12 16:43:53.456,Fix this file,,4
+74162253,2020-11-10 18:03:21.284,Convert shapes into Paths,,5
+74148247,2020-11-10 13:55:41.887,Text to shapes for tgs export,,15
+74148187,2020-11-10 13:55:05.641,Lottie Text Layers,,3
+74134374,2020-11-10 09:36:30.950,Remove angle bounds,,1
+74134100,2020-11-10 09:31:44.817,Fix layer bounding box,,4
+74003307,2020-11-07 09:40:57.921,Script app setup,,5
+73994501,2020-11-06 22:48:55.521,Update trace documentation,,2
+73994462,2020-11-06 22:46:28.254,Hide tangent handles unless near the mouse cursor for the bezier editor,,4
+73965730,2020-11-06 10:36:04.191,Build Pypi for win/mac,,7
+73875221,2020-11-04 18:07:45.197,Import/Export Synfig,,4
+73821266,2020-11-03 19:58:11.495,dotLottie I/O plugin,,5
+73796122,2020-11-03 12:08:24.722,Fix weird link errors on Win,,10
+73676901,2020-10-31 22:03:55.360,Scroll at the end of the console when new stuff is entered,,1
+73676113,2020-10-31 20:56:03.784,Ensure all enums are visible in python,,3
+73658470,2020-10-31 07:14:02.661,Document File Format,,5
+73658464,2020-10-31 07:13:34.317,Improve Pythod docs,,5
+73541198,2020-10-28 20:27:30.366,Ensure color widgets can be used from QUiLoader,,4
+73504954,2020-10-28 08:54:10.720,Scripting API to create objects,,10
+73504812,2020-10-28 08:51:50.839,QImage to Pillow Image,,5
+73296748,2020-10-24 15:18:27.163,Trace bitmaps with potrace,,7
+73232016,2020-10-23 07:53:23.237,Don't allow molding if too close to a handle,,2
+72976710,2020-10-19 18:18:14.017,Refactor plugin settings setup,,3
+72976572,2020-10-19 18:13:34.167,Move the plugin system out of app/,,2
+72976527,2020-10-19 18:12:14.203,pen-friendly spinboxes: just click and drag to set values,,7
+72976281,2020-10-19 18:06:53.504,"For gradients and bezier, maintain the number of nodes through keyframes",,5
+72887735,2020-10-17 20:07:17.865,Try creating a snap package,,6
+72832391,2020-10-16 11:55:37.823,"Icons missing  in I/O ""windows"" -  GNU/Linux Appimage","Hello, 
+
+when i load or save the project , icons are missing in the  I/O( open, save, import, etc...) ""windows""'
+
+Beside that i cannot resize the  I/O ""windows"".
+
+![missing3](/uploads/68d5ec1bd4aa20ca3de51a39b19a5e0d/missing3.png)",3
+72775250,2020-10-15 13:27:11.357,"Before release, update windows download links in docs",,1
+72770433,2020-10-15 11:57:17.768,UI Problem with GNU/Linux Appimage,"Hello,
+i have a problem with the UI and Appimage ( GNU/Linux).
+In particular the timeline is  ""compressed"" or not completely visible.
+
+```
+System:
+0.1.4+appimage-ffd62d22
+Pop!_OS 20.04 LTS
+linux 5.4.0-7642-generic
+x86_64
+5.15.0
+5.15.0
+
+Monitor 4K ( 3840x2160) - monitor scale 200%
+```
+
+I tried also to load the app with `Exec=env QT_SCALE_FACTOR=1.6` but it's not working.
+
+EDIT: updated Screnshot:
+
+![scale16](/uploads/1faed74e285f26bef29269322264894d/scale16.png)",5
+72728087,2020-10-14 17:39:44.264,Widget color settings,,5
+72696795,2020-10-14 08:55:56.080,Gradient stop context menu,,3
+72696754,2020-10-14 08:55:26.951,Fix group bounding box,,3
+72666102,2020-10-13 17:49:07.494,Link fill style with selected gradient handle,,3
+72645884,2020-10-13 13:42:35.526,Bezier Molding,,5
+72567184,2020-10-12 10:51:48.977,Insert node,,3
+72535891,2020-10-11 19:58:50.511,Test running on windows,,4
+72528714,2020-10-11 14:45:15.414,"""Exclude from export"" layer option",,3
+72522706,2020-10-11 10:01:11.742,Gradient Presets?,,3
+72509133,2020-10-10 19:37:21.374,Sometimes a new document gets saved without dialog. Maybe after frame export / web preview?,,2
+72440832,2020-10-09 09:15:02.558,use UndoMacroGuard everywhere,,3
+72432887,2020-10-09 06:42:27.255,Add/remove keyframes from context menus,,4
+72412257,2020-10-08 18:50:55.717,Crash When selecting vertices,,2
+72411086,2020-10-08 18:19:41.803,Fix export menu action text,,1
+72349245,2020-10-07 20:25:22.207,turn docnode_visible and docnode_locked into properties,,2
+72318805,2020-10-07 12:58:40.655,Fix crash on lottie export,,1
+72316830,2020-10-07 12:26:57.944,Export menu actions,,3
+72314280,2020-10-07 11:41:43.854,Add post_release target that checks the files in the release page are correct,,4
+72270146,2020-10-06 16:21:42.148,Figure out lottie start time / time stretch,,7
+72257221,2020-10-06 13:16:25.501,Add segment curve/straighten menu actions,,2
+72246656,2020-10-06 10:27:16.684,Document new editing functionality,,4
+72246105,2020-10-06 10:16:16.596,Delete selection action,,2
+70943170,2020-09-09 17:14:46.875,Expose importers / exporters to Python,,5
+70943044,2020-09-09 17:10:11.243,Fix stroke bounding box,,3
+70895330,2020-09-08 19:43:28.255,Import shapes for lottie,,5
+70895325,2020-09-08 19:43:11.321,Lottie bezier shapes export,,5
+70895311,2020-09-08 19:42:41.576,Check shape processing order,"Make sure drawing stuff on top is consistent.
+Also check file open/save including lottie.",5
+70871214,2020-09-08 10:52:12.625,Build Python on Windows,,7
+70835941,2020-09-07 16:51:43.899,Bezier tangent handles sometimes are swapped for symmetrical nodes,,3
+70818892,2020-09-07 10:48:14.378,Solid Stroke,,5
+70818877,2020-09-07 10:47:41.640,Transform Modifier,,5
+70789505,2020-09-06 17:23:26.247,Link selected color to the color widgets,Should recurse in groups/layers and select fill/stroke.,3
+70764505,2020-09-05 10:55:14.564,Tool button layout should scale better when height is restricted,,2
+70760605,2020-09-05 07:01:05.482,Mac build,"We need to set up a Mac build, hopefully in a way that can be integrated with CI",10
+70760602,2020-09-05 07:00:46.600,Windows Build,"We need to set up a Windows build, hopefully in a way that can be integrated with CI",20
+70760256,2020-09-05 06:41:07.136,Build AppImage on an older Ubuntu version,Currently we're using ubuntu:latest but it should be on an older version for wider support.,10
+70702555,2020-09-03 17:51:39.920,Property model should add keyframes when in record mode,,1
+70702532,2020-09-03 17:50:54.640,Color delegate should show the decoration,currently it fills the whole cell,1
+70473849,2020-08-30 19:00:07.966,Layers widget,"* [x] Selecting the current composition
+* [ ] Drag / Drop
+* [ ] Convert shape groups to/from layers",10
+70473832,2020-08-30 18:58:33.572,Timeline widget,"* [x] Drag keyframes
+* [ ] Test undo / redo",5
+68322898,2020-07-20 22:28:51.325,tool to swap one color for another,"Affect both fills and strokes, maybe option for gradients?",20
+68320340,2020-07-20 22:24:09.948,Todo,"* when creating a later, set in out points to the animation
+* Move name before group color in document node
+* Give a default name to animations",3
+89286817,2021-06-25 07:37:59.164,Initial text style is wrong,,3
+89255429,2021-06-24 15:24:40.059,Object not in position when export to Lottie,object masking with shape animation not in position when export to Lottie.[anim_with_masking.rawr](/uploads/6d922984fd27fa209cb8eaf2a66ecfdc/anim_with_masking.rawr),4
+89087202,2021-06-22 12:04:05.323,Object Clones / allow referencing arbitrary nodes,,8
+88777550,2021-06-16 02:39:59.819,Insert Image file name type masks are offset somehow,"#### Steps to reproduce
+
+1. Open Glaxnimate
+2. Insert Image...
+3. Select the PNG file name type
+4. Select the SVG file name type
+
+#### Result
+
+Actual result: Selecting the PNG file type here causes it to match JPG files, and selecting the SVG file type causes it to match PNG files.
+
+#### Version
+
+macOS 11.4
+Glaxnimate 0.4.3-11-g8157dfe",6
+88777473,2021-06-16 02:37:13.293,Trace crashes on Apple Silicon,"#### Steps to reproduce
+
+1. Installed dependencies with Brew
+2. Built using slightly modified build steps to find the correct paths
+3. Opened it
+4. Inserted an image
+5. Right clicked on the layer
+6. Selected Trace...
+
+#### Result
+
+Expected: Apparently a trace dialog should open?
+What really happened: It crashed.
+
+#### Version
+
+macOS 11.4
+Glaxnimate 0.4.3-11-g8157dfe
+
+Attaching logs:
+[glaxnimate_trace_crash_log.txt](/uploads/157a48558ffcf91f8e432c38b6b6ae3d/glaxnimate_trace_crash_log.txt)",7
+88674246,2021-06-14 13:28:23.980,"Python ""constructors"" returning unique_ptr and adding (clones) to shape lists",,4
+88672105,2021-06-14 12:58:48.597,Set up Modifiers,,4
+88658037,2021-06-14 09:06:53.184,lottie can't export masking object,,3
+88629636,2021-06-13 12:50:13.549,Keyframe back to old state when move multiple keyframe selected moved to new state,![multiple_keyframe](/uploads/dcb4100f059a1410e9560bcc874b0628/multiple_keyframe.mp4),2
+88628930,2021-06-13 12:06:22.626,Repeater Modifier,,4
+88628893,2021-06-13 12:03:17.086,Trim Path Modifier,,4
+88606908,2021-06-12 09:08:56.148,Fix scrolling on the timeline,,3
+88605465,2021-06-12 08:12:40.532,Open path when duplicate object,"I create a shape circle and then convert it to the path, I am adding a keyframe on the shape. after that, I am duplicating the object, but the new object from the duplicate open path. [bug_when_duplicate.rawr](/uploads/eceec65335dde81b8ce7d3516c0ceb78/bug_when_duplicate.rawr)",2
+88432133,2021-06-09 06:20:11.794,Timeline not collapsing on new layers,,3
+88419503,2021-06-08 21:59:15.974,always create fill/stroke objects from tools if group is enabled (+layer option),,3
+88419480,2021-06-08 21:58:03.087,rearrange default dock layout (- layers + gradients),,6
+88324000,2021-06-07 12:53:54.695,Make recording mode more noticeable,,3
+88276281,2021-06-06 11:59:27.900,Undoing precomposition leaves stray editor items in the canvas,,4
+88274542,2021-06-06 10:08:10.936,Timeline gets misaligned... again -_-,,3
+88272075,2021-06-06 08:31:53.173,Crash when undoing precompose,,5
+88230078,2021-06-04 16:27:09.024,Basic CSS selector support,,4
+88152435,2021-06-03 10:14:02.369,Mac Travis Build,,3
+88085782,2021-06-02 08:31:23.300,Upload Artifacts to SourceForge,,5
+88048812,2021-06-01 15:38:03.259,Upload artifacts to itch.io,,5
+87979549,2021-05-31 14:01:02.641,Check PyPi gitlab builds,,2
+87950045,2021-05-31 06:53:28.637,Octree quantization,,8
+87932832,2021-05-30 15:35:51.934,Timeline selection getting out of sync,,4
+87926281,2021-05-30 09:36:55.034,Timeline stripes get thrown off when scrolling,,2
+87924502,2021-05-30 08:03:37.845,Show layer parents in the timeline,,2
+87910530,2021-05-29 16:02:40.051,Text to path adds too many points,,3
+87903926,2021-05-29 10:51:01.779,Moving objects messes up timeline alignment,,3
+87903682,2021-05-29 10:38:35.812,keyframe icons are offset,,2
+87884322,2021-05-28 16:27:08.440,Update selection from the timeline,,4
+87884277,2021-05-28 16:25:56.890,Filter composition on the timeline,,2
+87884235,2021-05-28 16:25:06.408,Add back layer ranges on the timeline,,3
+87884219,2021-05-28 16:24:08.861,Drag/drop on the timeline,,4
+87879698,2021-05-28 14:57:51.262,Crash when adding objects to comps after precomposing a layer,,2
+87826659,2021-05-27 15:47:47.859,precomposing messes up alignment,,3
+87694239,2021-05-25 15:53:14.840,crash when switching gradient to named color,,5
+86831108,2021-05-11 06:23:01.480,build pypi for 3.8 and 3.9. and upload them to gitlab on master/release,,5
+86618846,2021-05-06 22:06:22.868,not loading lottie fps,,2
+86424711,2021-05-04 05:58:27.152,python macro system,A system where the user can edit small python scripts that are then available from a menu and show as functions in the console,7
+86326818,2021-05-01 18:24:58.847,Expose tracing utilities to python,,3
+86268250,2021-04-30 08:38:39.987,compile artifact for glaxnimate-bin on AUR,,5
+86267516,2021-04-30 08:25:45.859,update glaxnimate-git (AUR) on release,,2
+86160750,2021-04-28 18:08:15.834,Clicking on the plugin checkbox in the list should toggle them,,2
+86160736,2021-04-28 18:07:30.431,frame-by-frame plugin,,2
+86160723,2021-04-28 18:07:01.325,Plugins should have a description,,3
+86154552,2021-04-28 15:52:27.209,when the time is set to precomp in/out the canvas isn't updated,,3
+86154369,2021-04-28 15:49:03.559,SVG load bug (blep-hair.svg),,3
+85983947,2021-04-26 20:50:32.735,Crash when creating an object right after undoing an object creation,,3
+85978837,2021-04-26 18:59:19.076,Stylers don't respect the visible property,,2
+85948927,2021-04-26 10:59:16.555,Keyboard shortcut settings not being saved,,3
+85925940,2021-04-26 05:16:26.465,select multiple keyframes,,4
+85906089,2021-04-25 13:41:11.617,Font style changes after creating an item,,3
+85896793,2021-04-25 05:39:32.704,Show precomp tab above the timeline,,2
+85896771,2021-04-25 05:38:31.426,Timeline show layer parent and button to assign,,3
+85896766,2021-04-25 05:36:43.270,timeline: show layer color/hide/lock icons,,3
+85896715,2021-04-25 05:35:08.709,"Rename stuff like ""Path Stroke"" to ""Stroke""",,1
+85896697,2021-04-25 05:33:49.765,Timeline: Layers / contents,,20
+85896653,2021-04-25 05:28:02.649,Merge functionality between edit and draw,,40
+85896629,2021-04-25 05:24:11.440,Make bezier tangents more visible,,1
+85896624,2021-04-25 05:23:07.259,Ctrl+Z to undo adding points on draw,,3
+85896563,2021-04-25 05:19:26.579,Startup new document dialog,,5
+85896491,2021-04-25 05:12:20.275,Preset system,,4
+85885366,2021-04-24 17:55:33.668,remove shapes.hpp,,1
+85833453,2021-04-23 16:02:06.229,trace - color management improvements,"An undo for the auto detect colours would be nice, and/or some way to lock in certain colours so they don't get reselected, eg I want to pick a couple of colours and not have them forgotten because I clicked auto to see what it would pick
+
+A way to remove a specific colour would also be cool (although I just saw you can rearrange the list and then remove the last one, I still think it'd be more intuitive if there was just an ""x"" for each colour or something)",5
+85773519,2021-04-22 20:51:22.691,Fix broken links in docs,"""Script console"" and ""Plugin"" page don't work. . https://glaxnimate.mattbas.org/contributing/scripting/",1
+85721808,2021-04-22 08:18:53.017,"Percent spin box, use on scale, line height",,3
+85693292,2021-04-21 19:50:40.694,Proper edit items for text (position size),,5
+85693025,2021-04-21 19:46:28.218,Text along path,,7
+85692980,2021-04-21 19:45:21.754,Font Selection dialog,,5
+85692955,2021-04-21 19:44:54.659,Google Fonts integration,,10
+85332932,2021-04-16 18:44:14.313,Copy/paste shapes using gradients,,3
+85191403,2021-04-14 15:09:48.941,Refactor Assets/Document Nodes,,10
+85095727,2021-04-13 08:20:27.246,Python module is broken,,3
+78494455,2021-02-05 13:09:20.658,The program crashed while saving the project in the synfig format,"The program crashed while saving the project in the synfig format. It also crashed when opening sinfig files.
+
+I opened the program on windows 10.
+
+The crash was both in the stable version and in the experimental one.",4
+78119394,2021-01-30 16:56:35.454,Add CMake Dependencies into AUR packages,in the AUR packages [glaxnimate-bin](https://aur.archlinux.org/packages/glaxnimate-bin/) and [glaxnimate-git](https://aur.archlinux.org/packages/glaxnimate-git/) is [cmake](https://archlinux.org/packages/extra/x86_64/cmake/) in the dependencies list missing. it is needed. i repoted the issue in the telegram group (i am thecraftguy).,2
+77990862,2021-01-28 11:08:06.831,Maximize not working,"When trying to maximize the Glaxnimate window, nothing happens (XUbuntu 20.10)",5
+77986496,2021-01-28 09:58:52.013,Crash when pasting SVG,,3
+76272639,2020-12-19 13:04:17.905,Ensure the whole canvas is refereshed on property change,,2
+76203872,2020-12-17 19:08:38.616,Simplify Canvas Rendering,,3
+76187856,2020-12-17 13:05:01.429,Mattes,,15
+76171522,2020-12-17 08:23:49.786,"Parse SVG ""d"" without spaces",,3
+76118529,2020-12-16 07:52:41.319,Fix SVG output for parented layer transforms,,2
+75968609,2020-12-11 16:37:39.366,Request: Pinch gesture support,"Add Support for Touch Screens in adding
+- pinch zoom
+- pinch rotate
+
+see example: https://doc.qt.io/qt-5/qtwidgets-touch-pinchzoom-example.html",4
+75968398,2020-12-11 16:31:15.736,Right-clicking on the tree view shouldn't switch the current node,,2
+75914004,2020-12-10 16:45:06.371,Decompose,,2
+75898246,2020-12-10 12:25:01.432,Undoing AddObject causes errors from the model,,2
+75653352,2020-12-05 15:52:53.822,Plugin actions should always be in the same order in the menu,,2
+75649933,2020-12-05 12:20:15.349,Deleting objects doesn't update the tree view correctly,,3
+75615507,2020-12-04 13:04:12.624,Pixel-Images to Vector-Images  bulk convert,"I need to convert a bunch of PNG Files to SVG Files and Glaxnimate has the best implementation for any bitmap to vector conversion.
+
+Glax suggested to expose the tracing functionality to python, so that I could write a script for load and save.",4
+75604234,2020-12-04 09:26:47.759,Dependency graph for comps,,7
+75579969,2020-12-03 22:06:28.226,Show gradients in the timeline,,5
+75549080,2020-12-03 13:25:32.336,Align to canvas as a group (and more alignment options),,5
+75504287,2020-12-02 18:46:59.785,Align/distribute view,,10
+75504156,2020-12-02 18:42:10.584,Lottie modifiers,,7
+75502540,2020-12-02 18:01:59.361,Position keyframe bezier,,10
+75435745,2020-12-01 15:25:04.488,"""Duplicate"" menu action",,2
+75421913,2020-12-01 12:01:27.160,Document precomps,,4
+124365243,2023-02-27 15:14:14.105,Dotlottie Export,"Steps to reproduce
+
+<!-- Describe what you did (step-by-step) so we can reproduce: -->
+
+* Open Glaxnimate
+* Draw any random vector object like square or star
+* Export as dotLottie
+
+#### Result
+
+<!-- Describe what happened and what the expected result would be -->
+Export stops halfway, message appears ""plugin raised an exeption"", no export of file occurs
+
+
+<!-- List Operating System and Glaxnimate version
+Glaxnimate: 0.5.2+win-09923d6f
+System: Windows 11 Version 22H2
+Kernel: winnt 10.0.22621
+CPU: x86_64
+Application Qt: 6.4.2
+System Qt: 6.4.2
+ZLib: 1.2.13
+Potrace: potracelib 1.16
+Libav: Lavu56.70.100, Lavf58.76.100, Lavc58.134.100, SwS5.9.100
+libarchive: 3.6.2
+
+
+<!-- Example file:
+Attach a sample file (or files) highlighting the issue, if appropriate. -->",3
+124264856,2023-02-24 16:06:37.510,New layer does not get a range of frames when made - properties shows 1st frame 0 and last frame -1,"A peculiar problem which I so far have just ignored because it was possible to set the frames in properties afterwards but when using a free form line this is impractical. Basically a new layer does not get a range of frames when made - properties shows 1st frame 0 and last frame -1 - so it is not visible. This can be changed in properties as mentioned. It happens in Glaxnimate: 0.5.2+appimage-757aea71 on Linux Mint 21.1 but in the stable version 0.5.1 it doesn't happen here a new layer is give a default range of 0 to 180 making it fully visible. Is there a setting/preference which needs to be set in the 0.5.2?
+
+Glaxnimate: 0.5.2+appimage-757aea71
+System: Linux Mint 21.1
+Kernel: linux 5.15.0-60-generic
+CPU: x86_64
+Application Qt: 5.15.2
+System Qt: 5.15.2
+ZLib: 1.2.11
+Potrace: potracelib 1.13
+Libav: Lavu56.70.100, Lavf58.76.100, Lavc58.134.100, SwS5.9.100
+libarchive: 3.1.2
+
+
+![new_path_layer_no_frames](/uploads/8fb80f25e52db2165b6200be86663770/new_path_layer_no_frames.png)",2
+124252605,2023-02-24 13:05:44.987,0.5.2: unable to download - package download links error 404,"https://gitlab.com/mattbas/glaxnimate/-/releases/0.5.2
+
+* Linux AppImage
+* Deb Package
+* Source Tarball
+
+in the Download table all give `{""message"":""404 Not found""}` for the link in the package cell.",3
+123956582,2023-02-19 20:37:54.160,Update the context menu for property handles to match all the actions in the context menu from the timeline,,3
+123946615,2023-02-19 12:08:10.702,Follow path (existing path to position animation),,7
+123891068,2023-02-17 17:09:36.267,"Add ""Fast"" interpolation (reverse of Ease)",,4
+123880575,2023-02-17 14:00:06.341,Add conical gradients,"* [ ] enum value
+* [ ] paint
+* [ ] icon
+* [ ] svg I/O
+* [ ] avd I/O",3
+123799022,2023-02-16 12:27:39.652,Add android vector drawable support,,14
+123780265,2023-02-16 07:38:44.553,app icon not showing in the gnome app grid when installed as flatpak,"Thanks for the great app!
+
+There is a small issue regarding the app icon in the app drawer: is not shown when the app is installed as a flatpak at least on my machine.
+
+I *think* it is because while the app icon itself is installed as `org.mattbas.Glaxnimate.svg`, the icon name referenced in the desktop file is `glaxnimate`. Changing it to `org.mattbas.Glaxnimate` fixes it. ( [flatpak documentation](https://docs.flatpak.org/en/latest/freedesktop-quick-reference.html) )",1
+123584346,2023-02-13 10:58:45.595,Save log to file,,2
+123551855,2023-02-12 18:06:27.702,dev version 12th february crashes on image export on linux 21.1 mint,"I tried the DEV version from CET evening today 12th feb. 
+
+Glaxnimate: 0.5.1+appimage-ce927c1f
+System: Linux Mint 21.1
+Kernel: linux 5.15.0-58-generic
+CPU: x86_64
+Application Qt: 5.15.2
+System Qt: 5.15.2
+ZLib: 1.2.11
+Potrace: potracelib 1.14
+Libav: Lavu56.70.100, Lavf58.76.100, Lavc58.134.100, SwS5.9.100
+libarchive: 3.2.2
+
+Unfortunately it crashes on attempting to export to images. In the export menu it does not allow you to select a folder - it just shuts down. And I was silly enough to delete the older DEV appimage which was working fine. Is it possible to be able to download the older DEVs so I can export to images again?",3
+123537774,2023-02-12 07:00:26.655,Don't modify ellpise shape when not needed,,2
+123532166,2023-02-11 21:07:35.705,Point values exported as null to lottie,,3
+123531866,2023-02-11 20:45:41.104,Trim layers when loading a template with different times from the startup dialog,,2
+123520728,2023-02-11 11:42:44.421,Select Tool usability issues,,3
+123250063,2023-02-07 23:52:40.438,Import from Lottiefiles seems to be broken on Linux,"#### Steps to reproduce
+
+<!-- Describe what you did (step-by-step) so we can reproduce: -->
+
+* Open Glaxnimate
+* Click on ""File"", then on ""Import from LottieFiles""
+* Search for ""Let it snow""
+* Click on second file top left, called ""let it snow""
+* Click on ""Import"" button
+
+#### Result
+
+Error message pops up:
+![image](/uploads/57388829b1ca61733b73e82fa0ac8266/image.png)
+
+#### Version
+
+Glaxnimate: 0.5.1+flatpak-69-g56a4473f
+System: Arch Linux
+Kernel: linux 6.1.10-AMD-znver2
+CPU: x86_64
+Application Qt: 5.15.8
+System Qt: 5.15.8
+ZLib: 1.2.13
+Potrace: potracelib 1.16
+Libav: Lavu57.28.100, Lavf59.27.100, Lavc59.37.100, SwS6.7.100
+libarchive: 3.6.2
+
+
+<--------------------->
+Additional information:
+
+This is the glaxnimate-git package on Arch Linux. 
+I have seen the same issue with the glaxnimate package. 
+This issue is also present on every lottie file I have tried to import. 
+Saving the file to disk and then importing it has the same results.
+
+I don't have other operating systems to try on, so I don't know if it's related to my OS, some version of a package in my OS or anything. 
+A few months ago Arch moved away from python2, and it's now depreciated, with python3 taking it's place. These two are not exactly compatible, so if you are using python scripts to handle the import this may be where the issue lies.",2
+122303988,2023-01-23 13:57:21.242,Error could not load first frame for Animation timing,"When animating a counter with an SVG from Inkscape (counting from 1960 to 1970 using text), the first timing (visibility) settings (25 f each decade) works fine however the last 3 looses their timings. When reopening the project file giving the error - could not load first frame for Animation timing. Is there a maximum of timings you can set and I have exceeded the limit?
+
+![loosing_timings_set](/uploads/37b025e7541fd80d105d1690633168f0/loosing_timings_set.png)
+
+![loosing_timings_set_error](/uploads/44e778a38d04a474a255274db7bc4a80/loosing_timings_set_error.png)
+
+![loosing_timings_lost](/uploads/68d8d728dbb07021f9d20b3dcead8272/loosing_timings_lost.png)",2
+121501429,2023-01-10 08:57:34.290,Export options using video,"The export option for video: When I choose video as output from a 24 fps 1920x1080 canvas the video file is rather poor and blocky as is usual for a low bitrate and low quality settings. I have tried to max out the bitrate at 10000 which improves the video but I would still want it to improve. If I analyse the output video in mediainfo I get a rather low bit rate of just under 2000 kps. How can I further improve the video quality. I see that other output formats are supported like H264 and H265 but how are they selected?
+
+Glaxnimate: 0.5.1+appimage-214afdfb (DEV version)
+System: Linux Mint 21.1
+Kernel: linux 5.15.0-57-generic
+CPU: x86_64
+Application Qt: 5.15.0
+System Qt: 5.15.0
+ZLib: 1.2.11
+Potrace: potracelib 1.13
+Libav: Lavu56.70.100, Lavf58.76.100, Lavc58.134.100, SwS5.9.100
+libarchive: 3.1.2
+
+![export_options](/uploads/6fa4251f4a5843684ba65f9ce0cf0607/export_options.png)
+![export_video_mp4_bitrate](/uploads/cf88b7cd07114627ab2e441d4b49618b/export_video_mp4_bitrate.png)
+![media_info_video_mp4_bitrate](/uploads/07e3ac60e2e0180f5e89eee6aa37246d/media_info_video_mp4_bitrate.png)
+![video_export_formats](/uploads/f87428e8b9d9cbcfb45a0924d7e4c88b/video_export_formats.png)",7
+118135621,2022-11-04 10:14:04.945,Show the contributors file in the about dialog,,2
+118012994,2022-11-02 14:20:15.280,Deb package 0.5.1 fails to install on Debian 11 Bullseye due to libpython 3.10 requirement,"I noticed that the stable Deb package (version `0.5.1+deb-3a75daf1`) installation results in a broken package on Debian 11 Bullseye. This is due to the missing dependency on libpython 3.10. This cannot be satisfied in Debian 11 (which has Python 3.9, see https://tracker.debian.org/pkg/python3-defaults).
+
+My workaround suggestion (in the absence of a second Deb package) is to specify this specific dependency in the [Deb section of the download page](https://glaxnimate.mattbas.org/download/#deb-package). Something like ""requires Python 3.10"".",1
+117807052,2022-10-30 10:22:18.873,Rive file support,,8
+117362613,2022-10-22 09:32:07.918,"Importing lottie ignores ""hd"" on stylers",,2
+116609358,2022-10-10 20:17:59.378,Export frames as png,"Can an option be added to export an animation as individual pngs (or exrs, tiffs, jpgs etc)?
+
+I'm using 0.5.1+deb-da745bc5 and there appear to be no lossless image output options
+
+![Screenshot_from_2022-10-10_21-14-44](/uploads/a11c818f9a4871fa3480a27d57410172/Screenshot_from_2022-10-10_21-14-44.png)",3
+116435045,2022-10-07 02:23:58.230,Window too big for the resolution of my laptop,"#### Steps to reproduce
+
+* Set your resolution to 1366x768
+* Open Glaxnimate
+
+#### Result
+
+First, when I opened it for the first time the window was filing more than the screen. I used holded <kbd>SUPER</kbd> to resize the window, and although horizontally the window fit, I couldn't resize the window any more vertically. To deal with this I had to hold <kbd>SUPER</kbd> everytime I needed to go to the timeline.
+
+#### Version
+
+OS: Fedora Linux 36 (Workstation Edition) <br />
+GNOME VERSION: 42.4 <br />
+Glaxnimate: 0.5.1 <br />
+System: KDE Flatpak runtime <br />
+Kernel: linux 5.19.7-200.fc36.x86_64 <br />
+CPU: x86_64 <br />
+Application Qt: 5.15.6 <br />
+System Qt: 5.15.6 <br />
+ZLib: 1.2.11 <br />
+Potrace: potracelib 1.16 <br />
+Libav: Lavu57.28.100, Lavf59.27.100, Lavc59.37.100, SwS6.7.100 <br />
+libarchive: 3.5.2
+
+![Kooha-2022-10-06-21-21-04](/uploads/1d48e0020af539bd564f0978308482f0/Kooha-2022-10-06-21-21-04.webm)",5
+113906395,2022-08-26 09:22:24.868,"[RAWR] BUG: SAVE, REOPEN wrong path or node...","hi
+
+i find bug for RAWR for save the project.
+
+reproduce:
+-import file SVG in glaxnimate
+-save in RAWR
+-close glaxnimate
+-reopen Glaxnimate; open file rawr
+
+there is missed path or open the path, (wrong saving in rawr)
+
+so i did tested for JSON (not rawr)
+result correct path/node..
+
+here file SVG (inkscape)
+![bug.svg](/uploads/ddcf39b18c67b3e9548d62f356020d2e/bug.svg)
+
+
+**this is BUG**
+
+here file RAWR (imported from file svg)
+[bug-rawr.rawr](/uploads/e57b0078ae7119fdbb3ddaa5cac96f9c/bug-rawr.rawr)
+
+from file RAWR to JSON: same issue bug
+[bug-rawr-to-json.json](/uploads/935c657906bedc92cf3d2f2413db4d46/bug-rawr-to-json.json)
+
+
+**this is not BUG**
+
+from file SVG (import) to JSON: WORKS, not bug
+[bug-svg-to-json.json](/uploads/b7a34abc5986b1e2fa42781746ac5bdc/bug-svg-to-json.json)",2
+113869898,2022-08-25 16:51:41.157,add flatpak support,i understand that the project offers an appimage but i think having a flatpak release is better since it helps the discoverability of the project since flatpak is supported on most distros by default and shows up packages in the storefronts and it's much easier for users to keep updated compared to an appimage,9
+113864827,2022-08-25 15:05:18.302,Incomplete gradient colours warning info during import,"When importing a file, warnings about gradient colours are shown (Invalid value for ..). Whether the extended logs should be implemented that can tell more specifically what is wrong with the colours?\
+![sand_glass_import_gradient_errors](/uploads/b97472c4236dd586849f49c2e94e7669/sand_glass_import_gradient_errors.png)
+
+Example: [sand-glass_orig](https://gitlab.com/mattbas/glaxnimate/uploads/881eefd153c8e9eeb29a869402481f3e/sand-glass_orig.tgs) #512",2
+113699761,2022-08-23 14:22:34.054,[0.5.0] - Unable to download Source Tarball,"#### Steps to reproduce
+
+<!-- Describe what you did (step-by-step) so we can reproduce: -->
+
+* Navigate to https://gitlab.com/mattbas/glaxnimate/-/releases/0.5.0
+* Click on ""Source Tarball"" in the ""Download"" table (https://gitlab.com/mattbas/glaxnimate/-/jobs/artifacts/0.5.0/raw/glaxnimate-src.tar.gz?job=tarball)
+
+#### Result
+
+Error 404 - Page Not Found
+
+#### Additional information
+https://glaxnimate.mattbas.org/download/ with https://gitlab.com/mattbas/glaxnimate/-/jobs/artifacts/release/raw/glaxnimate-src.tar.gz?job=tarball is *not* a viable alternative to this as it's missing any kind of version reference in either the url or the file name itself, e.g. we package 0.5.0, tarball gets updated and our 0.5.0 package starts to build 0.6.0 - you get the idea.",2
+113645774,2022-08-22 16:41:07.329,LottieFiles API integration,,5
+113567906,2022-08-20 17:32:59.482,Zigzag,,5
+113567903,2022-08-20 17:32:35.542,Offset path,,7
+113558492,2022-08-20 09:57:41.681,"Text problem with size >49, and wrong Anchor Point position","## Video Demonstration of the `Text Size` and `Anchor Point Placement` problems:
+
+Please see this [Demo Video](https://youtu.be/RVVwrAaY-XU) I recorded for explaining the following issues:
+***
+## If Font Size > 49
+
+### Steps to reproduce (1)
+* Open Glaxnimate
+* Add a Text Line with `Font Size > 49`
+
+#### Result
+The `Text Box` would become a small icon and may reside at the top-left corner of the screen
+
+***
+## Change the Font Size < 50 and see the Anchor Point
+### Steps to reproduce (2)
+* Keep it selected and change the `Font Size < 50`
+
+#### Result
+* The Text Box will return to its normal shape.
+* Observe the `Anchor Point` may not be at the center of the Text Box, it might be at the top-left corner of the Screen or the Text box itself.
+* Click anywhere on the screen to deselect it and then select it back, but `Anchor Point` would not be at the center point of the Text Box.
+
+***
+## If Font Size < 50, See Anchor Point.
+### Steps to reproduce (3)
+* Add another Text Line with `Text Size < 49`
+
+#### Result
+* Observe that Text Box would appear fine, however, its `Anchor Point` would reside on the top-left corner of the screen.
+* Click anywhere on the screen to deselect it. Now select it back and you would observe that the `Anchor Point` jumps back to the center of the Text Box.
+***
+
+### Version
+Glaxnimate: 0.5.0+win-49002eec <br/>
+System: Windows 10 Version 2009 <br/>
+Kernel: winnt 10.0.19044 <br/>
+CPU: x86_64 <br/>
+Application Qt: 5.15.2 <br/>
+System Qt: 5.15.2 <br/>
+ZLib: 1.2.11 <br/>
+Potrace: potracelib 1.16 <br/>
+Libav: Lavu56.70.100, Lavf58.76.100, Lavc58.134.100, SwS5.9.100 <br/>
+libarchive: 3.5.2 <br/>
+<!-- Example file:
+Attach a sample file (or files) highlighting the issue, if appropriate. -->",1
+113312199,2022-08-15 23:25:07.742,Control key does not constrain the line to 90°,"Greetings from NZ;
+
+When drawing bezier lines, <kbd>**ctrl**</kbd> is supposed to snap the line to 90°, but for me this isn't working. I have tested on Linux using the built in version from Shotcut (version 0.5.0-53-g5972fc91) and the latest stable release on Windows 11.
+
+Also confirmed via [this thread](https://forum.shotcut.org/t/animated-box-border-drawing-for-outlining-text-or-graphics/35034/14?u=poisonedslice) that lead Shotcut developer Dan, and several other knowledgeable members, have not been able to make this work either.
+
+I didn't include this as a bug since the description is self explanatory and there is no trigger. I apologise if that was the wrong choice, and will amend if requested.",2
+111739046,2022-07-17 09:44:46.639,Many file options cause program to crash,"#### Steps to reproduce
+* Open Glaxnimate
+* Perform any action in the file menu that would read or write files. Open, Import, Export, Add Image, Save, etc.
+
+#### Result
+The program crashes immediately, and any unsaved work is lost.
+
+#### Version
+- Glaxnimate: 0.5.0
+- System: Ubuntu Core 18
+- Kernel: linux 5.4.0-104-generic
+- CPU: x86_64
+- Application Qt: 5.14.2
+- System Qt: 5.14.2
+- ZLib: 1.2.11
+- Potrace: potracelib 1.14
+- Libav: Lavu57.18.100, Lavf59.17.101, Lavc59.20.100, SwS6.5.100
+- libarchive: 3.2.2",2
+111044328,2022-07-01 22:05:24.120,animation is not preserved when import SVG and export it as JSON,"I'm trying to use Glaxnimate to convert an animating SVG to Lottie (JSON). However, upon getting a JSON export, Lottie preview just show an still image instead of animating.
+
+https://assets.website-files.com/5cd40c117f1ff810bf42803b/6113f5151e62af8a73e8c924_logo-motion-black.svg
+
+This is the file I try to convert.",3
+110767618,2022-06-27 13:04:40.508,file image not showing when export as lottie.,"image asset not showing when playing on web preview Lottie(svg/canvas) also json file. 
+on SVG(SMIL) working",4
+110082165,2022-06-14 10:15:07.060,Make exporting old-style keyframe optional (disabled by default),Modern lottie players don't need `e` in keyframe,3
+109549680,2022-06-03 09:17:35.751,Missing shorcut for play puse,"It would be nice to have a shorcut for play stop  standard keyboard shorcut is a SPACEBAR
+
+0.5.0+win-30c8df58",1
+107962515,2022-05-03 22:18:57.766,compile error on M_PI,"#### Steps to reproduce
+
+Compile glaxnimate using msys2 on Windows with gcc 11.2 toolchain.
+
+#### Result
+
+Get the following error:
+> error: 'M_PI' was not declared in this scope
+
+Full build log [here](https://github.com/mltframework/shotcut/runs/6269890446?check_suite_focus=true).
+
+#### Version
+
+git master as of May 3, 2022.
+
+#### More Info
+
+`M_PI` is not in any C or C++ standard. It is commonly available, however:
+https://www.gnu.org/software/libc/manual/html_node/Mathematical-Constants.html
+
+That indirectly explains you need to define `_XOPEN_SOURCE` with gcc (and clang?). MSVC probably requires a different macro, but you might not be experiencing the problem there. In any case, I can workaround the problem by setting environment variable `CXXFLAGS-D_XOPEN_SOURCE=500` before the first run of cmake, which I will do as a workaround for now. (Edit `CMAKE_CXX_FLAGS` in `CMakeCache.txt` if you already ran cmake.) In my own code for these circumstances I put into a header file before `#include <math.h>` (or `<cmath>`?)
+```
+#if !defined(_XOPEN_SOURCE) || _XOPEN_SOURCE < 500
+#  undef _XOPEN_SOURCE
+#  define _XOPEN_SOURCE 500
+#endif
+```
+I report as a bug instead of merge request and simply provide some tips to let you decide what to do if anything.",1
+104002067,2022-03-03 04:32:23.080,SVG import issues,"![tes_import.svg](/uploads/5bb0be46e500f4ebcfb70342ab56b4da/tes_import.svg)
+
+Not in position.
+Inkscape version 1.1.2",2
+102757028,2022-02-20 20:14:14.660,Fix trim path on ellipse,,2
+102668732,2022-02-18 08:11:23.922,app force close when add colors stop gradient,"app force close when adding color stop on end point(right node) its no problem when add on start point(left node, square)",1
+101859331,2022-02-04 02:20:47.295,Build fails: error: implicit instantiation of undefined template,"```
+/wrkdirs/usr/ports/graphics/glaxnimate/work/glaxnimate-7aaa27b346888d9aeae12815c3aa3e720adf985f/src/core/utils/gzip.cpp:98:12: error: implicit instantiation of undefined template 'std::array<unsigned char, 16384>'
+    Buffer buffer;
+           ^
+/usr/include/c++/v1/__tuple:219:64: note: template is declared here
+template <class _Tp, size_t _Size> struct _LIBCPP_TEMPLATE_VIS array;
+                                                               ^
+```
+
+[Log](http://beefy18.nyi.freebsd.org/data/main-amd64-default/pd79790970038_se2fe58d61b/logs/glaxnimate-0.5.0.log) (IPv6 URL).
+
+Version 0.5.0
+
+clang-13
+
+FreeBSD 13",1
+101859080,2022-02-04 02:06:36.093,Please add FreeBSD to the Stable Releases page,"The [FreeBSD port](https://www.freshports.org/graphics/glaxnimate/) is now available for ```Glaxnimate```.
+
+Could you please add it to the [Stable Releases and Package Managers](https://glaxnimate.mattbas.org/download/) page?
+
+The command to install ```Glaxnimate``` on FreeBSD is ```pkg install glaxnimate```.
+
+Thank you,
+
+Yuri",1
+101578960,2022-01-31 09:56:11.615,warning: object backing the pointer will be destroyed at the end of the full-expression,"This warning printed by clang-12 looks potentially damaging:
+```
+/disk-samsung/freebsd-ports/graphics/glaxnimate/work/glaxnimate-7aaa27b346888d9aeae12815c3aa3e720adf985f/external/QtAppSetup/src/app/scripting/python/python_engine.cpp:171:29: warning: object backing the pointer will be destroyed at the end of the full-expression [-Wdangling-gsl]
+        const char* cname = name.toStdString().c_str();
+                            ^~~~~~~~~~~~~~~~~~
+1 warning generated.
+```",1
+101400588,2022-01-27 16:00:53.188,Release PyPI 3.10,,3
+101400539,2022-01-27 16:00:28.646,Simplified Trace Dialog,,6
+98844422,2021-12-10 16:22:06.193,crash on re-opening current file,,7
+98376871,2021-12-02 21:53:04.499,solid color layers not imported correctly,,2
+96438874,2021-10-30 11:31:01.308,check loading this svg,,4
+96223924,2021-10-27 07:18:54.660,Issues with import file SVG file from Inkscape.,the shape changed when import file SVG inkscape where the shape have the hole ![Screenshot_from_2021-10-27_14-14-05](/uploads/a04268a1190729ea84c912cd393ef089/Screenshot_from_2021-10-27_14-14-05.png),2
+96035748,2021-10-24 15:53:42.678,Fix CI AUR build,See https://gitlab.com/mattbas/glaxnimate/-/blob/master/.gitlab-ci.yml#L85-141,3
+95821566,2021-10-20 20:06:06.379,trim path does `m` the wrong way round,,2
+95560765,2021-10-17 21:00:11.820,trim not rendering correctly whe star = end = 0,,2
+95533799,2021-10-16 18:29:20.878,Add Document info,,4
+95212938,2021-10-11 11:45:53.066,Timeline nodes disappear when selecting their line in current git version,"In the current git version of Glaxnimate, when selecting a line with nodes, the nodes disappear (see video).
+
+![problem_timenodes](/uploads/9998bf047e267db7ae6027f10c9351b6/problem_timenodes.mp4)",3
+94922367,2021-10-06 05:38:53.006,Different start of animation on viewport vs render result lottie,"glaxnimate 0.4.6
+
+When I am adding trimpath effect to the circle it called ""ellipse"" on the layer and setup the keyframe. first start of animation come from the right on the viewport, but on the render result Document>web preview>lottie(SVG) animation start from the top, its like change the rotation of the circle -45deg. 
+when I try to adding animation trimpath to the rectangle, on the viewport animation started around clockwise but on the render result lottie animation started around counter clockwise",3
+94852771,2021-10-05 08:55:25.155,Refresh UUIDs on lottie input,,2
+94637762,2021-09-30 19:36:51.955,Include default Google API key?,,4
+94492013,2021-09-28 22:50:47.667,Can't change language,"I am using the latest windows version of glaxnimate 0.4.5, and I cannot modify the language. Only one input box is displayed in the preferences![爱奇艺截屏20210929070259](/uploads/38684d812fa4f03f1f01c8ef9d2ecefe/爱奇艺截屏20210929070259.png)",2
+94486944,2021-09-28 19:47:32.471,Clean up font loading,,5
+94320020,2021-09-26 17:36:34.530,Load external fonts,,7
+94309680,2021-09-26 08:47:20.222,[Feature request] - Draw round polygons/Stars,"This should allow to round polygons/stars corners, like it's already possible with rectangles",4
+94251897,2021-09-24 11:54:03.004,Glaxnimate crashes when switching between compositions,"#### Steps to reproduce
+
+<!-- Describe what you did (step-by-step) so we can reproduce: -->
+
+* Open Glaxnimate
+* Open/Import a .rawr project file/.tgs sticker file of a previously edited sticker (have only experienced it happening with imported/opened files, but not while editing a file that I just created, even if I save it multiple times)
+* Switch to another composition (sometimes it takes a few switches back and forth) / Attempt to close a composition tab / Sometimes it's enough to just import another sticker to previously opened project
+
+#### Result
+
+<!-- Describe what happened and what the expected result would be -->
+* Glaxnimate crashes and closes after switching to another composition or in attempt to close a composition tab
+
+I'm attaching some .rawr files 
+#### Version
+
+<!-- List Operating System and Glaxnimate version
+From Glaxnimate you can go to ""Help > About... > System"" and click ""Copy""
+then paste here the information -->
+
+<!-- Example file:
+Attach a sample file (or files) highlighting the issue, if appropriate. -->
+[shroomjack1_01.rawr](/uploads/30b44fef9b2b91365f08b4ab18bd12ce/shroomjack1_01.rawr)
+
+[bee_2.rawr](/uploads/26359ad1600ebdd843ed24aa81f0c3a5/bee_2.rawr)",3
+94251337,2021-09-24 11:43:04.695,Issues with .tgs import - wrong fill color,"#### Steps to reproduce
+
+<!-- Describe what you did (step-by-step) so we can reproduce: -->
+
+* Open Glaxnimate
+* Import a .tgs file (.gif converted to .tgs with ""giftolottie"")
+
+#### Result
+
+The imported sticker is not being displayed correctly. Every object is filled with black color. Everything is okay in telegram though.
+
+#### Version
+
+<!-- List Operating System and Glaxnimate version
+From Glaxnimate you can go to ""Help > About... > System"" and click ""Copy""
+then paste here the information -->
+
+Glaxnimate: 0.4.5+win-7288b4cc
+System: Windows 10 Version 2009
+Kernel: winnt 10.0.19042
+CPU: x86_64
+Application Qt: 5.15.2
+System Qt: 5.15.2
+ZLib: 1.2.11
+Potrace: potracelib 1.16
+Libav: Lavu56.70.100, Lavf58.76.100, Lavc58.134.100, SwS5.9.100
+libarchive: 3.5.2
+
+
+<!-- Example file:
+
+
+
+Attach a sample file (or files) highlighting the issue, if appropriate. -->
+
+![glaxnimate_iaYlmWvEr2](/uploads/ce44fa1676492c99bf584eafb21d098f/glaxnimate_iaYlmWvEr2.png)
+
+[AnimatedSticker.tgs](/uploads/26bd0e7815566e62b8ea0ab80979405c/AnimatedSticker.tgs)",2
+93910957,2021-09-18 17:53:14.628,AUR packages doesn't follow Arch Linux standards,"The current stable version is called glaxnimate-git, this is not used for the source for the package but for the kind of version. -git means last dev CVS revision. -dev for development release versions.
+https://wiki.archlinux.org/title/Arch_User_Repository#What_is_the_difference_between_foo_and_foo-git_packages?
+
+The current PKGBUILD used in glaxnimate-git should be put in a new AUR package glaxnimate. and glaxnimate-git should be adapted to get last git version and autoupdate name.
+
+I adapted current PKGBUILD to the real -git mode if it can help, it will automatically update revision number in package.
+
+[PKGBUILD](/uploads/d1a04a9bba1605e2de6cd9a4dc9d1370/PKGBUILD)",3
+93628026,2021-09-14 09:59:23.185,[Feature request] Edit motion path,"Feature request for supporting this feature, it's called motion path in After Effects.
+Here's the link to Adobe's documentation.
+https://helpx.adobe.com/after-effects/using/assorted-animation-tools.html
+
+
+https://puu.sh/Ibg0z/4598c9b837.mp4
+
+![9f14hWG8V5](/uploads/33b03aae2fdc61ae5ecde6a278901193/9f14hWG8V5.mp4)",10
+93624506,2021-09-14 09:10:59.625,Make transform handles independent of zoom,,2
+93599826,2021-09-13 22:07:06.031,Issues with object's Fill Alpha set to 0 when importing SVGs,"#### Steps to reproduce
+
+<!-- Describe what you did (step-by-step) so we can reproduce: -->
+
+* Open Glaxnimate
+* Go to ""File > Import..."" and import an SVG file
+
+#### Result
+
+<!-- Describe what happened and what the expected result would be -->
+* File is imported, but some or all of the Group objects in it have their Fill Alpha set to 0. From what I've noticed it's mostly the objects that don't have a stroke or have the stroke set to 0.
+
+Example where all of the groups have 0 alpha despite rendering fine in other programs.
+![image](/uploads/6b552024095d1cfe6552328875214285/image.png)
+
+#### Version
+
+<!-- List Operating System and Glaxnimate version
+From Glaxnimate you can go to ""Help > About... > System"" and click ""Copy""
+then paste here the information -->
+Glaxnimate: 0.4.4+win-2b62558d
+System: Windows 10 Version 2009
+Kernel: winnt 10.0.19042
+CPU: x86_64
+Application Qt: 5.15.2
+System Qt: 5.15.2
+ZLib: 1.2.11
+Potrace: potracelib 1.16
+Libav: Lavu56.70.100, Lavf58.76.100, Lavc58.134.100, SwS5.9.100
+libarchive: 3.5.1
+
+<!-- Example file:
+Attach a sample file (or files) highlighting the issue, if appropriate. -->
+
+![Asset_1text.svg](/uploads/0978f050095ad7f705da9fa0e14e007c/Asset_1text.svg)",2
+93596043,2021-09-13 19:58:41.551,SVG conversion and alpha interpolation problem,"Here I have source json and destination animated SVG. There are two objects one jam (in red) and one bread slice.
+
+In the original Glax format and json, the jam is hidden by putting it's alpha channel to 0. It is changed abruptly to 1 at the moment the bread reach the center of the picture. It use the ability to keep a state constant until a keyframe and then change it progressively, or change abruptly it's state.
+
+[murphy_anim0.json](/uploads/fd7f15b5513c41b76cf3a68f7795d2b3/murphy_anim0.json)
+
+With SVG conversion instead, the change from 0 to 1 is progressive, making the jam fade-in before the bread slice cover it.
+
+[murphy_anim0.animated.svgz](/uploads/e12d9e1bcf7cb06728cdfc80adf0ed6f/murphy_anim0.animated.svgz)
+
+An easy solution for the animator would be to have the jam object follow the bread, hidden behind it. But for conversion, a new nod near the changing state node could keep the 0 value to emulate Lottie feature.
+
+There is a little glitch in the bottom corner of the bread in the SVG(z) version too, but it should probably be in another issue?",2
+93446381,2021-09-10 08:56:42.229,Add optionnal package suggestion in build doc (ex: qt5-image-formats),"Some optional packages could be installed to manage more formats on Glaxnimate. Like qt5-image-formats package on Debian based distribution. Could be added to the documentation of the installation process.
+
+The same way the AUR package could have : qt5-imageformats (so could also be added for Arch Linux based distros) and on AUR PKGBUILD itself: optdepends=('qt5-imageformats')",2
+93190432,2021-09-06 12:57:00.448,Dragging transform handles sometimes doesn't update the transfoprm widget,,3
+93121478,2021-09-04 16:32:36.096,Dragging multiple layers in the layer list view only moves one,,2
+93121464,2021-09-04 16:31:16.313,Creating shapes doesn't properly update the selection,,3
+92664017,2021-08-26 20:46:57.247,Export sprite sheets,,3
+91825201,2021-08-11 16:04:20.745,Python module not working on windows,,12
+91615034,2021-08-07 18:55:16.022,"When the checkered part of the canvas is outside the view, the document doesn't get rendererd",,3
+91358705,2021-08-03 09:14:23.905,Lazy Construction of DocumentNode::pixmap,As a unique_ptr in d,2
+91197554,2021-07-31 20:18:08.621,Check synfig import plugin,,2
+91172107,2021-07-30 19:44:40.790,changing transform from timeline sometimes doesn't update the transform item on canvas,,4
+91164951,2021-07-30 17:02:35.885,Some imported SVG files are offset,,3
+91144691,2021-07-30 09:55:56.480,Emoji Import,,5
+91144597,2021-07-30 09:54:02.208,Clicking objects on the timeline doesn't update the selection,,2
+91091756,2021-07-29 13:03:45.721,GIF import doesn't work,"#### Steps to reproduce
+
+<!-- Describe what you did (step-by-step) so we can reproduce: -->
+
+* Open Glaxnimate
+* Go to ""File -> Import...""
+* Choose the desired .gif file (happens consistently with any .gif that I tried to import)
+
+#### Result
+* Window titled ""Save File - Glaxnimate"" pops up. It says ""Operation Failed"" in the Issues area.
+* Message appears at the top of the canvas area with a text ""Plugin raised an exception"" and a button ""Hide"" to hide the message. After pressing it another message appears that says ""Could not import ""path/to/file.gif""
+* .gif file is not imported
+<!-- Describe what happened and what the expected result would be -->
+
+#### Version
+
+<!-- List Operating System and Glaxnimate version
+From Glaxnimate you can go to ""Help > About... > System"" and click ""Copy""
+then paste here the information -->
+
+Glaxnimate: 0.4.3
+System: Windows 10 Version 2009
+Kernel: winnt 10.0.19042
+CPU: x86_64
+Application Qt: 5.15.2
+System Qt: 5.15.2
+ZLib: 1.2.11
+Potrace: potracelib 1.16
+Libav: Lavu56.70.100, Lavf58.76.100, Lavc58.134.100, SwS5.9.100
+
+<!-- Example file:
+Attach a sample file (or files) highlighting the issue, if appropriate. -->
+Screenshot of the issue
+
+![glaxnimate_4f2fhwYdYi](/uploads/e6c5ce4bc0e13711e37137ad479d7832/glaxnimate_4f2fhwYdYi.png)
+
+Gif that I tried to import
+
+![fry](/uploads/11fbcd1d5f9f7a6701863ce4b8078003/fry.gif)",6
+91077784,2021-07-29 09:18:13.111,"Add ""All Formats"" to format selection to the ""Add Image""","When using ""Add Image"" you can only choose from the list of supported formats, but it's not possible to choose ""All Files"", which is the default option for ""Import"" and ""Open"". Please add same functionality to the ""Add Image"" for convenience.
+
+![glaxnimate_jgEiP0lcvx](/uploads/bb14e633cd9ee6b6374cd095fcfb15d6/glaxnimate_jgEiP0lcvx.png)",2
+91074784,2021-07-29 08:40:29.438,Issues with imported SVG files - Anchor Point,"Every imported .svg file has it's anchor positioned at (0, 0) instead of being centered. Each group in the imported .svg has it's anchor point at (0, 0).
+Would be great if we were able to snap anchor point to the center or edges/corners of the layer/group, it's often important to place it directly at the center.
+
+![glaxnimate_kab0ZWAraX](/uploads/3aabc70dc1ccd75e2abe5e75baf0769b/glaxnimate_kab0ZWAraX.png)
+![glaxnimate_RU7RCwvPKo](/uploads/35222b9bcdda681cfaf516132976cc5c/glaxnimate_RU7RCwvPKo.png)
+![glaxnimate_Zuem94p3NH](/uploads/da9328a4d0667ef51a26e5fe9859c968/glaxnimate_Zuem94p3NH.png)",3
+91069487,2021-07-29 07:58:35.583,Issues with imported SVG files - Scaling,"Every .svg file that I make in AI and import to glaxnimate is stretched to fit the canvas, instead of keeping the original proportions. When imported to other applications(AI, Inkscape) everything is fine. 
+
+Would be great to have imported files at their original proportions.
+
+![shapes.svg](/uploads/91094443cf9f2ae2c2f5495495b8dac2/shapes.svg)
+![glaxnimate_Esp3zUPhVe](/uploads/792b671abfcf9a4b39992d4737a1fb1a/glaxnimate_Esp3zUPhVe.png)
+![glaxnimate_PqJTqZxNtZ](/uploads/ac133c34bb72cb33507d07950ae5eed2/glaxnimate_PqJTqZxNtZ.png)",2
+91038041,2021-07-28 17:14:45.750,"Lottie doesn't support RGBA for solid colors, use fill/stroke opacity instead",,5
+90432524,2021-07-17 12:49:47.706,Freezes on laoding an SVG file with a few thousands of objects,"Try importing attached SVG file. Glaxnimate will freeze with file open dialog still opened.
+
+![1.svg](/uploads/b201b52d0716e7e7e30af99d952cbc24/1.svg)
+
+This is on latest release AppImage build.
+
+Or maybe I need to wait more time?",3
+90147952,2021-07-12 19:59:45.022,Timeline tree scrolls more than timeline when larger than the widget,,3
+90138516,2021-07-12 16:32:02.101,Drag/drop should ask precomp/object/open,,2
+90137188,2021-07-12 16:01:43.637,"Updating current color while drawing, should update the preview path",,2
+90137151,2021-07-12 16:00:50.141,Moving Layers messes up selection,,4
+90081259,2021-07-11 18:01:16.291,Discord preset / validation,,3
+90055003,2021-07-10 09:35:21.708,"Android - Add ""Glaxnimate"" in the ""open with..."" dialog","It could be useful to open files directly from your file editor of choice, other than directly from the in-app menu.
+Currently, Glaxnimate is not configured to open .png, .svg, .tgs, etc... files.
+![Screenshot_OpenWithMenu](/uploads/d61baffb059641cf43a8521184e0da9a/Screenshot_2021-07-10-11-27-11.png)",8
+89562166,2021-06-30 19:22:37.572,"When an object is first select, the next drag moves it",,3
+89562010,2021-06-30 19:16:53.656,Android port,,40
+89355621,2021-06-27 08:13:26.978,Refactor selection updates,,10
+89344471,2021-06-26 15:02:12.329,"When selecting multiple objects, changing fill/stroke should apply to all",,6
+89286825,2021-06-25 07:38:19.749,Selecting text objects is weird,,3

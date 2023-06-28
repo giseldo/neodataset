@@ -1,0 +1,2113 @@
+issuekey,created,title,description,storypoints
+33319034,2020-04-15 12:38:48.664,Include Praefect usage in the usage ping,"GitLab features a [Usage Ping](https://docs.gitlab.com/ee/user/admin_area/settings/usage_statistics.html#usage-ping-core-only), which sends a simple JSON to GitLab servers for us to track certain data from customers. For example, it shows the version of Git installed for internal analysis which is used to determine when and if we can deprecate Git versions.
+
+### Proposal
+
+- [x] Extend the usage ping to send data regarding Praefect usage
+- [x] Extend the version app that records the version ping, to accept this new parameter.",3
+33293341,2020-04-15 01:06:05.551,Omnibus Praefect dashboard improvements from demo,"From the 2020-04-14 demo, we noticed the following potential improvements:
+
+- The table containing the latest known elected primary should also include the instance name (e.g. IP or hostname).
+- The replication queue size could be further broken down by Praefect instance and virtual storage.
+- Need a panel for the replication delay metric (`gitaly_praefect_replication_delay`).
+- Virtual storage flapping should use two labels (`{{instance}} {{gitaly_storage}}`)
+
+From the 2020-04-17 demo, we noticed we should also include:
+
+- A panel for the query `rate(grpc_server_handled_total{job=""praefect"",grpc_code!=""OK""}[5m])`
+- A panel for the node up time: `gitaly_praefect_node_last_healthcheck_up`",2
+33252162,2020-04-14 08:03:14.182,ReplicateRepository should create a bitmap when there's none,"ReplicateRepository is used in multiple cases, one of which is moving a repository across shards. In https://gitlab.com/gitlab-org/gitlab/commit/888ffdfa7f5dc3af5c1653d5064199027ac9be4a#dab876ea293e0f990ba0851665c089cfe2c7e0c5_92_99 @nick.thomas describes a good case where we should ensure that Gitaly writes bitmaps:
+
+>>>
+    Run housekeeping after moving a repository between shards
+    
+    The current inter-shard move is implemented as a `git fetch` from the
+    original shard to an empty repository on the new shard. The repository
+    on the new shard lacks bitmaps, and may be less well packed, than the
+    repository on the old shard. This has a measurable performance impact.
+    
+    We may be changing from ""FetchInternalRemote"" to ""ReplicateRepository""
+    in the future, but until then, forcing housekeeping to run is a good
+    performance optimisation - we trade off some short-term I/O load on the
+    new shard for better performance across a wide range of RPCs, including
+    an order-of-magnitude improvement in `IsAncestor`, which is the find
+    that motivated this change.
+>>>
+
+That change is behind a feature flag, part of closing this issue is removing the flag, and making sure we're using the ReplicateRepository RPC.",3
+33235781,2020-04-14 00:20:22.486,Horizontal scaling of a single shard MVC,"## Problem to solve
+
+When hundreds of developers are working on a mono repo (perhaps 5GB), it is possible to saturate a single server with reads and writes. CI servers add to this load. There is no way to horizontally scale reads without NFS today.
+
+## Further details
+
+The current workaround for this is:
+
+- install a load balancer between GitLab and a Gitaly storage
+- the load balancer should distribute reads and writes across all many Gitaly nodes
+- Gitaly nodes are kept in sync by a shared NFS volume that is mounted to each Gitaly nodes
+
+This relies on NFS to keep all nodes completely consistent.
+
+## Proposal
+
+When using Praefect for Gitaly HA, each repository is replicated some number of times. Only the primary node services reads.
+
+Using the Praefect tracking database:
+
+- randomly distributes reads to any node where the replication queue is empty for that repository.
+
+![praefect-distribute-reads](/uploads/da214c773640e33de80060b63c364d3e/praefect-distribute-reads.png)
+
+## Links / references",5
+33100397,2020-04-09 13:39:06.670,Smarter Praefect election process,"## Problem to solve
+
+Right now our primary election process in Praefect treats all Gitaly nodes that are up as possible candidates for election. However, what happens if a secondary fails replication or becomes out of sync? We need to consider marking the Gitaly node as ""unelectable"" and taking it out of the rotation. 
+
+## Further Details
+
+We probably need to consider a number of inputs:
+
+1. Are there any jobs left in the replication queue? If there is a node that is up that has an empty queue, we'd prefer that one over another one.
+1. Failure rates of the replication queue: If a node is unable to sync with the current primary for a number of repositories, that is indicative that something went out of sync, and we may need to do a repair.
+
+Ideas for consideration:
+
+1. During the election process, sort nodes by descending number of outstanding jobs.
+1. Track a metric of the `FetchInternalRemote` and/or `ReplicateRepository` RPCs in Praefect
+
+## Proposal
+
+When promoting a secondary to a new primary, use the Gitaly node with least pending replication jobs.
+
+## Links / references",4
+33025854,2020-04-08 08:11:56.928,2PC via pre-receive hook,"As a result of the experiments in #2466 and #2529, we have concluded that the most promising way to implement strong consistency for reference updates is by going via Git hooks: given a reference update, a hook will execute on each Gitaly node that reports back to Praefect. Praefect will collect these reports from all Gitaly nodes that take part in the current update and, if all nodes post the same update, send them a message to go ahead.
+
+While the mid-term goal is to hook directly into the reference transaction handling code in order to handle all kinds of reference updates and not only those invoked via git-receive-pack(1), this requires a new set of hooks on Git's side. We thus decided to implement a first POC of this mechanism by using the Git pre-receive hook, which executes after all reference updates have been announced by the Git client. This should give us a better picture of how the mechanism will work in the end.
+
+The following diagram depicts the 3PC via a pre-receive hook:
+
+```mermaid
+sequenceDiagram
+  Praefect->>+Gitaly: ReceivePack
+  Gitaly->>+Git: git receive-pack
+  Git->>+Hook: update HEAD master
+  Hook->>+Gitaly: TX: update HEAD master
+  Gitaly->>+Praefect: TX: update HEAD master
+  Praefect->>+Praefect: TX: collect votes
+  Praefect->>+Gitaly: TX: commit
+  Gitaly->>+Hook: TX: commit
+  Hook->>+Git: exit 0
+  Git->>+Gitaly: exit 0
+  Gitaly->>+Praefect: success
+```
+
+The 2PC voting protocol will start as soon as a first ""TX"" message is received on the Praefect node. Each of the pre-receive hooks will block until it receives a message from Praefect telling to to either go on with the update or to abort. In case the vote was successful, the hook will exit with `0` to indicate success, otherwise it will return an error code and thus abort the reference update.
+
+The main goal of this issue is to establish a communication channel between hook and Praefect to allow for transaction handling. The communication channel should be implemented transparent to Gitaly nodes as much as possible so that Gitaly does not need to know if and how many transactions a given Git transaction is going to start. This ensures we can swap out the hooks in the future and start multiple transactions for a single Git command.",7
+33016702,2020-04-08 00:35:00.797,Remove primary in praefect config once SQL election is merged and the default,"SQL leader election has now been merged https://gitlab.com/gitlab-org/gitaly/-/issues/2547, meaning we no longer need the idea of a ""default"" primary in the config.
+
+We should remove this in:
+
+- [x] Praefect example config toml in gitaly
+- [x] GDK
+- [ ] Omnibus
+- [x] Gitaly Cluster admin docs",2
+32979230,2020-04-07 09:24:40.375,Option for failover to put out-of-date repositories in read-only mode,"## Problem to solve
+
+Praefect has a failover mechanism, where if it detects that a Gitaly node is unresponsive, it will promote a secondary storage server to primary. If this secondary server could be missing data still from the old primary. This in itself would allow Gitaly to serve stale data. However, after serveral mutations on the repository, it could end up in a state where data-loss occurs. As such, the current implementation is great for demo's, or instances where velocity is more important than data integrity. The current approach will not work for gitlab.com
+
+## Solution
+
+In <issue link> we're working on reporting of potential data loss, this issue proposes the next iteration of it; putting each of those repositories in a read only state, until manual intervention from an admin to mark it operational again. Allowing all administrators to use the current failover mechanism, and resolve data integrety issues manually.  
+
+
+### Additional benefits
+
+When moving a repository on a shard, it's put in read only mode for a brief period of time. This is a loosely defined contract right now. Having a praefect managed read only mode for repositories put stronger data integrity.
+
+This approach could remove the need for https://gitlab.com/gitlab-org/gitaly/-/issues/2601",5
+32967456,2020-04-07 03:51:13.467,Stale packed-refs.new files prevents branches from being deleted,"We saw in https://gitlab.com/gitlab-org/gitlab/-/issues/213620#note_318864514, that somehow the `gitlab-org/gitlab` repository had a stale/aborted `packed-refs.new` file that prevented branches from being deleted inside the `MergeRequestWorker`, causing that worker to retry 4 times unnecessarily:
+
+```
+root@file-cny-01-stor-gprd.c.gitlab-production.internal:/var/log/gitlab/gitlab-rails# sudo ls -al /var/opt/gitlab/git-data/repositories/@hashed/a6/80/a68072e80f075e89bc74a300101a9e71e8363bdb542182580162553462480a52.git
+total 34168
+drwxr-s---   7 git root     4096 Apr  7 02:50 .
+drwxr-s---   5 git root     4096 Dec 12 09:21 ..
+-rw-r--r--   1 git root      409 Apr  7 00:05 config
+-rw-r--r--   1 git root       73 Dec 12 09:17 description
+-rw-r--r--   1 git root   156636 Apr  7 02:54 FETCH_HEAD
+drwxr-sr-x   2 git root     4096 Apr  7 00:05 gitlab-worktree
+-rw-r--r--   1 git root       23 Feb  5 07:35 HEAD
+drwxr-sr-x   2 git root     4096 Dec 12 09:17 hooks
+drwxr-sr-x   2 git root     4096 Apr  7 02:54 info
+-rw-r--r--   1 git root   301751 Apr  7 02:13 language-stats.cache
+drwxr-sr-x 260 git root     4096 Apr  7 02:56 objects
+-rw-r--r--   1 git root 30427806 Apr  6 11:07 packed-refs
+-rw-r--r--   1 git root  4055040 Apr  6 11:08 packed-refs.new
+drwxr-sr-x  11 git root     4096 Dec 12 09:21 refs
+root@file-cny-01-stor-gprd.c.gitlab-production.internal:/var/log/gitlab/gitlab-rails# date
+Tue Apr  7 02:56:39 UTC 2020
+```
+
+Attached are the files:
+
+[packed-refs.tar.gz](/uploads/d12f6d32ef38a805943bff296b25a722/packed-refs.tar.gz)
+
+It almost looks like the writes to `packed-refs.new` got aborted at 11:08:
+
+![image](/uploads/4e1d6697a1c911a5e0963dab6ed7a7b4/image.png)
+
+Few questions/issues:
+
+1. What left this `packed-refs.new` around? I presume it was a `git pack-refs`. I see a `PackRefs` RPC that completed successfully at 11:05: https://log.gprd.gitlab.net/goto/b30757c2d0feb12c7ea3dd7590d93760 
+1. Should we run `Cleanup()` on stale `packed-refs.new` files?
+1. https://gitlab.com/gitlab-org/gitlab/-/issues/213620: `MergeRequestWorker` should be idempotent here: why did the deletion of the branch cause duplicate merge commits? 
+1. These error messages only went to `githost.log`: https://gitlab.com/gitlab-org/gitaly/blob/981ff509c05475c65480f11c92101f0a4d5f5158/ruby/lib/gitlab/git/operation_service.rb#L209. Can we just port this RPC to Go and use structured logging here?",2
+32951949,2020-04-06 16:34:21.400,Documentation: two sources of truth for GL_REPOSITORY,"When receiving a git push, Gitaly will make HTTP callbacks to gitlab-rails. This is done via the Git `pre-receive` and `post-receive` hooks.
+
+In these callbacks, Gitaly must tell gitlab-rails what repo the hooks are running in. We use an opaque token called GL_REPOSITORY for this. This token comes in as an RPC request field, and gets handed down into the Git hook via an environment variable on the `git receive-pack` process.
+
+There are three groups of RPC's where we need GL_REPOSITORY to make callback requests:
+
+- SSHService.SSHReceivePack (git push via SSH)
+- SmartHTTPService.PostReceivePack (git push via HTTP)
+- OperationsService.UserCommitfiles, OperationsService.UserMergeBranch, etc. (RPC's that modify a repo on while impersonating a user)
+
+In the case of OperationsService, we always pass GL_REPOSITORY [via the Repository protobuf message](https://gitlab.com/gitlab-org/gitaly/-/blob/dca26f3a6d09e3cea5d05373bd2c35ddc03c05c8/proto/shared.proto#L42).
+
+In the case of SSHReceivePack and PostReceivePack, however, we have a confusing situation. These RPC's were implemented before we had a GL_REPOSITORY field on the Repository message. What we do there instead is that we explicitly pass in the value via the request message ([example 1](https://gitlab.com/gitlab-org/gitaly/-/blob/master/proto/smarthttp.proto#L82)) and [example 2](https://gitlab.com/gitlab-org/gitaly/-/blob/master/proto/ssh.proto#L66)).
+
+The purpose of this issue is to discuss if this is a problem or not, and if so, what we want to do about it.",2
+32839108,2020-04-03 15:28:33.762,Praefect gRPC logs should not be visible when running subcommands,The Praefect gRPC logs are appearing in the terminal when running subcommands. This is a regression and not desirable since it makes too much noise.,2
+32804854,2020-04-02 23:50:00.882,Automatically clean up after moving a project to a different shard,"## Problem to solve
+
+Moving a project from one shard to another leaves behind the repo on the original shard, and it isn't cleaned up automatically. This means manual work is required to reclaim space
+
+## Proposal
+
+If a project is moved to a new shard successfully, the space should be reclaimed on the old shard by deleting the repo
+
+## Links / references",2
+32791485,2020-04-02 15:44:34.984,Praefect: Enable database replication queue by default,"As of now by default Praefect uses in-memory implementation of the replication queue.  
+This can be switched to Postgres implementation by providing configuration parameter [`postgres_queue_enabled`](https://gitlab.com/gitlab-org/gitaly/-/blob/cc314adf47d3eed96d824f35ae601e891e2e70e2/internal/praefect/config/config.go#L33) with value `true`.
+Once Postgres implementation tested enough this parameter must be removed and Postgres implementation must become default.
+
+/cc @zj-gitlab @jramsay",2
+32783997,2020-04-02 13:47:46.967,Praefect: same storage name can't be used for different virtual storages,"If you have setup with multiple virtual storages and each storage has node with name `node-1` only one node will be used for processing.  
+Another node will be treated as duplicate and skipped, [here is the code](https://gitlab.com/gitlab-org/gitaly/-/blob/19fd0676954fd87cee2f0108efd3caaf20c5c266/internal/praefect/datastore/datastore.go#L168-170).
+
+Expected: all nodes must be bound to proper virtual storage so all operations can be routed properly.
+
+/cc @zj-gitlab @jramsay",3
+32774722,2020-04-02 10:00:00.043,WalkRepos should handle a directory being deleted during file walking,[`service/internalgitaly.WalkRepos`](https://gitlab.com/gitlab-org/gitaly/-/blob/f3f4ae8bc2945b8363835e6c6862a7044311aa9e/internal/service/internalgitaly/walkrepos.go#L36) should handle a possible `not exists` errors. This can happen if a repository is deleted by another RPC during the file walk.,1
+32760295,2020-04-02 00:06:14.058,Detect node failure by read/write failures,"### Problem to solve
+
+Health checks can often succeed even if there is a problem with the server, Gitaly or Git. For example, the Gitaly process may be running just fine and respond with a healthy signal even though the persistent disk is not available which would prevent any Git operation from succeeding.
+
+### Further details
+
+Health checks are relatively slow to detect failures (seconds), and are performed less frequently to the total number of Git operations. For example, a busy Gitaly node may be handle hundreds of requests per second (get commit, get file, list something etc). If multiple health checks must fail before failover, this means thousands of operations have failed before the system notices a failure.
+
+### Proposal
+
+Praefect should monitor Gitaly RPC success/failures and mark a node as bad if there multiple failues in a row. For example, if 5 or 10 RPCs fail in a row, this is a strong signal that the node isn't working.
+
+Worst case scenario we fail over to an up to date replica because strong consistency means we always have an up to date replica https://gitlab.com/groups/gitlab-org/-/epics/1189.
+
+### Testing
+
+Functional end-to-end coverage will be provided by a new [failover test](https://gitlab.com/gitlab-org/quality/testcases/-/issues/836). And broad coverage by [running the entire end-to-end test suite against environments using Praefect for storage](https://gitlab.com/gitlab-org/gitlab-qa/-/blob/master/docs/what_tests_can_be_run.md#testintegrationpraefect-ceeefull-image-address) (including Staging).
+
+Performance end-to-end testing will be implemented as part of https://gitlab.com/gitlab-org/quality/performance/-/issues/231 (see https://gitlab.com/gitlab-org/quality/team-tasks/-/issues/451 for a more detailed plan of performance tests under failure conditions).
+
+### Links / references",3
+32409342,2020-03-24 23:01:08.037,Expose node level metrics even if automatic failover is disabled,"Currently, node metrics such as `gitaly_praefect_primaries` and `gitaly_praefect_node_latency` get populated when `failover_enabled = true`. We should populate these metrics regardless.
+
+This involves refactoring the node manager so that it does healthchecks on the nodes even if `failover_enabled = false`.
+
+Here is where we start the health checks: https://gitlab.com/gitlab-org/gitaly/-/blob/master/internal/praefect/nodes/manager.go#L164
+
+The easiest way is to probably prevent node promotion with `failoverEnabled` in https://gitlab.com/gitlab-org/gitaly/-/blob/master/internal/praefect/nodes/manager.go#L164",2
+32242603,2020-03-20 16:40:59.315,"On startup, Praefect can't talk to gitaly nodes before it picks up replication jobs","During our demo on 3/20/20, we observed that when praefect is brought up when the sql replication queue has jobs in `ready`, praefect picks up the jobs immediately and tries to replicate, but failed because it couldn't talk to gitaly.
+
+To reproduce:
+
+1. bring praefect down
+1. create replication jobs on the sql database
+1. bring praefect up
+
+in the logs, praefect will complain that it cannot talk to gitaly, and the jobs will fail.",2
+32212850,2020-03-20 07:59:26.937,Drop Golang 1.12 support,"With the release of Go 1.14, the support stops for Go 1.13 as per the Golang policy to support the last two releases. This means that Gitaly now supports being compiled by an unsupported Golang version.
+
+Action items:
+- [x] Remove Go 1.12 from our Pipeline
+- [ ] Remove Go 1.12 from the docs at this project, and GitLab",1
+32114771,2020-03-18 04:00:41.679,Enable partial clone with blob size filter by default,"## Problem to solve
+
+Once it is possible to enable blob and sparsity filters independently, we should enable blob filters by default since they are low risk and make it easy for customers to try out partial clone.
+
+## Proposal
+
+Currently we have one feature flag `gitaly_upload_pack_filter` to control both blob and sparsity filters.
+
+- reuse the existing feature flag `gitaly_upload_pack_filter` for blob filters, and default to enabled
+- create a new feature flag `gitaly_upload_pack_filter_sparsity` for sparsity filters, and default to false
+
+## Links/references",4
+32070182,2020-03-17 08:52:31.361,SQL for failover and leader election,"## Problem to solve
+
+It is important that multiple Praefect proxies/routers can be run at the same time so that there is no single point of failure. These need to be consistent in choosing the same primary node else different Praefects will route requests inconsistently causing data loss.
+
+## Further details
+
+There have been investigations in Consul https://gitlab.com/gitlab-org/gitaly/issues/2037 https://gitlab.com/gitlab-org/gitaly/issues/2458 for GitLab Omnibus, since this is a good application of Consul. However, Consul isn't likely to be ideal in a Kubernetes environment.
+
+Since we already have a PostgreSQL database as part of the current architecture, and is seems like viable first iteration (spike https://gitlab.com/gitlab-org/gitaly/-/merge_requests/1883) we will use this for providing failover and leader election. We plan to keep open the possibility for supporting Consul and K8s features for these problems.
+
+## Proposal
+
+1. We do some lightweight refactoring to prepare the Praefect code to support both SQL and Consul
+1. We aim to incorporate the SQL PoC approach first and roll out two Praefect nodes on GitLab.com.
+1. Focus on getting failover metrics etc. so we have more data on how this performs
+
+## Links / references",6
+32037158,2020-03-16 13:13:33.347,Document how to keep Praefect's SQL schema up to date,"Praefect has its own SQL database. Every time you deploy a new version of Praefect you need to make sure you run any pending SQL migrations.
+
+The status quo in multi-node GitLab installations is that the local administrators must have their own process for running database migrations. In the gitlab-rails case this means running `rake db:migrate`. https://docs.gitlab.com/omnibus/update/#zero-downtime-updates
+
+I think we should extend this documentation with information on how to run Praefect migrations.",2
+31850391,2020-03-10 22:59:23.516,Add praefect replication delay metric,"Per demo on 3/10, a useful metric would be the total time from when a replication job is created to when it is completed. This would give us total ""replication delay"".
+
+Additionally, this metric should be graphed in Grafana: https://dashboards.gitlab.net/d/8EAXC-AWz/praefect?orgId=1&from=now-24h&to=now
+",2
+31685325,2020-03-06 17:33:00.467,Turn on info-ref advertisement cache by default,"Right now, info-ref advertisement caching is guarded by a feature flag. We have been running the feature on GitLab.com for a while now without major incidents (last incident was `TODO: link issue with cache walker incident`). This should be enabled by default.",1
+31631137,2020-03-05 18:06:05.158,"Add GetFullestShard, GetBusiestShard, GetFastestGrowingProject, GetBusiestProject grpc methods","As a gitlab admin, I would like to balance git repository storage between shards based on project activity and growth.
+
+Gitaly now provides information about current disk usage and availability per shard.
+
+The following GRPC methods could be very useful in selecting specific projects for relocation.
+
+- `GetFullestShard`
+- `GetBusiestShard`
+- `GetFastestGrowingProject`
+- `GetBusiestProject`
+
+While this information *could* be examined using monitoring, it would be useful to integrate such informatics into the `gitlab-rails` app, in order to ultimately expose this information through the admin api, supporting admin tooling.",8
+31270038,2020-02-26 00:32:38.002,Add praefect storage to the performance bar,"## Problem to solve
+
+When using Gitaly HA it is hard to reconcile what you see in the browser, with what is happening on the server. Which node is primary? If I stop a node, which node is promoted to primary. This would be easy to know if there was information in the performance bar about this.
+
+## Proposal
+
+Include information in the performance bar about which Gitaly node in the cluster responded to the request.
+
+## Links / references",2
+31269946,2020-02-26 00:24:36.869,Praefect dial-nodes has even more garbage output,"## Problem to solve
+
+In the demo today we observed large amounts of garbage output. This seems like a regression.
+
+## Proposal
+
+Remove the noise from the output",2
+27970392,2019-12-05 09:48:27.417,Gitaly should perform better Rails-side validation,"For example, this API query alone causes dozens of 500 errors per minute: https://log.gitlab.net/goto/bb1a0ad5013edecd5f0e31daa4c12df0
+
+The Gitaly ruby client should do more basic client side validation, to ensure refs are valid (don't contain whitespace) etc. 
+
+This will prevent a remote GRPC call, git spawn etc, only to error with a basic validation error. 
+
+More examples of this: https://log.gitlab.net/goto/a5a4ce0c321fb5c3703286ced55d1df3",2
+27479933,2019-11-22 19:58:23.670,Remove old praefect config virtual_storage_name and nodes,"Once https://gitlab.com/gitlab-org/omnibus-gitlab/merge_requests/3754 and gdk is updated with the change to allow multiple praefect virtual storages, we can remove the backwards compatible support in praefect.
+
+also we need to remove the text fixture in `internal/praefect/config/testdata/single-virtual-storage.config.toml`",2
+27083225,2019-11-15 09:27:10.660,Observe which projects suffered dataloss from failover,"## Problem to solve
+
+As an administrator, when a failover occurs, I want to know which repositories have experienced dataloss. This provides me an indication of which developers have been effected and where to target efforts for recovering missing data where possible. For example, letting a team know that they might need to re-push their feature branches.
+
+## Further details
+
+At a minimum, we should be able to which specific projects suffered dataloss, caused by replication operations that cannot be completed due to incomplete replication queue.
+
+A possible future improvement could also be to summarize the number of replication jobs lost for each repo, and perhaps even count per ref, per repository.
+
+## Proposal
+
+Store failed replication jobs for some period of time in the Praefect database, and provide a method for reporting on this.
+
+Perhaps the MVC, would be command that can be run on any Praefect server to:
+
+- dump all the failed replication jobs (this could be useful for analysis)
+- summarize failed replication jobs
+",4
+26989784,2019-11-12 17:33:52.832,Use `--end-of-options` in the GitDSL,"Requires the minimum version of Git 2.24: https://gitlab.com/gitlab-org/gitaly/issues/2170
+
+From the GH release blog: https://github.blog/2019-11-03-highlights-from-git-2-24/#tidbits
+
+>>>
+Git 2.24 has a new way to prevent this sort of option injection attack using --end-of-options. When Git sees this as an argument to any command, it knows to treat the remaining arguments as such, and won’t interpret them as more options.
+
+So, instead of the string previously mentioned, you could write the following to get the history of your (admittedly, pretty oddly named) branch:
+
+$ git log --end-of-options --super-dangerous-option
+
+Not using the standard -- was an intentional choice here, since this is already a widely-used mechanism in Git to separate reference names from files. In this example, you could have also written git log --end-of-options --super-dangerous-option ^master -- path/to/file to get only the history over that range which modified that specific file.
+>>>
+
+Example of the Git behaviour:
+
+```
+$ git diff --end-of-options --name-only HEAD~ HEAD
+fatal: option '--name-only' must come before non-option arguments
+```",2
+26782454,2019-11-06 18:37:00.993,Add GetStorageDiskStatistics grpc,"It may also be useful to implement a method for obtaining a collection of disk space statistics.  In fact, this could reduce overall load on the server, by avoiding the need to invoke multiple remote procedure calls to obtain separate details.
+
+So this issue is to suggest the feature addition of a `grpc` resembling `GetStorageDiskStatistics` which would return a collection, ideally a dictionary, containing at least the disk `avail` and disk `used` portions of the output of a `df /var/opt/gitlab` invocation on the given target storage node system.",3
+26778710,2019-11-06 16:25:00.923,Add GetStorageDiskUsed grpc,"Currently, `gitlab-rails` acquires disk usage information for individual project repositories from `gitaly` which ultimately appears to use `du` (https://gitlab.com/gitlab-org/gitaly/blob/master/internal/service/repository/size.go#L36).
+
+As an SRE, I am responsible for managing storage node configuration through the gitlab rails web application admin section, and also adding new nodes as needed.  Automating these procedures would be very helpful for our team.  To accomplish this, some data is required.
+
+I would like to have reliable access to the disk `used` (amount of disk in current use) statistic.
+
+Only as an example, not an implementation recommendation: `ssh file-34-stor-gprd.c.gitlab-production.internal 'df /var/opt/gitlab --output=used | tail -n1' #=> 13710976516`
+
+After having spoken with @pokstad1 and @jacobvosmaer-gitlab , I think the best suggestion is to implement a `grpc` resembling `GetStorageDiskUsed` which will return the parsed results of such an `df` operation with the relevant detail or details.",3
+26778708,2019-11-06 16:24:56.858,Add GetStorageDiskAvail grpc,"Currently, `gitlab-rails` acquires disk usage information for individual project repositories from `gitaly` which ultimately appears to use `du` (https://gitlab.com/gitlab-org/gitaly/blob/master/internal/service/repository/size.go#L36).
+
+As an SRE, I am responsible for managing storage node configuration through the gitlab rails web application admin section, and also adding new nodes as needed.  Automating these procedures would be very helpful for our team.  To accomplish this, some data is required.
+
+I would like to have reliable access to the disk `avail` (amount of remaining -- unused -- disk space available for use) statistic.
+
+Only as an example, not an implementation recommendation: `ssh file-34-stor-gprd.c.gitlab-production.internal 'df /var/opt/gitlab --output=avail | tail -n1' #=> 2933905600`
+
+After having spoken with @pokstad1 and @jacobvosmaer-gitlab , I think the best suggestion is to implement a `grpc` resembling `GetStorageDiskAvail` which will return the parsed results of such an `df` operation with the relevant detail or details.",3
+26718942,2019-11-05 14:42:44.005,Remove WikiService#get_formatted_data RPC,"Depends on: https://gitlab.com/gitlab-org/gitlab/merge_requests/19627
+
+The RPC has gone unused, and can be removed from both our `Protobuf` schema, as well as the Golang + Ruby code that's related.",1
+26227127,2019-10-23 09:58:28.902,Gitaly spikes to 100% CPU usage when a moved project's branch details are called via API,"### Summary
+
+This will affect all environments when customers move workload in different shards. We did find this out while testing out our new [50k Reference Architecture](https://docs.gitlab.com/ee/administration/high_availability/README.html#50000-user-configuration) I noticed that one of the 4 Gitaly nodes was spiking to 100% when performance testing was done against the [Repository Branch Details API](https://docs.gitlab.com/ee/api/branches.html#get-single-repository-branch).
+
+![image](/uploads/5b0c199a53a039bda4c9f4445691d940/image.png)
+
+http://50k.testbed.gitlab.net/-/grafana/dashboard/snapshot/KDpnPrAq5Cj3sH75cGenTJE400E3G0X8
+
+In this setup we have 4 identical Gitaly nodes (64 CPU, 240GB Memory) that each have a copy of the same large project on each. Our test tool then tests the environment at a rate of 1000 RPS and makes calls equally to each of the 4 project copies (so approximately 250 RPS to each Gitaly node). The other copies of the prohect only should around 20% usage.
+
+The only difference that applied here is how the copy of the project was imported to the affected Gitaly node - It was specifically moved from another Gitaly node via the [Project Edit API](https://docs.gitlab.com/ee/api/projects.html#edit-project) where as all the others were imported to their Gitaly nodes directly via UI settings.
+
+To verify this I imported another copy of the project today in the same way to another Gitaly node and was able to reproduce the issue successfully.
+
+Of note the affected node shows numerous Git operations (details in the logs section below). Interestingly not all Linux task managers showed these Git operations but `top` did and they were averaging around 20% CPU usage.
+
+### Steps to reproduce
+
+1. Import a Project to an environment that has at least 2 Gitaly nodes (API was used in this case and the specific project is [a copy of `gitlab-foss`](https://gitlab.com/gitlab-org/quality/performance-data/blob/master/gitlabhq_export.tar.gz)).
+1. Move the project to the other Gitaly node via the [Project Edit API](https://docs.gitlab.com/ee/api/projects.html#edit-project).
+1. Set up a way to monitor the CPU use on the Gitaly node that now contains the project (e.g. Prometheus or even just watching `top` on the node directly)
+1. [Prepare the GitLab Performance Tool](https://gitlab.com/gitlab-org/quality/performance#documentation) and the proceed to run the `api_v4_projects_repository_branches_branch` test against the environment. The RPS rate will be dependent on your environment but `20s_20rps` should do, e.g.
+    * `ACCESS_TOKEN=<token> ./run-k6 -e environments/<environment>.json -s scenarios/20s_20rps.json -t tests/api_v4_projects_repository_branches_branch.js`
+1. As the test is running note that the CPU usage spikes massively to 100%.
+
+### Example Project
+
+We use a copy of [`gitlab-foss`](https://gitlab.com/gitlab-org/quality/performance-data/blob/master/gitlabhq_export.tar.gz). It's specifically a backup of our own backup on GitHub, [gitlabhq](https://github.com/gitlabhq/gitlabhq), as that's sanitised and doesn't contain private data.
+
+### What is the current *bug* behavior?
+
+Gitaly CPU usage spikes massively to 100% when the [Repository Branch Details API](https://docs.gitlab.com/ee/api/branches.html#get-single-repository-branch) endpoint is polled for a project that's been moved to the Gitaly node via the [Project Edit API](https://docs.gitlab.com/ee/api/projects.html#edit-project).
+
+### What is the expected *correct* behavior?
+
+That the Gitaly node shows the same CPU usage as others where the project is the same but hasn't been moved via the [Project Edit API](https://docs.gitlab.com/ee/api/projects.html#edit-project).
+
+### Relevant logs and/or screenshots
+
+[Perf Output](https://docs.gitlab.com/ee/administration/troubleshooting/sidekiq.html#process-profiling-with-perf), taken over a couple of minutes as a long version of the test was running:
+```
+Samples: 59M of event 'cpu-clock', Event count (approx.): 14942880250000
+Overhead  Command  Shared Object           Symbol
+  27.56%  git      libz.so.1.2.11          [.] inflate
+  21.79%  git      libz.so.1.2.11          [.] inflate_table
+   9.28%  git      libz.so.1.2.11          [.] inflate_fast
+   3.59%  git      libc-2.27.so            [.] 0x000000000018adb8
+   3.53%  git      git                     [.] lookup_object
+   2.27%  git      libz.so.1.2.11          [.] adler32_z
+   1.69%  git      git                     [.] clear_commit_marks_1
+   1.61%  git      git                     [.] create_object
+   1.49%  git      git                     [.] hashmap_get
+   1.40%  git      git                     [.] parse_commit_buffer
+   1.16%  git      git                     [.] nth_packed_object_offset
+   1.13%  git      [kernel.kallsyms]       [k] __do_page_fault
+   1.09%  git      [kernel.kallsyms]       [k] clear_page_erms
+   0.91%  git      git                     [.] get_sha1_hex
+   0.61%  git      git                     [.] bsearch_hash
+   0.50%  git      git                     [.] compare_commits_by_gen_then_commit_date
+   0.46%  git      libc-2.27.so            [.] 0x00000000000950dd
+   0.43%  git      [kernel.kallsyms]       [k] _raw_spin_unlock_irqrestore
+   0.42%  git      git                     [.] unpack_object_header_buffer
+   0.40%  git      [kernel.kallsyms]       [k] unmap_page_range
+   0.39%  git      [kernel.kallsyms]       [k] get_page_from_freelist
+   0.37%  git      libc-2.27.so            [.] malloc
+   0.37%  git      [kernel.kallsyms]       [k] filemap_map_pages
+   0.36%  git      git                     [.] prio_queue_get
+   0.36%  git      [kernel.kallsyms]       [k] try_charge
+   0.35%  git      git                     [.] paint_down_to_common
+   0.35%  git      [kernel.kallsyms]       [k] __d_lookup_rcu
+   0.34%  git      git                     [.] prio_queue_put
+   0.29%  git      [kernel.kallsyms]       [k] do_syscall_64
+```
+
+[Go Tool `pprof` output](https://gitlab.com/gitlab-com/runbooks/blob/master/howto/gitaly-profiling.md#1-download-the-profiles). Top 30 Cumulative:
+```
+Showing nodes accounting for 4.24s, 23.30% of 18.20s total
+Dropped 581 nodes (cum <= 0.09s)
+Showing top 30 nodes out of 272
+      flat  flat%   sum%        cum   cum%
+         0     0%     0%      7.48s 41.10%  google.golang.org/grpc.(*Server).serveStreams.func1.1
+         0     0%     0%      7.47s 41.04%  google.golang.org/grpc.(*Server).handleStream
+     0.01s 0.055% 0.055%      7.47s 41.04%  google.golang.org/grpc.(*Server).processUnaryRPC
+         0     0% 0.055%      6.93s 38.08%  github.com/grpc-ecosystem/go-grpc-middleware.ChainUnaryServer.func1
+         0     0% 0.055%      6.92s 38.02%  github.com/grpc-ecosystem/go-grpc-middleware/tags.UnaryServerInterceptor.func1
+     0.01s 0.055%  0.11%      6.84s 37.58%  github.com/grpc-ecosystem/go-grpc-middleware.ChainUnaryServer.func1.1
+         0     0%  0.11%      6.84s 37.58%  gitlab.com/gitlab-org/labkit/correlation/grpc.UnaryServerCorrelationInterceptor.func1
+         0     0%  0.11%      6.82s 37.47%  gitlab.com/gitlab-org/gitaly/internal/middleware/metadatahandler.UnaryInterceptor
+         0     0%  0.11%      6.75s 37.09%  github.com/grpc-ecosystem/go-grpc-prometheus.(*ServerMetrics).UnaryServerInterceptor.func1
+     0.01s 0.055%  0.16%      6.64s 36.48%  github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus.UnaryServerInterceptor.func1
+         0     0%  0.16%      5.75s 31.59%  github.com/grpc-ecosystem/go-grpc-middleware/auth.UnaryServerInterceptor.func1
+         0     0%  0.16%      5.75s 31.59%  gitlab.com/gitlab-org/gitaly/internal/middleware/cancelhandler.Unary
+         0     0%  0.16%      5.75s 31.59%  gitlab.com/gitlab-org/gitaly/internal/middleware/limithandler.(*LimiterMiddleware).UnaryInterceptor.func1
+         0     0%  0.16%      5.75s 31.59%  gitlab.com/gitlab-org/gitaly/internal/middleware/sentryhandler.UnaryLogHandler
+         0     0%  0.16%      5.64s 30.99%  github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing.UnaryServerInterceptor.func1
+     0.02s  0.11%  0.27%      5.61s 30.82%  gitlab.com/gitlab-org/gitaly/internal/middleware/cache.UnaryInvalidator.func1
+     0.01s 0.055%  0.33%      5.58s 30.66%  gitlab.com/gitlab-org/gitaly/internal/middleware/panichandler.UnaryPanicHandler
+         0     0%  0.33%      4.06s 22.31%  gitlab.com/gitlab-org/gitaly/proto/go/gitalypb._RefService_FindBranch_Handler
+         0     0%  0.33%      3.87s 21.26%  runtime.mcall
+     3.84s 21.10% 21.43%      3.84s 21.10%  runtime.futex
+     0.04s  0.22% 21.65%      3.76s 20.66%  runtime.schedule
+         0     0% 21.65%      3.55s 19.51%  gitlab.com/gitlab-org/gitaly/proto/go/gitalypb._RefService_FindBranch_Handler.func1
+     0.02s  0.11% 21.76%      3.54s 19.45%  gitlab.com/gitlab-org/gitaly/internal/service/ref.(*server).FindBranch
+     0.26s  1.43% 23.19%      3.42s 18.79%  runtime.findrunnable
+     0.01s 0.055% 23.24%      3.41s 18.74%  gitlab.com/gitlab-org/gitaly/internal/command.New
+         0     0% 23.24%      3.41s 18.74%  gitlab.com/gitlab-org/gitaly/internal/git.BareCommand
+     0.01s 0.055% 23.30%      3.17s 17.42%  runtime.futexsleep
+         0     0% 23.30%      2.97s 16.32%  runtime.park_m
+         0     0% 23.30%      2.34s 12.86%  gitlab.com/gitlab-org/gitaly/internal/git.Command
+         0     0% 23.30%      2.19s 12.03%  gitlab.com/gitlab-org/gitaly/proto/go/gitalypb._CommitService_CommitIsAncestor_Handler
+```
+
+### Output of checks
+
+#### Results of GitLab environment info
+
+<details>
+<summary>Expand for output related to GitLab environment info</summary>
+<pre>
+
+```
+System information
+System:		Ubuntu 18.04
+Proxy:		no
+Current User:	git
+Using RVM:	no
+Ruby Version:	2.6.3p62
+Gem Version:	2.7.9
+Bundler Version:1.17.3
+Rake Version:	12.3.2
+Redis Version:	3.2.12
+Git Version:	2.22.0
+Sidekiq Version:5.2.7
+Go Version:	unknown
+
+GitLab information
+Version:	12.3.5-ee
+Revision:	9dbaa740018
+Directory:	/opt/gitlab/embedded/service/gitlab-rails
+DB Adapter:	PostgreSQL
+DB Version:	10.9
+URL:		http://50k.testbed.gitlab.net
+HTTP Clone URL:	http://50k.testbed.gitlab.net/some-group/some-project.git
+SSH Clone URL:	git@50k.testbed.gitlab.net:some-group/some-project.git
+Elasticsearch:	no
+Geo:		no
+Using LDAP:	no
+Using Omniauth:	yes
+Omniauth Providers:
+
+GitLab Shell
+Version:	10.0.0
+Repository storage paths:
+- default: 	/var/opt/gitlab/git-data/repositories
+- storage1: 	/var/opt/gitlab/git-data/repositories
+- storage2: 	/var/opt/gitlab/git-data/repositories
+- storage3: 	/var/opt/gitlab/git-data/repositories
+- storage4: 	/var/opt/gitlab/git-data/repositories
+GitLab Shell path:		/opt/gitlab/embedded/service/gitlab-shell
+Git:		/opt/gitlab/embedded/bin/git
+```
+
+</pre>
+</details>
+
+#### Results of GitLab application Check
+
+<details>
+<summary>Expand for output related to the GitLab application check</summary>
+<pre>
+
+```
+Checking GitLab subtasks ...
+
+Checking GitLab Shell ...
+
+GitLab Shell: ... GitLab Shell version >= 10.0.0 ? ... OK (10.0.0)
+Running /opt/gitlab/embedded/service/gitlab-shell/bin/check
+Check GitLab API access: OK
+Redis available via internal API: OK
+
+gitlab-shell self-check successful
+
+Checking GitLab Shell ... Finished
+
+Checking Gitaly ...
+
+Gitaly: ... default ... OK
+storage1 ... OK
+storage2 ... OK
+storage3 ... OK
+storage4 ... OK
+
+Checking Gitaly ... Finished
+
+Checking Sidekiq ...
+
+Sidekiq: ... Running? ... no
+  Try fixing it:
+  sudo -u git -H RAILS_ENV=production bin/background_jobs start
+  For more information see:
+  doc/install/installation.md in section ""Install Init Script""
+  see log/sidekiq.log for possible errors
+  Please fix the error above and rerun the checks.
+
+Checking Sidekiq ... Finished
+
+Checking Incoming Email ...
+
+Incoming Email: ... Reply by email is disabled in config/gitlab.yml
+
+Checking Incoming Email ... Finished
+
+Checking LDAP ...
+
+LDAP: ... LDAP is disabled in config/gitlab.yml
+
+Checking LDAP ... Finished
+
+Checking GitLab App ...
+
+Git configured correctly? ... yes
+Database config exists? ... yes
+All migrations up? ... yes
+Database contains orphaned GroupMembers? ... no
+GitLab config exists? ... yes
+GitLab config up to date? ... yes
+Log directory writable? ... yes
+Tmp directory writable? ... yes
+Uploads directory exists? ... yes
+Uploads directory has correct permissions? ... yes
+Uploads directory tmp has correct permissions? ... yes
+Init script exists? ... skipped (omnibus-gitlab has no init script)
+Init script up-to-date? ... skipped (omnibus-gitlab has no init script)
+Projects have namespace: ...
+2/1 ... yes
+2/19 ... yes
+2/20 ... yes
+2/31 ... yes
+2/33 ... yes
+21/35 ... yes
+2/43 ... yes
+2/44 ... yes
+1/45 ... yes
+1/46 ... yes
+Redis version >= 2.8.0? ... yes
+Ruby version >= 2.5.3 ? ... yes (2.6.3)
+Git version >= 2.22.0 ? ... yes (2.22.0)
+Git user has default SSH configuration? ... yes
+Active users: ... 1
+Is authorized keys file accessible? ... yes
+Elasticsearch version 5.6 - 6.x? ... skipped (elasticsearch is disabled)
+
+Checking GitLab App ... Finished
+
+
+Checking GitLab subtasks ... Finished
+```
+
+Note that the Sidekiq error above is due to this being a HA environment where they run on separate nodes.
+
+</pre>
+</details>",3
+26167524,2019-10-21 16:59:28.196,Remove repository field inside of ConflictFileHeader,"In https://gitlab.com/gitlab-org/gitlab/merge_requests/18692, we changed the client behavior to use the repository being passed into the request rather than wait for the very same repository object to get attached to the response. 
+
+Once that is merged, in 12.6 we can remove the `repository` field in `ConflictFileHeader` completely.",1
+25228249,2019-09-24 09:00:45.647,Praefect as pass through proxy by default in the GDK,"Currently one could run Praefect in the GDK, after running `rake praefect:enable`. Given we're confident that praefect works, especially if there's only one Gitaly storage node, the daemon should be enabled by default.
+
+The thing to consider is that users don't like to reseed their GDK, as it takes long. So the changes should have good forward compatibility.",2
+24662617,2019-09-10 22:04:46.914,Pass through FindRemoteRepository in Praefect to any gitaly node,We can proxy it to any of the praefect gitaly nodes since this RPC call is not dependent on a repository.,3
+24637979,2019-09-10 12:38:01.716,Remove get-commit-signatures feature flag,"`GetCommitSignatures` has been rewritten using Go in https://gitlab.com/gitlab-org/gitaly/issues/1604. The new RPC is under a feature flag and already [enabled in gitlab.com](https://gitlab.com/gitlab-org/gitaly/issues/1907). The feature flag can now be removed from both gitaly and gitlab-ce.  
+
+#### TODO 
+
+- [ ] Remove the feature flag from go first: https://gitlab.com/gitlab-org/gitaly/merge_requests/1484
+- [ ] Remove feature flag from gitlab-ce: https://gitlab.com/gitlab-org/gitlab/merge_requests/16550",1
+24637373,2019-09-10 12:18:50.144,Remove ruby implementation for GetCommitSignatures RPC,"GetCommitSignatures RPC has been rewritten using Go in https://gitlab.com/gitlab-org/gitaly/issues/1604. [The old RPC that uses ruby can be removed](https://gitlab.com/gitlab-org/gitaly/blob/master/internal/service/commit/commit_signatures.go#L37).  
+
+Method signature:  
+
+``` go
+func rubyGetCommitSignatures(s *server, request *gitalypb.GetCommitSignaturesRequest, stream gitalypb.CommitService_GetCommitSignaturesServer) error {
+```  
+
+## TODO
+
+- [ ] Remove `rubyGetCommitSignatures` go function
+- [ ] Fix broken specs
+- [ ] if possible remove all ruby code related to`GitalyServer::CommitService#get_commit_signatures`",1
+24395322,2019-09-02 17:29:30.955,Roll out get_commit_signatures feature flag,"<!-- Title suggestion: [Feature flag] Enable description of feature -->
+
+## What
+
+Remove the `get_commit_signatures` feature flag
+
+## Owners
+
+- Team: Gitaly
+- Most appropriate slack channel to reach out to: `#g_gitaly`
+- Best individual to reach out to: @felipe_artur 
+
+## Expectations
+
+Commit signatures request should use use go version of the RPC  
+which is expected to be more performant.
+
+### What release does this feature occur in first?
+
+12.3
+
+### What are we expecting to happen?
+
+Better performance of the RPC
+
+### What might happen if this goes wrong?
+
+Worst case scenario: Stop showing if commit signatures are verified  
+because of some exception.  
+
+We may not see commits page broken because that RPC is made async.
+
+### What can we monitor to detect problems with this?
+
+* https://dashboards.gitlab.net/d/000000199/gitaly-feature-status?from=now-12h&to=now&orgId=1&var-method=GetCommitSignatures&var-job=gitaly&refresh=5m  
+
+* https://sentry.gitlab.net/gitlab/gitaly-production/
+
+* https://sentry.gitlab.net/gitlab/gitaly-production/?query=GetCommitSignatures
+
+## Beta groups/projects
+
+If applicable, any groups/projects that are happy to have this feature turned on early. Some organizations may wish to test big changes they are interested in with a small subset of users ahead of time for example.
+
+- `gitlab-org/gitlab-ce`/`gitlab-org/gitaly` projects
+- `gitlab-org`/`gitlab-com` groups
+- ...
+
+## Roll Out Steps
+
+- [x] [Read the documentation of feature flags](https://docs.gitlab.com/ee/development/rolling_out_changes_using_feature_flags.html)
+- [x] Enable on staging
+- [x] Test on staging
+- [x] Ensure that documentation has been updated
+- [x] Enable on GitLab.com for individual groups/projects listed above and verify behaviour
+- [x] Announce on the issue an estimated time this will be enabled on GitLab.com
+- [x] Enable on GitLab.com by running chatops command in `#production`
+- [ ] Cross post chatops slack command to `#support_gitlab-com` and in your team channel
+- [x] Announce on the issue that the flag has been enabled
+- [x] Remove feature flag and add changelog entry",1
+24173138,2019-08-26 16:37:40.687,Remove `ensure_storage_path_exists` from gitlab-ce,"as discussed in https://gitlab.com/gitlab-org/gitaly/issues/1807#note_208197834, the first step to deprecating the Namespace service is to get rid of `ensure_storage_path_exists` calls
+
+There are two parts to this issue:
+
+- Modify RenameNamespace to create the parent directory of the destination dir
+- Remove calls to `ensure_storage_path_exists` calls in gitlab-ce",1
+23984510,2019-08-20 19:38:13.416,Remove deprecated message handling code,"The following discussion from !1410 should be addressed:
+
+- [ ] @zj-gitlab started a [discussion](https://gitlab.com/gitlab-org/gitaly/merge_requests/1410#note_205645542): 
+
+    > Post merge I'll create an issue to remove this code in %""12.4""
+
+Remove in %""12.4"", because gitlab-ce/gitlab-ee must be using the new `:messages` param (https://gitlab.com/gitlab-org/gitlab-ce/merge_requests/31640 is currently targeting %""12.3"").",1
+23159924,2019-07-25 13:46:45.607,Deprecate ListDirectories RPC,"This RPC is only used in cleanup rake tasks, as far as I can tell. E.g. https://gitlab.com/gitlab-org/gitlab-ce/blob/master/lib/tasks/gitlab/cleanup.rake#L7
+
+This is problematic for Gitaly HA because we there will be directories on multiple different Gitaly servers and we don't want to directly expose those Gitaly servers.
+
+We should take a look at the things that use ListDirectories, and reimplement whatever it is they do inside Gitaly. In some cases it might be automated cleanup; in other cases we might need a new RPC. In the latter case that RPC should express what we want to happen, and leave the actual work to Gitaly.",1
+21848253,2019-06-12 16:36:11.114,remote: warning: ignoring extra bitmap file when pulling from a deduplicated repo,"Seen today on the gitlab-org/gitlab-pages repository:
+
+```
+$ git fetch upstream master
+remote: warning: ignoring extra bitmap file: /var/opt/gitlab/git-data/repositories/@pools/81/17/811786ad1ae74adfdd20dd0372abaaebc6246e343aebd01da0bfc4c02bf0106c.git/objects/pack/pack-1d59d5e04b0538cfc7fb23125f81c317aafd0b10.pack
+```
+
+I think we try to avoid displaying server-side paths to the client in other cases. Other than that, it didn't seem to affect anything - the fetch succeeded and had all the objects I expected.",4
+21331132,2019-05-27 12:19:43.930,Remove Rugged patches from gitlab,"We have been forced to walk back part of the Gitaly migration project because it turned out that in certain scenarios, the old gitlab-ce code that used Rugged is still significantly more performant than the new Gitaly code. Specifically, this is the case for some GitLab installations that host their Git repository data on slow NFS servers.
+
+The code in question can be found here: https://gitlab.com/gitlab-org/gitlab-ce/tree/master/lib/gitlab/git/rugged_impl
+
+This is blocking us from completing the Gitaly migration project. These rugged patches should be removed again. This issue is meant to track their removal.
+
+## Current Plan of Record for 14.3 and beyond
+
+_Summary of the discussion in the below thread_
+
+We don't believe that the Rugged patches are necessary for our customers utilizing NFS as we believe that [performance issues necessitating these patches are mitigated](https://gitlab.com/gitlab-org/gitaly/-/issues/1690#note_584475955).
+
+As the Rugged patches create an additional maintenance concern for the Gitaly team, as well as not supporting the direction of moving customers requiring HA towards Gitaly Cluster. We therefore feel that they should be removed.
+
+Starting in %""14.3"", we will default to disabling the Rugged patches. As stated above, we don't believe that this will cause any performance issues for our users.
+
+### Mitigations pending customer issues
+
+- The Rugged patches are currently behind a feature flag. Starting in %""14.3"" we will be defaulting this feature flag to disable Rugged, but we will not be removing the feature flag. If customers notice performance degradation, they can re-enable the Rugged patches via the feature flag. 
+
+- Pending significant customer performance issues, the current plan is to remove the Rugged patches a couple of releases past %""14.3""  and the associated feature flag.",1
+27219683,2019-05-06 10:42:07.284,GetCommitSignatures' messages can be too large,"https://sentry.gitlab.net/gitlab/gitlabcom/issues/736414/
+
+```
+GRPC::ResourceExhausted: 8:Received message larger than max (6302368 vs. 4194304)
+  grpc/generic/active_call.rb:31:in `check_status'
+    fail GRPC::BadStatus.new_status_exception(
+  grpc/generic/active_call.rb:181:in `attach_status_results_and_complete_call'
+    recv_status_batch_result.check_status
+  grpc/generic/active_call.rb:170:in `receive_and_check_status'
+    attach_status_results_and_complete_call(batch_result)
+  grpc/generic/active_call.rb:338:in `each_remote_read_then_finish'
+    receive_and_check_status
+  gitlab/gitaly_client/commit_service.rb:440:in `each'
+    response.flat_map do |message|
+...
+(158 additional frame(s) were not displayed)
+
+Gitlab::Git::CommandError: 8:Received message larger than max (6302368 vs. 4194304)
+  gitlab/git/wraps_gitaly_errors.rb:13:in `rescue in wrapped_gitaly_errors'
+    raise Gitlab::Git::CommandError.new(e)
+  gitlab/git/wraps_gitaly_errors.rb:6:in `wrapped_gitaly_errors'
+    def wrapped_gitaly_errors(&block)
+  gitlab/metrics/instrumentation.rb:161:in `block in wrapped_gitaly_errors'
+    .measure { super }
+  gitlab/metrics/method_call.rb:36:in `measure'
+    retval = yield
+  gitlab/metrics/instrumentation.rb:161:in `wrapped_gitaly_errors'
+    .measure { super }
+...
+(150 additional frame(s) were not displayed)
+
+Gitlab::Git::CommandError: 8:Received message larger than max (6302368 vs. 4194304)
+```",2
+20590064,2019-05-05 08:37:03.357,Fail to start if the pid file is empty,"``gitaly`` cannot start if the pid file is empty.
+
+First found [here](https://forum.gitlab.com/t/gitaly-fail-14-connect-failed/26137).
+
+I cannot figure out how the pid file becomes empty, but probably we can handle this situation?",2
+17980204,2019-02-05 16:14:24.155,CalculateChecksum: invalid memory address or nil pointer,"Seen 553 instances of this in 4 hours of customer's Gitaly logs (ZenDesk: https://gitlab.zendesk.com/agent/tickets/111902):
+
+```
+2019-02-04_22:21:04.33575 time=""2019-02-04T22:21:04Z"" level=error msg=""grpc panic"" error=""runtime error: invalid memory address or nil pointer dereference"" method=/gitaly.RepositoryService/CalculateChecksum
+```
+
+They are running GitLab 11.5.4.
+
+Unfortunately I don't see a backtrace, but I think we need to fix this ASAP.
+
+/cc: @dbalexandre",1
+16771769,2018-12-18 19:31:54.299,Deleting tag fails when branch and tag exists with the same name,"While testing https://gitlab.com/gitlab-org/gitaly/merge_requests/1006, I have a test that attempts to delete the tag `v1.1.0`, but this fails because https://gitlab.com/gitlab-org/gitlab-test has both `refs/heads/v1.1.0` and `refs/tags/v1.1.0`:
+
+```
+time=""2018-12-18T11:21:15-08:00"" level=info msg=""I, [2018-12-18T11:21:15.603634 #38932]  INFO -- : Pushing deleted branches from /Users/stanhu/gitlab/gitaly/internal/testhelper/testdata/data/TestSuccessfulUpdateRemoteMirrorRequestWithWildcards066627066 to remote remote_mirror_2: [\""v1.1.0\""]"" supervisor.args=""[bundle exec bin/ruby-cd /Users/stanhu/gitlab/gitaly/_build/src/gitlab.com/gitlab-org/gitaly/internal/service/remote /Users/stanhu/gitlab/gitaly/_build/src/gitlab.com/gitlab-org/gitaly/ruby/bin/gitaly-ruby 38900 /var/folders/jf/z0tr5kvs589dk92xkzkk49wc0000gn/T/gitaly-ruby944237139/socket.1]"" supervisor.name=gitaly-ruby.1
+--- FAIL: TestSuccessfulUpdateRemoteMirrorRequestWithWildcards (1.17s)
+    test_hook.go:39: time=""2018-12-18T11:21:15-08:00"" level=error msg=""finished streaming call with code Unknown"" error=""rpc error: code = Unknown desc = Gitlab::Git::CommandError: warning: refname '1942eed5cc108b19c7405106e81fa96125d0be22' is ambiguous.\nGit normally never creates a ref that ends with 40 hex characters\nbecause it will be ignored when you just specify 40-hex. These refs\nmay be created by mistake. For example,\n\n  git checkout -b $br $(git rev-parse ...)\n\nwhere \""$br\"" is somehow empty and a 40-hex ref is created. Please\nexamine these refs and maybe delete them. Turn this message off by\nrunning \""git config advice.objectNameWarning false\""\nTo /Users/stanhu/gitlab/gitaly/internal/testhelper/testdata/data/TestSuccessfulUpdateRemoteMirrorRequestWithWildcards080387857\n * [new branch]      11-0-stable -> 11-0-stable\n * [new branch]      11-1-stable -> 11-1-stable\nwarning: refname '1942eed5cc108b19c7405106e81fa96125d0be22' is ambiguous.\nGit normally never creates a ref that ends with 40 hex characters\nbecause it will be ignored when you just specify 40-hex. These refs\nmay be created by mistake. For example,\n\n  git checkout -b $br $(git rev-parse ...)\n\nwhere \""$br\"" is somehow empty and a 40-hex ref is created. Please\nexamine these refs and maybe delete them. Turn this message off by\nrunning \""git config advice.objectNameWarning false\""\nTo /Users/stanhu/gitlab/gitaly/internal/testhelper/testdata/data/TestSuccessfulUpdateRemoteMirrorRequestWithWildcards080387857\n + f4e6814...33fde33 v1.0.0 -> v1.0.0 (forced update)\n * [new tag]         new-tag -> new-tag\nerror: dst refspec v1.1.0 matches more than one.\nerror: failed to push some refs to '/Users/stanhu/gitlab/gitaly/internal/testhelper/testdata/data/TestSuccessfulUpdateRemoteMirrorRequestWithWildcards080387857'\n"" grpc.code=Unknown grpc.method=UpdateRemoteMirror grpc.service=gitaly.RemoteService grpc.start_time=""2018-12-18T11:21:15-08:00"" grpc.time_ms=425.41 span.kind=server system=grpc test=TestSuccessfulUpdateRemoteMirrorRequestWithWildcards
+
+    require.go:794:
+                Error Trace:    update_remote_mirror_test.go:138
+                Error:          Received unexpected error:
+                                rpc error: code = Unknown desc = Gitlab::Git::CommandError: warning: refname '1942eed5cc108b19c7405106e81fa96125d0be22' is ambiguous.
+                                Git normally never creates a ref that ends with 40 hex characters
+                                because it will be ignored when you just specify 40-hex. These refs
+                                may be created by mistake. For example,
+
+                                  git checkout -b $br $(git rev-parse ...)
+
+```
+
+This is similar to https://gitlab.com/gitlab-org/gitaly/issues/1329.",3
+16750530,2018-12-18 10:48:51.560,Remove Gitlab::GitLogger,"The Gitlab::GitLogger logs just one error, which is returned to the client too. I think in that case that should be enough because of the interceptors we use.
+
+/cc @johncai @jacobvosmaer\-gitlab",1
+16732142,2018-12-17 20:50:12.912,Snapshots don't work with dedup,"Gitaly's snapshots won't work for repositories that use object pool as we ignore `objects/info/alternates`. Theoretically, it's possible to include objects from an object pool to the TAR archive.
+
+See https://gitlab.com/gitlab-org/gitaly/issues/1410 for details",3
+16209276,2018-11-29 10:15:07.787,Support Geo for dedupped repositories,"Geo needs to perform the same operation on the secondairies. Not sure what is required from the Gitaly team, so please consider this a tracking issue.",13
+15695396,2018-11-09 08:26:18.468,Stop symlinking the hooks directory,"Part of: https://gitlab.com/gitlab-org/gitaly/issues/1226
+
+The hooks are now executed by setting them explicitly each git shellout, instead of executing the `path/to/repo.git/hooks` which is symlinked to the `gitlab-shell/hooks` dir.
+
+The symlinking still happens, but this could stop. Downside of stopping doing so, is that a client could not downgrade the GitLab version with a minor release as the projects that got created in the mean time wouldn't have the symlink.
+
+The cost to keep symlinking is low, but I'd recommend removing the symlinking around %""12.0"" to avoid confusion and have one way of doing so.
+
+Added this to that milestone, feel free to remove @jramsay :)",1
+15977073,2018-07-10 08:06:20.274,Importing Project on same instance from URL fails,"### Summary
+
+Import a repository from the same GitLab instance during project creation is failing with the error message below displayed on the empty repository's import screen.
+
+```
+Every import attempt has failed: Error importing repository https://ckgltest.s.co.zw/root/greenie.git into root/greenie-import - 13:CreateRepositoryFromURL: clone cmd wait: exit status 128. Please try again.
+```
+
+### Steps to reproduce
+
+* Create a new project and select import by Git URL.
+* Enter the URL of another project within our GitLab instance and run the import.
+
+### Example Project
+
+Failed to reproduce on GitLab.com but reproduced successfully on 11.0.3-ee
+
+### What is the expected *correct* behavior?
+
+Project should be imported without errors. This was working for the [customer](https://gitlab.zendesk.com/agent/tickets/100000)  before upgrading to 11.0
+
+### Relevant logs and/or screenshots
+
+![Screen_Shot_2018-07-10_at_09.56.45](/uploads/f979d9588b839bce7509f23948d0c01e/Screen_Shot_2018-07-10_at_09.56.45.png)",3
+5257325,2017-05-02 08:41:18.269,Go 1.8,"This is a placeholder issue to discuss upgrading Go to 1.8, now that https://gitlab.com/gitlab-org/omnibus-gitlab/issues/2279 is merged. 
+
+- Update CI to stop testing on Go 1.5 / 1.6 and 1.7. 
+- Update documentation for developer requirements
+- Discuss any potential code changes that may follow on from this change in future (for example, related to context)",2
+5200506,2017-04-26 14:04:50.413,Gitlab-shell hooks can no longer send absolute paths to gitlab-ce,"~""Client Implementation"": https://gitlab.com/gitlab-org/gitlab-ce/issues/29925
+
+Additional tasks: 
+  - https://gitlab.com/gitlab-org/gitaly/issues/150
+  - https://gitlab.com/gitlab-org/gitaly/issues/151",4
+5200434,2017-04-26 13:55:34.459,Test how GitLab behaves when Gitaly is Down,"@pcarranza's idea:
+> test how does GitLab behaves when a Gitaly server is down - we need better resiliency when an NFS server goes down, since it will happen again and we will be running Gitaly on those hosts, we need to be sure that the application will survive when they go dark. For this I propose that we actually test how gRPC behaves and we code for resiliency from now and not as an afterthought.",2
+5200084,2017-04-26 13:20:27.666,Client Implementation: CommitDiff changes for deltas_only,"~Conversation: #222 
+
+~""RPC Design"": https://gitlab.com/gitlab-org/gitaly-proto/merge_requests/15 
+
+~""Server Implementation"": #178
+
+----------------------------------------------
+
+Update GitLab-CE with the CommitDiff changes for `deltas_only`",2
+5200076,2017-04-26 13:19:29.697,Client Implementation: CommitDiff changes for whitespace_changes_only and path,"~""RPC Design"": https://gitlab.com/gitlab-org/gitaly-proto/merge_requests/15 
+
+~""Server Implementation"": #178
+
+----------------------------------------------
+
+Update GitLab-CE with the CommitDiff changes for `whitespace_changes_only` and `path`",1
+5199436,2017-04-26 12:15:17.921,Address unicorn grpc preforking issues in gitlab-ce,Resolved by: https://gitlab.com/gitlab-org/gitlab-ce/issues/31143,3
+5198569,2017-04-26 10:33:32.869,Document changelog process in CONTRIBUTING,Also automation in release script.,1
+5197911,2017-04-26 09:21:50.325,RPC Design: Commit::TreeEntry Endpoint,"~""Migration Analysis"": #169 
+
+~Conversation: #310 
+
+------------------------------------
+
+Goal: develop the RPC interfaces required to migrate `Projects::RawController#show`",2
+5197872,2017-04-26 09:16:44.928,Migration Analysis: Workhorse Sendblob,"~Conversation: #212 
+
+Perform an analysis of the migration of Workhorse's `sendblob`.
+
+Output:
+* List of existing RPCs to be used
+* List of new RPCs required
+* Risks
+* Estimated effort",1
+5197697,2017-04-26 09:11:06.888,Define the GitLab Shell <-> Gitaly CLI Stub interface,"Blocking: #124 
+
+Related: https://gitlab.com/gitlab-org/gitlab-shell/issues/80
+
+----------------------------------
+
+As part of https://gitlab.com/gitlab-org/gitaly/issues/124 we need to have a way of communicating between GitLab-Shell and a GitLab CLI interface.
+
+Do we use environment variables? Configuration file? Arguments?
+
+https://gitlab.com/gitlab-org/gitaly/issues/124 is blocked on this but work will be able to continue once it's done.",1
+5002397,2017-04-10 14:44:46.799,Validate SmartHTTP::PostUploadPack,"~Conversation: https://gitlab.com/gitlab-org/gitaly/issues/219
+
+See the [Migration Process documentation](https://gitlab.com/gitlab-org/gitaly/blob/master/doc/MIGRATION_PROCESS.md#acceptance-testing-acceptance-testing) 
+for more information on the Acceptance Testing stage of the process.
+
+Feature Toggle Environment Variable: `GITALY_POST_UPLOAD_PACK`
+
+--------------------------------------------------------------------------------
+
+- [x] [Chef recipes](https://dev.gitlab.org/cookbooks/chef-repo) to enable/disable this feature https://dev.gitlab.org/cookbooks/chef-repo/merge_requests/684
+- [x] [Grafana dashboard](https://gitlab.com/gitlab-org/grafana-dashboards/) for monitoring https://gitlab.com/gitlab-org/gitaly-dashboards/merge_requests/5
+- [ ] Environments
+    - [x] `dev.gitlab.org` https://dev.gitlab.org/cookbooks/chef-repo/merge_requests/685
+    - [x] Staging https://dev.gitlab.org/cookbooks/chef-repo/merge_requests/684
+    - [x] `gitlab.com` https://dev.gitlab.org/cookbooks/chef-repo/merge_requests/696 https://docs.google.com/document/d/1SmZvlT7D1dXsEtRPZc0xWR0jGmPmLztlGkG4_L9DQeU/edit
+- [ ] Test Results (post as comments on this issue)
+    - [ ] Did the migration perform as expected? 
+    - [ ] Did the code have reasonable performance characteristics?
+    - [ ] Did error rates jump to an unacceptable level?
+- [ ] Have the changes been rolled back pending final review?
+- [ ] Runbook Added (link to MR)
+- [ ] Prometheus Alerts Added (link to MR)
+
+-----------------------------------------------------------------------------------
+
+We now (9.1) have a feature flag GITALY_POST_UPLOAD_PACK in gitlab-ce. We should validate that it works:
+
+- [x] test in omnibus nightly
+- [x] test in RC omnibus package
+- [x] test in staging (apply setting, do manual clones, look at prometheus counters for errors and to see if the RPC is being used)
+- [x] test in production for a few hours (same as staging)
+- [ ] test in production for a week
+- [ ] enable feature flag by default in omnibus
+
+----
+## Staging steps
+
+- update `gitlab-staging-worker` role (make sure change is on chef.gitlab.com, not just in the chef-repo)
+- `knife ssh -C 1 role:gitlab-staging-worker 'sudo chef-client; sleep 60; sudo gitlab-ctl term unicorn; echo done $?'` (`-C 1` is probably too slow for production)
+- `knife ssh role:gitlab-staging-worker 'for p in $(pgrep -f ""unicorn master""); do ps -o pid,etime,args -p $p; sudo cat  /proc/$p/environ | xargs --null --max-args=1; done' | grep GITALY`
+ - check [gitaly staging prometheus dashbord](https://performance.gitlab.net/dashboard/db/gitaly?orgId=1&var-job=gitaly-staging)
+- check [Sentry for staging](https://sentry.gitlap.com/gitlab/staginggitlabcom/)
+- manual tests
+- revert config change
+
+## Local omnibus steps
+
+In gitlab.rb:
+
+```ruby
+gitlab_rails['env'] = {'GITALY_POST_UPLOAD_PACK' => '1'}
+```
+
+To apply or revert:
+
+```
+sudo gitlab-ctl reconfigure
+sleep 60 # wait for unicorn to reload
+sudo gitlab-ctl term unicorn
+# test environment of unicorn master. should print a match
+for p in $(pgrep -f 'unicorn master'); do ps -o pid,etime,args -p $p; sudo cat  /proc/$p/environ | xargs --null --max-args=1 | grep GITALY; done
+```
+
+The rigmarole with `gitlab-ctl term` is because of https://gitlab.com/gitlab-org/omnibus-gitlab/issues/2002",3
+4985014,2017-04-07 16:07:31.432,Gitaly-on-NFS staging test plan,"How will we test this on staging with 9.1. RCx.
+
+- [x] make sure Gitaly over TCP works in omnibus
+- [x] test with localhost
+- [x] test with remote host and different repository root
+- [ ] instructions to prepare staging
+- [x] wait for package with all required capabilities to be deployed on staging
+- [ ] schedule time with someone with production access to run experiments on staging
+
+Parallel production issue: https://gitlab.com/gitlab-com/infrastructure/issues/1777
+
+Merge Request with (some of) the required staging configuration changes https://dev.gitlab.org/cookbooks/chef-repo/merge_requests/637",3
+4976958,2017-04-06 20:19:05.747,Operation `CommitDiff ` on service `Diff` doesn't implement the full functionality expected by Gitlab CE,"~Conversation: gitlab-org/gitaly#222
+
+The following flags are not supported:
+
+- [ ] deltas_only
+- [ ] ignore_whitespace_change
+- [ ] paths
+
+Because of this reason, we can't fully migrate this operation to Gitaly. We should implement support for these flags. This will require changes in gitaly-proto.
+
+/cc @jacobvosmaer-gitlab @andrewn @ahmadsherif ",4
+4700826,2017-03-13 12:11:11.416,Forward Git SSH sessions from gitlab-shell to Gitaly Server Implementation,"~Conversation: gitlab-org/gitaly#218
+
+Depends on ~""Migration Analysis"" #91
+
+Depends on ~""RPC Design"" https://gitlab.com/gitlab-org/gitaly-proto/merge_requests/5
+
+-------------------
+
+### ~""Server Implementation"" Forward Git SSH sessions from gitlab-shell to Gitaly
+
+Goal: allow Gitaly to monitor and control the git upload-pack and git receive-pack server-side processes spawned by the Git SSH transport.
+
+
+We already have a protocol for this. https://gitlab.com/gitlab-org/gitaly-proto/blob/v0.5.0/ssh.proto 
+
+We want to be able to run two commands on behalf of SSH clients: `git upload-pack` and `git receive-pack`. Each has its own RPC `SSHUploadPack` and `SSHReceivePack`.
+
+The idea behind the current proto is:
+
+- read first request message to get Repository and some metadata (GL_ID variable) in case of receive-pack
+- start the git process requested for the correct git repository path
+- in a goroutine: copy the rest of the request stream to stdin
+- in two goroutines: copy the stdout and stderr streams to the response
+- wait for the git command, out and err streams to finish
+- send final response message containing the git exit code",4
+4447094,2017-02-20 12:49:44.183,`make test` requires all files to be checked in,"Currently, the test suite is checking that all files are checked in and failing if there are any local changes:
+ 
+```
+notice-up-to-date:	notice
+	git ls-files --error-unmatch NOTICE # NOTICE is a tracked file
+	git diff --exit-code # there are no changed files
+```
+
+This is happening here: `git diff --exit-code`
+
+I would question why we have this at all:
+1. In a local development environment, we would expect there to be uncommitted changes.
+2. In a CI environment, this would not serve a purpose either
+
+We should be able to run `make test` without requiring all changes to be committed.",1
+124674510,2023-03-03 09:49:50.600,FindChangedPaths returns paths that are not changed from merge commit,"<!--
+If possible, please select a relevant template from the ""Choose a template"" dropdown above.
+-->
+
+<!-- template sourced from https://gitlab.com/gitlab-org/gitaly/-/blob/master/.gitlab/issue_templates/Default.md -->
+
+Related Gitlab Issue: https://gitlab.com/gitlab-org/gitlab/-/issues/23625
+
+When a user pushes a list of changes to gitlab we perform diff checks on the changes. If those changes include a merge commit the returned changed paths may also include changes that are already in history.
+
+We can solve the gitlab issue linked above by using [-c](https://git-scm.com/docs/git-diff-tree#Documentation/git-diff-tree.txt--c) instead of [-m](https://git-scm.com/docs/git-diff-tree#Documentation/git-diff-tree.txt--m) in the [FindChangedPaths git-diff-tree cmd](https://gitlab.com/gitlab-org/gitaly/-/blob/master/internal/gitaly/service/diff/find_changed_paths.go#L61). `-c` combines the diffs and only returns changes that are different in all parents e.g. conflict resolutions (where different from all parents) and other manual changes introduced during the merge.
+
+I discussed this in slack with @jcaigitlab and @pks-gitlab. 
+
+@pks-gitlab pointed out that this would be a breaking change so rather than changing the flag we should introduce an enum to allow the client to specify how the output should be formatted. 
+
+Note: the [output format for a merge commit](https://git-scm.com/docs/git-diff-tree#_diff_format_for_merges) when using `-c` is different to `-m` (each parent has a mode and sha and a status) so the `nextPath` function will need to return multiple `gitalypb.ChangedPaths` for each merge commit.",3
+118373307,2022-11-08 18:15:34.682,Add support for generating patch-ids,"Users who interact with MR pages are often distanced from the actual mechanics of git that underlie the diffs, which is a strength of our product. However, by gently obfuscating the concept of commits and branches, we find users are often confused about the implications of those concepts. One area this arises in particular is approval rules behavior around rebases. Often users want approval rules to be reset when new code enters the diff; this is a fairly basic security requirement, as it helps ensure that unreviewed/unapproved code doesn't enter an MR.
+
+This sensible behavior is broken in a situation where a rebase occurs, as git generates new commit SHAs, which look like ""new code"" to our app. While we can work around this with rebase commit SHAs and disabling approval rule resets for UI-generated rebases, if someone rebases via the command line, we have no way of detecting that -- we only see new commits coming in via the push. This would lead to a disjointed UX and rebase changes behavior depending on which execution method is chosen.
+
++ https://gitlab.com/gitlab-org/gitlab/-/issues/216144+
++ https://gitlab.com/gitlab-org/gitlab/-/issues/337888+
+
+The real question we're attempting to answer is ""has a meaningful, programmatic change been made in the diff"" which is only detectable by comparing `merge_request_diff` data. Rather than attempt to compare 2 diffs themselves (potentially quite large text blobs) we would instead like the ability to generate a representation of the raw diff, allowing us to compare for _actual_ changes in the code. This would allow us to detect not only for the case of ""this is just a rebase, no need to reset approvals"" but potentially to trigger (or not..) additional management behavior in the review cycle (such as notifying previous reviewers that a change has been made..)
+
+One approach towards accomplishing this would be to add support for [`git patch-id`](https://git-scm.com/docs/git-patch-id) as a new RPC, allowing us (Rails) to request as needed, storing the result in the DB. This would allow us to quickly and efficiently compare the gestalt of a series of commits, rather than giant diffs, or even commits themselves (which potentially can be added, removed, squashed, etc during rebasing without impacting the resulting diff..)
+
+(This was previously opened in https://gitlab.com/gitlab-org/gitlab/-/issues/378954 and includes some initial discussions and feedback from Rails-side stakeholders here https://gitlab.com/gitlab-org/gitlab/-/issues/378954#note_1149000248)",3
+117061447,2022-10-17 21:04:30.158,Introduce new WhitespaceChanges enum and deprecate ignore_whitespace_change,"Following from this comment: https://gitlab.com/groups/gitlab-org/-/epics/9028#note_1138747850 from @pks-t 
+
+ultimately this is a backwards-incompatible change in Gitaly that might also impact other users of it. How about we amend the `CommitDiff` RPC to expose a new enum `WhitespaceChanges` or similar that deprecates the `ignore_whitespace_change` field? It could either be `Unspecified` (we look at `ignore_whitespace_change`), `DontIgnore`, `Ignore` or `IgnoreAll` so that you can then control yourself how exactly to render the diff?
+
+
+### Availability & Testing
+As the change in this issue is adding a new field, and potentially marking another as deprecated there shouldn't be any major issue here. Any change in behaviour in rails shouldn't happen until https://gitlab.com/gitlab-org/gitlab/-/issues/378213.  
+- We should ensure that `omnibus-gitlab-mirror` trigged by the `trigger-qa` job passes to confirm no unexpected downstream impact",2
+108947683,2022-05-23 06:11:20.659,Optionally skip computing flattened paths in GetTreeEntries,Computing flattened paths in GetTreeEntries can be excessively expensive. We should add a flag to optionally skip this step so that clients only need to request them in case they're really needed.,2
+107255388,2022-04-27 02:34:37.082,Remove overlay2 driver specification on CI,"Updates !1148
+
+https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#use-the-overlayfs-driver
+
+> The shared runners on GitLab.com use the overlay2 driver by default.
+
+Part of &7935",2
+94969384,2021-10-06 15:04:16.913,[Feature flag] Enable pagination token exact match,"<!-- Title suggestion: [Feature flag] Enable description of feature -->
+
+## What
+
+Enable the `exact_pagination_token_match` feature flag ...
+
+## Owners
+
+* Team: ~""group::source code""
+* Most appropriate slack channel to reach out to: `#g_create_source-code-be`
+* Best individual to reach out to: @vyaklushin
+
+## Expectations
+
+### What release does this feature occur in first?
+
+https://gitlab.com/gitlab-org/gitaly/-/commit/69eac9a0db256b27a8872f6e871e5d7e61485471 
+14.3.0-rc42
+
+
+
+### What are we expecting to happen?
+
+Gitaly will return an error when page token is not found.
+
+Previously, it would try to return the next element of the collection that goes after the unknown page token. 
+
+### What might happen if this goes wrong?
+
+Users can see an error when requesting a list of branches.
+
+### What can we monitor to detect problems with this?
+
+https://log.gprd.gitlab.net/goto/9e72ab5de811c34415eb741c3696eaff
+
+## Beta groups/projects
+
+If applicable, any groups/projects that are happy to have this feature turned on early. Some organizations may wish to test big changes they are interested in with a small subset of users ahead of time for example.
+
+- `gitlab-org/gitlab` / `gitlab-org/gitaly` projects
+- `gitlab-org`/`gitlab-com` groups
+- ...
+
+## Roll Out Steps
+
+- [x] [Read the documentation of feature flags](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#feature-flags)
+- [x] Add ~""featureflag::staging"" to this issue ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#feature-flag-labels))
+- [x] Is the required code deployed? ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#is-the-required-code-deployed))
+- [x] Do we need to create a [change management issue](https://about.gitlab.com/handbook/engineering/infrastructure/change-management/#feature-flags-and-the-change-management-process)? ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#do-we-need-a-change-management-issue))
+- [x] Enable on staging ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#enable-on-staging))
+- [x] Test on staging ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#test-on-staging))
+- [x] Verify the feature flag was used by checking Prometheus metric [`gitaly_feature_flag_checks_total`](https://prometheus.gstg.gitlab.net/graph?g0.expr=sum%20by%20(flag)%20(rate(gitaly_feature_flag_checks_total%5B5m%5D))&g0.tab=1&g0.stacked=0&g0.range_input=1h)
+- [x] Announce on this issue an estimated time this will be enabled on GitLab.com
+- [x] Add ~""featureflag::production"" to this issue
+- [x] Enable on GitLab.com by running chatops command in `#production` ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#enable-in-production))
+- [x] Cross post chatops slack command to `#support_gitlab-com` and in your team channel
+- [x] Verify the feature flag is being used by checking Prometheus metric [`gitaly_feature_flag_checks_total`](https://prometheus.gprd.gitlab.net/graph?g0.expr=sum%20by%20(flag)%20(rate(gitaly_feature_flag_checks_total%5B5m%5D))&g0.tab=1&g0.stacked=0&g0.range_input=1h)
+- [x] Announce on the issue that the flag has been enabled
+- [x] Did you set the feature to both `100%` **and** `true` ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#enable-in-production))
+- [x] Submit a MR to have the feature `OnByDefault: true` and add changelog entry ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#feature-lifecycle-after-it-is-live))
+- [x] Have that MR merged
+- [x] Possibly wait for at least one deployment cycle ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#two-phase-ruby-to-go-rollouts))
+- [x] Submit an MR to remove the pre-feature code from the codebase and add changelog entry ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#feature-lifecycle-after-it-is-live))
+- [x] Have that MR merged
+- [x] Remove the feature flag via chatops ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#remove-the-feature-flag-via-chatops))
+- [x] Close this issue",1
+88793588,2021-06-16 08:46:04.710,Cleanup fallback logic for gitaly-git2go binary path resolution,"https://gitlab.com/gitlab-org/gitaly/-/merge_requests/3587 is merged and deployed on the gitlab.com.  
+It is safe to remove [fallback logic](https://gitlab.com/gitlab-org/gitaly/-/blob/8a6d0e26de9d584941267d2b68c94b37bc30e092/internal/git2go/command.go#L31-39) to define the path to the `gitaly-git2go` binary. 
+
+/cc @zj-gitlab",1
+81575543,2021-03-24 15:27:08.593,Geo: Help Praefect recover after it does an internal failover,"From https://gitlab.com/gitlab-org/gitaly/-/issues/3493#note_536442781:
+
+> Praefect responds with code `FailedPrecondition` and message `repository is in read-only mode`: https://gitlab.com/gitlab-org/gitaly/-/blob/f1b141704f05163c5cf95185151570b844cc8b1c/internal/praefect/coordinator.go#L33
+
+## Proposal
+
+When a secondary encounters this particular error while syncing, Geo should schedule the next retry at of this repository later than it usually would. For example, we could set a floor of 1 minute. And/or we could double the calculated delay.",1
+80369000,2021-03-05 22:50:35.388,Update docs for the minimum version of Ruby to 2.7,"While !2633 upgrades Ruby to 2.7, docs for the minimum version of Ruby has not been updated.
+
+Updating the docs is required.",1
+78723064,2021-02-09 14:14:47.646,[Gitaly] Make Ruby 3.0.x the default Ruby,"Part of &5149
+
+Once we have a [Ruby 3 build for gitaly-ruby](https://gitlab.com/gitlab-org/gitaly/-/issues/3715), we actually want to switch the default Ruby over as well, which should happen as a separate step. 
+
+**NOTE**: We had to roll back the Ruby 3 build due to a grpc rollback.",4
+77995430,2021-01-28 12:34:08.629,Enable Prometheus by default,"Gitaly does not enable Prometheus by default, only when administrators configure the buckets. This issue proposes to have default buckets of:
+
+```
+grpc_latency_buckets = [0.001, 0.005, 0.025, 0.1, 0.5, 1.0, 10.0, 30.0, 60.0, 300.0, 1500.0]
+```
+
+The config value remains to override what the default value is.
+
+See also: https://gitlab.com/gitlab-com/gl-infra/infrastructure/-/issues/9490#note_495908357",1
+77882837,2021-01-26 17:57:32.299,Praefect: Use millisecond precision for JSON logs time field,"### Problem to solve
+
+A customer [reported](https://gitlab.com/gitlab-com/account-management/emea/manomano/-/issues/53) that times in Praefect logs are not standardized. Some items have millisecond precision (thanks to https://gitlab.com/gitlab-org/gitaly/-/merge_requests/1887), but others don't.
+
+From the customer:
+```
+We are trying to ingest logs on Datalog and are facing dates on logs that aren't standardized.  Example on the same file (/var/log/gitlab/praefect/current):
+
+{""gitaly"":15927,""level"":""warning"",""msg"":""forwarding signal"",""signal"":23,""time"":""2020-12-09T15:24:49Z"",""wrapper"":15937}
+{""correlation_id"":""M2qIAurFTg7"",""grpc.code"":""OK"",""grpc.meta.auth_version"":""v2"",""grpc.meta.client_name"":""gitlab-web"",""grpc.meta.deadline_type"":""regular"",""grpc.method"":""FindCommit"",""grpc.request.deadline"":""2020-12-09T14:39:10Z"",""grpc.request.fullMethod"":""/gitaly.CommitService/FindCommit"",""grpc.service"":""gitaly.CommitService"",""grpc.start_time"":""2020-12-09T14:38:41Z"",""grpc.time_ms"":4.497,""level"":""info"",""msg"":""finished streaming call with code OK"",""peer.address"":""REDACTED:11670"",""pid"":15927,""relative_path"":""@hashed/e7/f6/REDACTED.git"",""span.kind"":""server"",""system"":""grpc"",""time"":""2020-12-09T14:38:41.010Z"",""virtual_storage"":""distributed""}
+```
+
+Notice that the first `time` does not have millisecond precision, but the last `time` does.
+
+### Proposal
+
+Praefect log entries should have times with millisecond precision (ISO 8601.3).",1
+77822925,2021-01-25 20:05:32.034,Enforce default limit for recursive calls to GetTreeEntries,"## Background
+
+In some repositories with very large trees (https://gitlab.com/gitlab-org/gitlab/-/issues/232072), recursive calls to GetTreeEntries can consume too much system resources to complete.
+
+## Proposal
+
+Enforce a default limit for the number of tree entries that can be recursively fetched by GetTreeEntries. Require an explicit override for requests that want more than the default limit.",3
+77019673,2021-01-11 11:55:50.294,[Feature flag] Enable Go implementation of FetchSourceBranch,"## What
+
+Enable the `gitaly_go_fetch_source_branch` feature flag, which switches over from the Ruby implementation of FetchSourceBranch to the Go implementation. FetchSourceBranch is used 
+
+- when creating merge requests across forks, FetchSourceBranch is used to get changes from the source repo into the target repo.
+- when doing cross-repository diffs.
+
+The feature flag has been rolled out in the past but caused severe performance regressions https://gitlab.com/gitlab-org/gitaly/-/issues/2741#note_374138071. There's been some changes to mitigate those regressions and avoid needless duplication of work when objects are already contained in the target repository https://gitlab.com/gitlab-org/gitaly/-/merge_requests/2980.
+
+## Owners
+
+- Team: Gitaly
+- Most appropriate slack channel to reach out to: `#g_create_gitaly`
+- Best individual to reach out to: @pks-t
+
+## Expectations
+
+### What release does this feature occur in first?
+
+%13.2 via f0a5bdd7f04fb2819b62ed7afd466daabf672d15, improved performance in %13.8 via f382aa9588e4c818a4a70eefe7b3a8ebf790f91c.
+
+### What are we expecting to happen?
+
+No change in behaviour is expected. Ideally, performance metrics for `FetchSourceBranch` shouldn't change.
+
+### What might happen if this goes wrong?
+
+- Errors when creating merge requests from forks.
+- Errors when diffing across repositories.
+- Latency regresses.
+
+### What can we monitor to detect problems with this?
+
+- https://dashboards.gitlab.net/d/000000199/gitaly-feature-status?var-environment=gprd&var-method=FetchSourceBranch
+
+## Roll Out Steps
+
+- [x] [Read the documentation of feature flags](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#feature-flags)
+- [x] Add ~""featureflag::staging"" to this issue
+- [x] Is the required code deployed? ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#is-the-required-code-deployed))
+- [x] Enable on staging ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#enable-on-staging))
+- [x] Test on staging ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#test-on-staging))
+- [ ] Ensure that documentation has been updated
+- [x] Announce on this issue an estimated time this will be enabled on GitLab.com
+- [x] Add ~""featureflag::production"" to this issue
+- [x] Enable on GitLab.com by running chatops command in `#production` ([howto](https://gitlab.com/gitlab-org/gitaly/-/blob/master/doc/PROCESS.md#enable-in-production))
+- [ ] Cross post chatops slack command to `#support_gitlab-com` and in your team channel
+- [x] Announce on the issue that the flag has been enabled
+- [x] Remove feature flag and add changelog entry
+- [ ] Close this issue",1
+76044947,2020-12-14 17:01:01.257,Remove Ruby implementation of UserUpdateSubmodule RPC,"Once the feature flag for the Go implementation for UserUpdateSubmodule has been removed in the previous release (https://gitlab.com/gitlab-org/gitaly/-/issues/3380), it is now a safe time to remove the old Ruby implementation.",1
+76044879,2020-12-14 16:59:02.672,Remove feature flag gitaly_go_user_update_submodule,"Once no issues have been found with the feature flag `gitaly_go_user_update_submodule` turned on by default, remove it.
+
+Follow up from #3290",1
+74220736,2020-11-11 19:28:48.746,Logging format 'text' considered invalid,"When using logging format `text` for `gitaly` chart it's considered `invalid`.
+In documentation `format` value of `[logging]` section should accept: `json` or `text`
+
+![image](/uploads/457e603e92498e00f4d61496126e8567/image.png)
+
+Gitaly pod logs:
+```
+root@ip-10-2-4-231:~# kubectl logs -n gitlab gitlab-gitaly-0
++ /scripts/set-config /etc/gitaly/templates /etc/gitaly
+Begin parsing .erb files from /etc/gitaly/templates
+Writing /etc/gitaly/config.toml
+Copying other config files found in /etc/gitaly/templates
++ exec /bin/sh -c '""/scripts/process-wrapper""'
+Starting Gitaly
+
+*** /var/log/gitaly/gitaly.log ***
+time=""2020-11-11T19:06:22Z"" level=info msg=""Starting Gitaly"" version=""Gitaly, version 13.5.3""
+time=""2020-11-11T19:06:22Z"" level=warning msg=""git path not configured. Using default path resolution"" resolvedPath=/usr/local/bin/git
+time=""2020-11-11T19:06:22Z"" level=info msg=""clearing disk cache object folder"" path=/home/git/repositories
+time=""2020-11-11T19:06:22Z"" level=info msg=""moving disk cache object folder to /home/git/repositories/+gitaly/tmp/diskcache085180550"" path=/home/git/repositories
+time=""2020-11-11T19:06:22Z"" level=info msg=""disk cache object folder doesn't exist, no need to remove"" path=/home/git/repositories
+time=""2020-11-11T19:06:22Z"" level=info msg=""Starting file walker for /home/git/repositories/+gitaly/cache"" path=/home/git/repositories/+gitaly/cache
+time=""2020-11-11T19:06:22Z"" level=info msg=""Starting file walker for /home/git/repositories/+gitaly/state"" path=/home/git/repositories/+gitaly/state
+time=""2020-11-11T19:06:22Z"" level=info msg=""cleared all cache object files in /home/git/repositories/+gitaly/tmp/diskcache085180550 after 4.352483ms"" path=/home/git/repositories
+time=""2020-11-11T19:06:23Z"" level=fatal msg=""invalid logger format"" format=text
+```
+
+Logging section for the `gitaly` ConfigMap using `text` as format:
+```
+root@ip-10-2-4-231:~# kubectl get cm -n gitlab gitlab-gitaly -o yaml | grep 'logging' -A5
+    [logging]
+    format = ""text""
+    dir = ""/var/log/gitaly""
+
+    [auth]
+    token = ""<%= File.read('/etc/gitlab-secrets/gitaly/gitaly_token').strip.dump[1..-2] %>""
+```
+
+---
+
+### Normal behavior
+
+The working logging section for the `gitaly` ConfigMap with `json` value:
+```
+root@ip-10-2-4-231:~# kubectl get cm -n gitlab gitlab-gitaly -o yaml | grep 'logging' -A5
+    [logging]
+    format = ""json""
+    dir = ""/var/log/gitaly""
+
+    [auth]
+    token = ""<%= File.read('/etc/gitlab-secrets/gitaly/gitaly_token').strip.dump[1..-2] %>""
+```
+
+Gitaly log when using `json` as `[logging]` value for the `format`:
+```
+root@ip-10-2-4-231:~# kubectl logs -n gitlab gitlab-gitaly-0
++ /scripts/set-config /etc/gitaly/templates /etc/gitaly
+Begin parsing .erb files from /etc/gitaly/templates
+Writing /etc/gitaly/config.toml
+Copying other config files found in /etc/gitaly/templates
++ exec /bin/sh -c '""/scripts/process-wrapper""'
+Starting Gitaly
+
+*** /var/log/gitaly/gitaly.log ***
+time=""2020-11-11T19:27:11Z"" level=info msg=""Starting Gitaly"" version=""Gitaly, version 13.5.3""
+time=""2020-11-11T19:27:11Z"" level=warning msg=""git path not configured. Using default path resolution"" resolvedPath=/usr/local/bin/git
+time=""2020-11-11T19:27:11Z"" level=info msg=""clearing disk cache object folder"" path=/home/git/repositories
+time=""2020-11-11T19:27:11Z"" level=info msg=""moving disk cache object folder to /home/git/repositories/+gitaly/tmp/diskcache451226427"" path=/home/git/repositories
+time=""2020-11-11T19:27:11Z"" level=info msg=""disk cache object folder doesn't exist, no need to remove"" path=/home/git/repositories
+time=""2020-11-11T19:27:11Z"" level=info msg=""Starting file walker for /home/git/repositories/+gitaly/cache"" path=/home/git/repositories/+gitaly/cache
+time=""2020-11-11T19:27:11Z"" level=info msg=""Starting file walker for /home/git/repositories/+gitaly/state"" path=/home/git/repositories/+gitaly/state
+time=""2020-11-11T19:27:11Z"" level=info msg=""cleared all cache object files in /home/git/repositories/+gitaly/tmp/diskcache451226427 after 4.46173ms"" path=/home/git/repositories
+{""address"":""/home/git/internal.sock"",""level"":""info"",""msg"":""listening at unix address"",""time"":""2020-11-11T19:27:12.101Z""}
+{""address"":""0.0.0.0:8075"",""level"":""info"",""msg"":""listening at tcp address"",""time"":""2020-11-11T19:27:12.101Z""}
+{""address"":"":9236"",""level"":""info"",""msg"":""starting prometheus listener"",""time"":""2020-11-11T19:27:12.105Z""}
+{""level"":""info"",""msg"":""finished tempdir cleaner walk"",""storage"":""default"",""time"":""2020-11-11T19:27:12.105Z"",""time_ms"":6}
+{""level"":""info"",""msg"":""starting RSS monitor"",""supervisor.name"":""gitaly-ruby.1"",""supervisor.rss_threshold"":209715200,""time"":""2020-11-11T19:27:12.106Z""}
+{""level"":""info"",""msg"":""starting RSS monitor"",""supervisor.name"":""gitaly-ruby.0"",""supervisor.rss_threshold"":209715200,""time"":""2020-11-11T19:27:12.106Z""}
+{""level"":""warning"",""msg"":""spawned"",""supervisor.args"":[""bundle"",""exec"",""bin/ruby-cd"",""/"",""/srv/gitaly-ruby/bin/gitaly-ruby"",""10"",""/home/git/ruby.1""],""supervisor.name"":""gitaly-ruby.1"",""supervisor.pid"":25,""time"":""2020-11-11T19:27:12.107Z""}
+{""level"":""warning"",""msg"":""spawned"",""supervisor.args"":[""bundle"",""exec"",""bin/ruby-cd"",""/"",""/srv/gitaly-ruby/bin/gitaly-ruby"",""10"",""/home/git/ruby.0""],""supervisor.name"":""gitaly-ruby.0"",""supervisor.pid"":26,""time"":""2020-11-11T19:27:12.108Z""}
+{""level"":""info"",""msg"":""PID 26 BUNDLE_GEMFILE=/srv/gitaly-ruby/Gemfile"",""supervisor.args"":[""bundle"",""exec"",""bin/ruby-cd"",""/"",""/srv/gitaly-ruby/bin/gitaly-ruby"",""10"",""/home/git/ruby.0""],""supervisor.name"":""gitaly-ruby.0"",""time"":""2020-11-11T19:27:12.552Z""}
+{""level"":""info"",""msg"":""PID 25 BUNDLE_GEMFILE=/srv/gitaly-ruby/Gemfile"",""supervisor.args"":[""bundle"",""exec"",""bin/ruby-cd"",""/"",""/srv/gitaly-ruby/bin/gitaly-ruby"",""10"",""/home/git/ruby.1""],""supervisor.name"":""gitaly-ruby.1"",""time"":""2020-11-11T19:27:12.576Z""}
+```
+
+### Version details
+
+Kubernetes, version 1.16  
+Gitaly, version 13.5.3  
+GitLab, version 13.5.3  
+GitLab Cloud Native Helm chart, version 4.5.3",2
+74093600,2020-11-09 14:56:50.787,Build commit graph with Bloom Filter,"In our monorepo, we started to observe very slow response time in `FindCommits` grpc.
+
+User when edit Merge Requests would get timeout with the following stack trace:
+
+```
+Gitlab::Git::CommandError (4:Deadline Exceeded):
+  lib/gitlab/git/wraps_gitaly_errors.rb:13:in `rescue in wrapped_gitaly_errors'
+  lib/gitlab/git/wraps_gitaly_errors.rb:6:in `wrapped_gitaly_errors'
+  lib/gitlab/git/repository.rb:347:in `log'
+  lib/gitlab/git/commit.rb:46:in `where'
+  app/models/repository.rb:155:in `commits'
+  lib/gitlab/metrics/instrumentation.rb:161:in `block in commits'
+  lib/gitlab/metrics/method_call.rb:36:in `measure'
+  lib/gitlab/metrics/instrumentation.rb:161:in `commits'
+  ee/lib/gitlab/authority_analyzer.rb:26:in `involved_users'
+  ee/lib/gitlab/authority_analyzer.rb:15:in `calculate'
+  ee/app/presenters/merge_request_approver_presenter.rb:56:in `users_from_git_log_authors'
+  ee/app/presenters/merge_request_approver_presenter.rb:44:in `block in users'
+  lib/gitlab/utils/strong_memoize.rb:30:in `strong_memoize'
+  ee/app/presenters/merge_request_approver_presenter.rb:43:in `users'
+  ee/app/presenters/merge_request_approver_presenter.rb:25:in `any?'
+  ee/app/views/shared/issuable/_approvals.html.haml:25
+  app/helpers/application_helper.rb:10:in `render_if_exists'
+  app/views/shared/issuable/_form.html.haml:36
+  app/views/projects/merge_requests/_form.html.haml:3
+  app/views/projects/merge_requests/_form.html.haml:1
+  app/views/projects/merge_requests/edit.html.haml:5
+  app/controllers/application_controller.rb:133:in `render'
+  ee/lib/gitlab/ip_address_state.rb:10:in `with'
+  ee/app/controllers/ee/application_controller.rb:44:in `set_current_ip_address'
+  app/controllers/application_controller.rb:497:in `set_current_admin'
+  lib/gitlab/session.rb:11:in `with_session'
+  app/controllers/application_controller.rb:488:in `set_session_storage'
+  lib/gitlab/i18n.rb:55:in `with_locale'
+  lib/gitlab/i18n.rb:61:in `with_user_locale'
+  app/controllers/application_controller.rb:482:in `set_locale'
+  lib/gitlab/error_tracking.rb:51:in `with_context'
+  app/controllers/application_controller.rb:547:in `sentry_context'
+  app/controllers/application_controller.rb:475:in `block in set_current_context'
+  lib/gitlab/application_context.rb:52:in `block in use'
+  lib/gitlab/application_context.rb:52:in `use'
+  lib/gitlab/application_context.rb:20:in `with_context'
+  app/controllers/application_controller.rb:468:in `set_current_context'
+  lib/gitlab/metrics/elasticsearch_rack_middleware.rb:24:in `call'
+  lib/gitlab/metrics/redis_rack_middleware.rb:22:in `call'
+  lib/gitlab/middleware/rails_queue_duration.rb:29:in `call'
+  lib/gitlab/metrics/rack_middleware.rb:17:in `block in call'
+  lib/gitlab/metrics/transaction.rb:54:in `run'
+  lib/gitlab/metrics/rack_middleware.rb:17:in `call'
+  lib/gitlab/request_profiler/middleware.rb:17:in `call'
+  ee/lib/gitlab/database/load_balancing/rack_middleware.rb:39:in `call'
+  ee/lib/gitlab/jira/middleware.rb:19:in `call'
+  lib/gitlab/middleware/go.rb:20:in `call'
+  lib/gitlab/etag_caching/middleware.rb:13:in `call'
+  lib/gitlab/middleware/multipart.rb:125:in `call'
+  lib/gitlab/middleware/read_only/controller.rb:51:in `call'
+  lib/gitlab/middleware/read_only.rb:18:in `call'
+  lib/gitlab/middleware/same_site_cookies.rb:27:in `call'
+  lib/gitlab/middleware/basic_health_check.rb:25:in `call'
+  lib/gitlab/middleware/handle_ip_spoof_attack_error.rb:25:in `call'
+  lib/gitlab/middleware/request_context.rb:23:in `call'
+  config/initializers/fix_local_cache_middleware.rb:9:in `call'
+  lib/gitlab/metrics/requests_rack_middleware.rb:60:in `call'
+  lib/gitlab/middleware/release_env.rb:12:in `call'
+```
+
+What this is suggesting is that https://gitlab.com/gitlab-org/gitlab/-/blob/v13.3.8-ee/ee/lib/gitlab/authority_analyzer.rb#L26 is being called and get timeout by Gitaly.
+
+I suspect this is because in a big monorepo, `git log -- <file_path>` could be very slow as reasons indicated in https://devblogs.microsoft.com/devops/super-charging-the-git-commit-graph-iv-bloom-filters/
+
+The solution here is to build the commit-graph with Bloom filter included by adding `--changed-paths` to `git commit-graph write`. I have a draft solution in https://gitlab.com/sluongng/gitaly/-/commit/78dba8b73e720b11500482b19b755346ec853025 that need to be developed into a full fledged solution.",3
+73848356,2020-11-04 09:51:03.416,Fix  resolving Praefect address in mixed-TLS deployments,"In deployements where Gitaly and Praefect have different TLS configurations, we may fail to correctly resolve injected Praefect addresses. The root cause is that in `resolvePraefectAddress`, we decide how to resolve the peer address by inspecting the incoming TCP connection: if it is unencrypted, we dial back with an unencrypted connection. If it is encrypted, we dial back with an encrypted connection. This doesn't make a lot of sense though, as we're deciding how to dial back depending on how we're reachable ourselves as a Gitaly node. We really shouldn't care for that and instead only go by the injected information we got.",3
+73819963,2020-11-03 19:16:24.161,Praefect should only dial to Gitaly for transactions,"For transactions, we require that Gitaly dials back to Praefect in order to vote on transactions. This introduces a few problems:
+
+- Gitaly is not configured with Praefect's security token. Praefect must send call-back information, including security token, to Gitaly for all transaction related calls.
+- It is not clear to customers how this dial back requirement affects supported network topologies for GitLab deployments. Sometimes, Praefect may be behind a load balancer or NAT. Being able to dial back to Praefect is not always desirable.
+
+However, Praefect is already configured with the Gitaly node security tokens and it is clear that Praefect must be able to reach individual Gitalies on the network. Therefore, it would be more robust to have Praefect initiate the gRPC call to Gitaly for all transaction votes. This would free Gitaly from needing to know network and security details for Praefect since Praefect is already a trusted client of Gitaly.",3
+73721249,2020-11-02 09:02:29.619,Improve input validation of hook inputs,"The ported UserMergeBranch RPC caused pipelines to not get triggered in production anymore. The root cause was that the PostReceive hook was executed with empty input, where it should've contained a list of all updated references. As a result, the hook pretended no changes existed and thus no pipelines had to be triggered.
+
+This error was hard to diagnose via logs or metrics as this is essentially about the absence of something. If we had stricter input verification in our hooks (e.g. expecting at least one change to exist), then the issue might've been a lot more visible and thus caught earlier.",2
+73263830,2020-10-23 18:05:29.240,Add FetchSHA abstraction to LocalRepository,"Originally reported in https://gitlab.com/gitlab-org/gitaly/-/merge_requests/2693#note_435231130
+
+Fetching a single SHA is done in multiple places across Gitaly and is very verbose and error prone. Having a definitive and easy to use function will improve our code quality. Adding a new method `FetchSHA` to `localrepo` could enable this.",2
+73262492,2020-10-23 17:22:24.021,Inject single client connection pool from main to all Gitaly services,"Currently, each service instantiates their own client pool for use in dialing across Gitalies. To improve performance by reducing connection dialing, the same pool should be used everywhere. This ideally should be dependency injected from the main module.
+
+Originally reported in https://gitlab.com/gitlab-org/gitaly/-/merge_requests/2693#note_435231124",2
+73256843,2020-10-23 15:52:48.949,Enable verbose logging of git2go subcommands,"Currently, git2go subcommands contain very complex logic for various tasks (e.g. squashing commits/resolving conflicts/commiting multiple changes). The subcommands lack observability since STDERR is used to return error messages. An alternative file descriptor should be used to allow git2go commands to relay back fine grain logs. When a git2go command exits with non-zero, or the logging level is set to a certain level, these fine grain logs should be emitted.",2
+73184079,2020-10-22 16:39:43.750,Refactor NewFeatureSets to remove unused error return value,"The test helper function `NewFeatureSets` is not capable of returning a non-nil error. The helper should be fixed to never return an error and all affected code locations should be updated to accept a single return value. Any error assertions for that function call should be removed.
+
+The function is defined here: https://gitlab.com/gitlab-org/gitaly/-/blob/master/internal/testhelper/testhelper.go#L959-980",1
+72835557,2020-10-16 12:59:27.421,GIT_DIR missing in hook environment,"### Summary
+
+As reported in https://gitlab.com/gitlab-org/gitlab/-/issues/258828, the `$GIT_DIR` is not present anymore in the environment for custom server hooks.
+
+I was able to reproduce by following the instructions at https://docs.gitlab.com/ee/administration/server_hooks.html#create-a-global-server-hook-for-all-repositories. The `$GIT_DIR` variable is not set at all for any of the `pre-receive`, `post-receive`, and `update` hooks (this was on a normal project code repository, I assume the same applies for other repository types).
+
+This seems related to recent work to port the hooks from Ruby to Go. I can see the variable was set in the Ruby code at https://gitlab.com/gitlab-org/gitaly/-/blob/dfd9c3e1a79f6a222b742b1978e45785b06a9440/ruby/lib/gitlab/git/hook.rb#L133.
+
+### Proposal
+
+`$GIT_DIR` is not explicitly documented at https://docs.gitlab.com/ee/administration/server_hooks.html#environment-variables, but for compatibility reasons we probably want to keep supporting it, and should also document this.
+
+We might also want to double-check that we're not missing any of the other variables that were set in the previous Ruby code: https://gitlab.com/gitlab-org/gitaly/-/blob/dfd9c3e1a79f6a222b742b1978e45785b06a9440/ruby/lib/gitlab/git/hook.rb#L118-138",1
+72770726,2020-10-15 12:04:30.346,"Follow-up from ""Pass correlation_id over to gitaly-ssh""","The following discussion from !2530 should be addressed:
+
+- [ ] @ash2k started a [discussion](https://gitlab.com/gitlab-org/gitaly/-/merge_requests/2530#note_428727639):  (+3 comments)
+
+    > @8bitlife 
+    > 
+    > Just discovered that these interceptors have been added. I understand the motivation but now I cannot customize neither of those interceptors:
+    > 
+    > - For the tracing one I'd like to inject a custom `Tracer` by using `grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer())` directly, not via LabKit (see the discussion here https://gitlab.com/gitlab-org/labkit/-/merge_requests/66)
+    > - For the correlation one I'd like to set the client name like that `grpccorrelation.StreamClientCorrelationInterceptor(grpccorrelation.WithClientName(""kas""))` as suggested here https://gitlab.com/gitlab-com/gl-infra/readiness/-/merge_requests/46#note_428087602 by @jacobvosmaer-gitlab.
+    > 
+    > I have looked at the code and both Workhorse are Shell add these interceptors to the client:
+    > 
+    > - Workhorse: https://gitlab.com/gitlab-org/gitlab-workhorse/-/blob/master/internal/gitaly/gitaly.go#L158-173 As you can see, it sets client name there.
+    > - Shell: https://github.com/gitlabhq/gitlab-shell/blob/master/internal/handler/exec.go#L112-L120 Also sets the name but is missing the tracing interceptor (maybe intentionally).
+    > 
+    > So the current behavior is not ideal - two traces/spans from the same place (right?) and redundant context creation because the correlating interceptor is executed twice (so it adds the correlation ID twice).
+    > 
+    > p.s. another bug that I've noticed is that `connOpts` is mutated. It's not safe to append to a slice that has been passed as the caller likely assumes that the method is not mutating it. The slice might have larger capacity and so this method will mutate the original backing array. The code should copy it first.
+    > 
+    > p.p.s. It might be nicer to change the signature to varargs to match `grpc.Dial()` and all the other places where we take functional options. This will also address the bug ^.
+
+@8bitlife @zj-gitlab",1
+72578977,2020-10-12 13:10:36.865,Intercept CreateRepository in Praefect to set up repository database state,"Currently we do not have a record of every repository a virtual storage is supposed to contain. This will change with #3033. We should intercept `CreateRepository` calls and set up the expected database records a repository should have. Related to #3133, we should select a primary for the repository when it is created. Related to #2971, we should select the nodes that will host the repository when it is created. Additionally, we can make generation related queries stricter once we can expect every repository to be present in the database and not allow for example incrementing generation of a repository that does not exist. Stricter queries prevent certain class of errors, such as https://gitlab.com/gitlab-org/gitaly/-/issues/3183, and make the logic simpler as we don't have to handle cases where the records are missing.",2
+72555029,2020-10-12 07:41:14.651,UserMerge RPC should error with FailedPrecondition on merge conflicts,"### Problem
+
+When a user merges a branch while it can't be merged, the Gitaly service will detect this, and return an error. This error is an Unknown error currently, which is surprising to operators of Gitaly. Additionally, the error is wrong as the why of the error is known.
+
+Last reason it should be another error, is that Unknown influences SL{A,O}s. Though it shouldn't.
+
+### Solution
+
+Gitaly should return a FailedPrecondition when it can't be merged due to conflicts.",1
+72076407,2020-10-02 12:27:00.182,Replace BurntSushi/toml package,"Gitaly uses TOML for configuration, and parsing is done with `github.com/BurntSushi/toml`. That package has gone unmaintained and while TOML is stable, Gitaly should depend on a new package  which is supported.",1
+72050561,2020-10-02 02:02:15.948,CreateRepositoryFromSnapshot will fail with error 'Promoting temporary directory failed' if parent directories of target path do not already exist,"If `CreateRepositoryFromSnapshot` is called when the parent directory of the target path does not exist, the request will fail with error:
+
+```
+rpc error: code = Internal desc = Promoting temporary directory failed: rename /var/opt/gitlab/git-data/repositories/+gitaly/tmp/repo446863582 /var/opt/gitlab/git-data/repositories/@geo-temporary/@hashed/
+19/58/19581e27de7ced00ff1ce50b2047e7a567c76b1cbaebabe5ef03f7c3017bb5b7.git: no such file or directory
+```
+
+Stracing this, we find that the `renameat` call fails with ENOENT:
+
+```
+18192 22:01:24.772985 renameat(AT_FDCWD, ""/var/opt/gitlab/git-data/repositories/+gitaly/tmp/repo446863582"", AT_FDCWD, ""/var/opt/gitlab/git-data/repositories/@ge
+o-temporary/@hashed/19/58/19581e27de7ced00ff1ce50b2047e7a567c76b1cbaebabe5ef03f7c3017bb5b7.git"") = -1 ENOENT (No such file or directory) <0.000013>
+```
+
+Generally this RPC is only called on a second attempt to create a repository, so the directory has already been created, but due to https://gitlab.com/gitlab-org/gitlab/-/issues/9803#note_422414267 these calls were the first attempt, exposing this issue.
+
+`ReplicateRepository` will [ensure the directories are present](https://gitlab.com/gitlab-org/gitaly/-/blob/d76d10b540d474d950103aa3303a89a9aad9dd88/internal/gitaly/service/repository/replicate.go#L142-144) before renaming the tmp directory, we should do the same in [this RPC](https://gitlab.com/gitlab-org/gitaly/-/blob/d76d10b540d474d950103aa3303a89a9aad9dd88/internal/gitaly/service/repository/create_from_snapshot.go#L106-112).",1
+71993240,2020-10-01 06:11:32.689,Gitaly module version cannot be updated in gitlab-workhorse and gitlab-shell,"On a clean Go v1.15.2 installation, I get this while trying to update the Gitaly module in gitlab-workhorse and gitlab-shell:
+
+```
+$  go get -u gitlab.com/gitlab-org/gitaly@v13.5.0-rc1
+go: downloading gitlab.com/gitlab-org/gitaly v0.0.0-20201001041716-3f5e218def93
+go: gitlab.com/gitlab-org/gitaly v13.5.0-rc1 => v0.0.0-20201001041716-3f5e218def93
+cat go.mod
+go get: inconsistent versions:
+	gitlab.com/gitlab-org/gitaly@v0.0.0-20201001041716-3f5e218def93 from gitlab.com/gitlab-org/gitaly@v13.5.0-rc1 requires gitlab.com/gitlab-org/gitaly@v1.68.0 (not gitlab.com/gitlab-org/gitaly@v0.0.0-20201001041716-3f5e218def93 from gitlab.com/gitlab-org/gitaly@v13.5.0-rc1)
+```
+
+According to https://github.com/golang/go/issues/35732 and https://golang.org/cmd/go/#hdr-Module_compatibility_and_semantic_versioning, this is because Go is trying to enforce semantic compatibility:
+
+>>>
+In semantic versioning, changing the major version number indicates a lack of backwards compatibility with earlier versions. To preserve import compatibility, the go command requires that modules with major version v2 or later use a module path with that major version as the final element. For example, version v2.0.0 of example.com/m must instead use module path example.com/m/v2, and packages in that module would use that path as their import path prefix, as in example.com/m/v2/sub/pkg. Including the major version number in the module path and import paths in this way is called ""semantic import versioning"". Pseudo-versions for modules with major version v2 and later begin with that major version instead of v0, as in v2.0.0-20180326061214-4fc5987536ef. 
+>>>
+
+I think this is saying that Gitaly should be using `m/v13` in the module path.
+
+A workaround may be to tag another v1 tag with the latest master:
+
+>>>
+Code written before the semantic import versioning convention was introduced may use major versions v2 and later to describe the same set of unversioned import paths as used in v0 and v1. To accommodate such code, if a source code repository has a v2.0.0 or later tag for a file tree with no go.mod, the version is considered to be part of the v1 module's available versions and is given an +incompatible suffix when converted to a module version, as in v2.0.0+incompatible. The +incompatible tag is also applied to pseudo-versions derived from such versions, as in v2.0.1-0.yyyymmddhhmmss-abcdefabcdef+incompatible. 
+>>>
+
+v1.87.0 was tagged in February 2020, and then we switched versioning schemes.
+
+@pokstad1 @samihiltunen What do you think we should do here?",2
+71984925,2020-10-01 02:34:21.181,Repository updates intermittently disappear on busy repos hosted on NFS mount shared by multiple Gitaly servers,"Issue is occurring on a large customer with three Gitaly nodes sharing an NFS mount behind a load balancer, appearing to be a single storage to rails.
+
+After upgrading to v13.3.2 several weeks ago users on several high-traffic projects on their instance have reported recently merged changes disappearing.  No errors are received when merging, but when they check the updated file at a later time the change is not present.  They had no reports of this issue when on v12.10.
+
+This may be the same underlying issue as #2589.
+
+Looking at a specific example, we found a GC had been running on a separate Gitaly host during the a `UserMergeBranch` was executed.  The GC reported the following error:
+
+```
+{
+  ""correlation_id"": ""GPhidQI0kw9"",
+  ""grpc.meta.auth_version"": ""v2"",
+  ""grpc.meta.client_name"": ""gitlab-sidekiq"",
+  ""grpc.meta.deadline_type"": ""unknown"",
+  ""grpc.method"": ""GarbageCollect"",
+  ""grpc.request.deadline"": ""2020-09-29T12:49:23Z"",
+  ""grpc.request.fullMethod"": ""/gitaly.RepositoryService/GarbageCollect"",
+  ""grpc.request.glProjectPath"": ""services/crm/Lightning/lightning-service/service"",
+  ""grpc.request.glRepository"": ""project-3515"",
+  ""grpc.request.repoPath"": ""services/crm/Lightning/lightning-service/service.git"",
+  ""grpc.request.repoStorage"": ""default"",
+  ""grpc.request.topLevelGroup"": ""services"",
+  ""grpc.service"": ""gitaly.RepositoryService"",
+  ""grpc.start_time"": ""2020-09-29T06:49:23Z"",
+  ""level"": ""error"",
+  ""msg"": ""warning: garbage found: /var/opt/gitlab-data/git-data/repositories/group/project/objects/pack/.nfs0000000002e6ff1b0002d23a
+warning: garbage found: /var/opt/gitlab-data/git-data/repositories/group/project.git/objects/pack/.nfs0000000002e6a8590002d236
+warning: garbage found: /var/opt/gitlab-data/git-data/repositories/group/project.git/objects/pack/.nfs0000000002e74aa30002d237
+warning: garbage found: /var/opt/gitlab-data/git-data/repositories/group/project.git/objects/pack/.nfs0000000002b239f50002d238
+warning: garbage found: /var/opt/gitlab-data/git-data/repositories/group/project.git/objects/pack/.nfs0000000002bf55ea0002d234"",
+  ""peer.address"": ""10.143.238.127:20084"",
+  ""pid"": 16719,
+  ""span.kind"": ""server"",
+  ""system"": ""grpc"",
+  ""time"": ""2020-09-29T06:50:44.402Z""
+}
+```
+
+These `.nfs...` files indicate that a file with an open file handle against it was deleted.  NFS will perform a [silly rename](http://nfs.sourceforge.net) when this occurs, renaming the file to the `.nfs...` format and keeping it on disk until the file handle is released. This suggests that something is deleting pack files out from under another process, though which specific processes are unclear.
+
+In addition, we see intermittent `rpc error: code = Unknown desc = Rugged::OSError: failed to read descriptor: Stale file handle` messages on multiple Gitaly-Ruby RPCs.  In these cases the request fails, so no data loss occurs.
+
+Current NFS mount settings on Gitaly nodes:
+
+```
+nfs4 (rw,relatime,vers=4.1,rsize=262144,wsize=262144,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=10.182.169.125,local_lock=none)
+```
+
+Note that the customer will be adding `lookupcache=positive` to their settings at their earliest opportunity.
+
+/cc @pokstad1 @cnightingale @bprescott\_",3
+71737554,2020-09-26 16:17:45.626,Gitaly HTTP client should specify TLSClientConfig to support mutual TLS auth,Gitaly currently doesn't specify a TLSClientConfig for the HTTP client used to make requests to the GitLab internal API. This prevents interoperation with services that require mutual TLS auth (e.g. nginx). The non-gRPC clients in Gitaly should be updated to use the configured Gitaly certificates for client connections.,2
+71507387,2020-09-22 13:44:04.601,Leverage core.bigFilesTreshold for better memory utilization,"From `man git-config`:
+
+```
+       core.bigFileThreshold
+           Files larger than this size are stored deflated, without attempting delta compression. Storing large files without delta compression avoids excessive memory usage, at the slight expense of
+           increased disk usage. Additionally files larger than this size are always treated as binary.
+
+           Default is 512 MiB on all platforms. This should be reasonable for most projects as source code and other text files can still be delta compressed, but larger binary media files won’t be.
+
+           Common unit suffixes of k, m, or g are supported.
+```
+
+Gitaly doesn't set the `core.bigFileThreshold`, so it defaults to 512MiB. I think `50m` would be a better threshold and creates a better trade off for us. As I think the number of source files that are over 50MB is limited, so until that point each blob will still be compressed, and they get optimized packs for it. 
+
+This config should be dynamically inject on the relevant Git commands/RPCs to improve `*UploadPack` performance, as well as `Repack*` performance.
+
+* [Tradeoffs from a user perspective](https://kscherer.github.io/linux%20git/2014/09/26/git-server-option-bigfilethreshold)",2
+71198033,2020-09-15 13:19:59.733,Reference transaction hook votes twice per reference update,"The reference-transaction hook will be called for every transition in Git's reference transaction mechanism. Currently, this will include exactly two transitions: either from `START -> prepared -> committed` or `START -> prepared -> aborted`. As our own hook will ignore which state we're transitioning to, we'll thus call out to the hook service twice and not pass along which state we've transitioned to. As a result, the hook service will vote twice per each reference update.
+
+One could argue that this is a feature and not a bug in order to assert that we've actually performed both transitions as expected. But in any case, voting in the second transition from `prepared -> {committed,aborted}` is quite useless to us as Git will ignore the Git hook's return value in these transitions. After all, the transaction has already been wrapped up, so there's no way it can be changed after the fact.
+
+As a result, we should stop voting in the second transition and only vote when moving to prepared state.",2
+70726576,2020-09-04 09:34:31.920,No use of checksum comparison after replication is done,"Once the replication is done (`update` of the repository at the gitaly storage) praefect runs [`CalculateChecksum`](https://gitlab.com/gitlab-org/gitaly/-/blob/master/internal/praefect/replicator.go#L263) for source and target gitaly nodes.  
+The result of the execution compared and if there is no match the error message would be written into the log (example):
+```json
+{
+      ""msg"": ""checksums do not match"",
+      ""hostname"": ""praefect-01-stor-gprd"",
+      ""shard"": ""default"",
+      ""level"": ""error"",
+      ""primary"": {
+        ""storage_name"": ""file-praefect-02"",
+        ""relative_path"": ""@hashed/fa/53/fa539965395b8382145f8370b34eab249cf610d2d6f2943c95b9b9d08a63d4a3.git""
+      },
+      ""replica"": {
+        ""relative_path"": ""@hashed/fa/53/fa539965395b8382145f8370b34eab249cf610d2d6f2943c95b9b9d08a63d4a3.git"",
+        ""storage_name"": ""file-praefect-01""
+      },
+      ""environment"": ""gprd"",
+      ""pid"": 32412,
+      ""time"": ""2020-09-03T20:58:57.840Z"",
+      ""tier"": ""sv"",
+      ""type"": ""praefect"",
+      ""fqdn"": ""praefect-01-stor-gprd.c.gitlab-production.internal"",
+      ""tag"": ""praefect"",
+      ""stage"": ""main""
+}
+```
+
+This happens pretty often:
+Start of the replication: ![image](/uploads/45c46f2939516b0ce4d5913a810ee493/image.png)  
+Errors about not matching checksums: ![image](/uploads/86763ea999d149bc58e23af9599f12d7/image.png)
+
+As a first step we could properly propagate `correlation_id` to all logging entries to get more info about what is going on as it is not used in all places where we log something.  
+
+It is not clear if we should take any actions in regard of different checksums for the repository.
+
+/cc @zj-gitlab @derekferguson",1
+70504008,2020-08-31 12:51:39.276,Fixup reference-transaction hook name based on arguments,"While the reference-transaction hook was released with Git v2.28.0, it's got a bug which will cause Git to accidentally execute the wrong hook if there's been interleaving calls to both the reference-transaction and another hook. This bug currently prohibits us to use the hook for reference transaction voting until a new Git version is released with the upstreamed fix. Given that this could be as late as release v2.29.0, it's potentially still quite a while until we can use the hook.
+
+As a temporary workaround, we may manually fixup hook names in our `gitaly-hooks` binary. GitLab systems only have at most four hooks installed: `reference-transaction`, `pre-receive`, `update` and `post-receive`. Because of how these hooks get called, we should be able to tell the case when Git meant to execute the `reference-transaction` hook instead of any of the other three by inspecting the hook's arguments:
+
+- `reference-transaction` will receive as first arguments one of `prepared`, `committed` or `aborted`
+- `pre-receive` never gets any arguments
+- `update` will get as first argument the reference that is to be updated in its fully-qualified form (e.g. `refs/heads/master`) and thus should never clash with any of the three above verbs
+- `post-receive` never gets any arguments
+
+As a consequence, none of these hooks except for the `reference-transaction` hook will ever get executed with one of `prepared`, `committed` or `aborted`. If they were executed with such an argument, we can be sure that Git wanted to execute the `reference-transaction` hook instead.
+
+By making use of this info, we should be able to fix up the hook name without any casualties and unblock ourselves until Git v2.29.0 is released with a fix.",3
+70060227,2020-08-20 10:29:50.883,Port UserUpdateSubmodule to Go,"UserUpdateSubmodule is currently handled by the Gitaly-Ruby sidecar, and should be ported to Go for performance reasons. This could be handled by shelling out to Git, leveraging Git2Go, or another way.
+
+/labels ~""performance"" ~""group::gitaly""",3
+70060225,2020-08-20 10:29:49.952,Port UserApplyPatch to Go,"UserApplyPatch is currently handled by the Gitaly-Ruby sidecar, and should be ported to Go for performance reasons. This could be handled by shelling out to Git, leveraging Git2Go, or another way.",3
+70060224,2020-08-20 10:29:48.454,Port UserSquash to Go,"UserSquash is currently handled by the Gitaly-Ruby sidecar, and should be ported to Go for performance reasons. This could be handled by shelling out to Git, leveraging Git2Go, or another way.
+
+/labels ~""performance"" ~""group::gitaly""",3
+70060223,2020-08-20 10:29:47.315,Port UserCommitFiles to Go,"UserCommitFiles is currently handled by the Gitaly-Ruby sidecar, and should be ported to Go for performance reasons. This could be handled by shelling out to Git, leveraging Git2Go, or another way.
+
+/labels ~""performance"" ~""group::gitaly""",3
+70060220,2020-08-20 10:29:44.746,Port UserRevert to Go,"UserRevert is currently handled by the Gitaly-Ruby sidecar, and should be ported to Go for performance reasons. This could be handled by shelling out to Git, leveraging Git2Go, or another way.
+
+/labels ~""performance"" ~""group::gitaly""",3
+70060218,2020-08-20 10:29:43.689,Port UserCherryPick to Go,"UserCherryPick is currently handled by the Gitaly-Ruby sidecar, and should be ported to Go for performance reasons. This could be handled by shelling out to Git, leveraging Git2Go, or another way.",3
+70060215,2020-08-20 10:29:42.686,Port UserFFBranch to Go,"UserFFBranch is currently handled by the Gitaly-Ruby sidecar, and should be ported to Go for performance reasons. This could be handled by shelling out to Git, leveraging Git2Go, or another way.
+
+/labels ~""performance"" ~""group::gitaly""",2
+70060212,2020-08-20 10:29:40.153,Port UserMergeToRef to Go,"UserMergeToRef is currently handled by the Gitaly-Ruby sidecar, and should be ported to Go for performance reasons. This could be handled by shelling out to Git, leveraging Git2Go, or another way.
+
+/labels ~""performance"" ~""group::gitaly""",2
+70060205,2020-08-20 10:29:35.749,Port UserDeleteTag to Go,"UserDeleteTag is currently handled by the Gitaly-Ruby sidecar, and should be ported to Go for performance reasons. This could be handled by shelling out to Git, leveraging Git2Go, or another way.
+
+/labels ~""performance"" ~""group::gitaly""",2
+70060200,2020-08-20 10:29:28.269,Port UserCreateTag to Go,"UserCreateTag is currently handled by the Gitaly-Ruby sidecar, and should be ported to Go for performance reasons. This could be handled by shelling out to Git, leveraging Git2Go, or another way.
+
+/labels ~""performance"" ~""group::gitaly""",2
+69890593,2020-08-17 05:34:49.695,Ignore common name from x509 certificates,"A temporary mitigation of a breaking change was introduced in https://gitlab.com/gitlab-org/gitaly/-/merge_requests/2472.
+
+This should be removed in the next major version of GitLab. Additionally, all users of the Gitaly Go-client should be upgraded.
+
+Relates to https://gitlab.com/gitlab-org/gitaly/-/issues/3036",2
+69757246,2020-08-12 10:55:45.679,Re-include reference-transaction hook,"The reference-transaction hook has been removed from Gitaly due to a regression in Git v2.28.0, causing the wrong hooks to be invoked with inputs from the reference-transaction hook if there's interleaving hook calls. We need to re-include the reference-transaction hook as soon as Git v2.28.1 has been released with a fix to this issue.
+
+Depends on https://gitlab.com/gitlab-org/gitlab-git/-/issues/1144",2
+69757169,2020-08-12 10:53:18.265,Call reference-transaction hook from Ruby sidecar,"While we already call the pre-receive, update and post-receive hooks manually in the Ruby sidecar, we don't do so for the reference-transaction hook. This is a necessity when we want to drop the pre-receive hook in favor of the reference-transacton hook, though.
+
+This depends on the re-inclusion of Gitaly's reference-transaction hook and thus on the release of Git v2.28.1.",2
+69722330,2020-08-11 19:27:47.040,Improve reconcile error handling when individual repo failures occur,"Currently, the reconcile command will exit early if one of the repos experiences an unrecoverable error. This should not stop the command from continuing onto other repositories. Ideally, any errors encountered for individual repos should be reported back to the client and displayed appropriately to the user.",2
+69699005,2020-08-11 14:39:19.467,Rename white/blacklist references,"```
+❯ git grep whitelist
+internal/praefect/replicator.go:308:    // whitelist contains the project names of the repos we wish to replicate
+internal/praefect/replicator.go:309:    whitelist map[string]struct{}
+internal/praefect/replicator.go:342:            whitelist:       map[string]struct{}{},
+internal/praefect/replicator.go:372:// WithWhitelist will configure a whitelist for repos to allow replication
+internal/praefect/replicator.go:373:func WithWhitelist(whitelistedRepos []string) ReplMgrOpt {
+internal/praefect/replicator.go:375:            for _, repo := range whitelistedRepos {
+internal/praefect/replicator.go:376:                    r.whitelist[repo] = struct{}{}
+internal/rubyserver/proxy.go:15:// Headers prefixed with this string get whitelisted automatically
+internal/rubyserver/proxy.go:86:                // Automatically whitelist any Ruby-specific feature flag
+internal/rubyserver/proxy_test.go:26:   require.False(t, ok, ""outgoing MD should not contain non-whitelisted key"")
+internal/rubyserver/proxy_test.go:43:   require.Equal(t, []string{value}, outMd[key], ""outgoing MD should contain whitelisted key"")
+internal/rubyserver/proxy_test.go:60:   require.Equal(t, []string{value}, outMd[key], ""outgoing MD should contain whitelisted feature key"")
+```
+
+Gitaly should not use black vs white, but instead use block and allow lists.",1
+69499544,2020-08-06 09:08:59.758,Praefect server metadata not resolved before passing to Ruby sidecar,"When receiving a call with Praefect server metadata, we need resolve contained connection information first based on the current peer's connection information. This will fill in the remote's IP address, which is something that may change depending on how Praefect has connected to us.
+
+While we already to this for ""normal"" calls via `PraefectFromContext()`, we don't for proxied calls intended for our Ruby sidecar. As a result, the sidecar may receive invalid connection information which it cannot use. To fix this, we need to resolve address information on Gitaly's side and inject resolved metadata into the Ruby sidecar's metadata.
+
+References https://gitlab.com/gitlab-org/gitlab/-/issues/233838",3
+69398701,2020-08-04 08:18:53.935,Improved metrics for transactions,"Todays testrun showed that metrics for transactions could be improved:
+
+- no way to figure out how many voters per transaction there are
+- client-side delay for voting on a transaction is missing
+- the server-side delay is extremely static and it doesn't matter whether we use primary-wins strategy or not. Maybe it's broken?",2
+69174006,2020-07-29 13:29:48.148,`praefect reconcile` hangs then fails on staging,"`praefect reconcile` on staging runs normally for a few minutes then hangs and fails on staging with the following error `unable to reconcile: rpc error: code = Unavailable desc = transport is closing`. It does not reach the point where it prints ""FINISHED: ..."".
+
+cc/ @8bitlife @zj-gitlab",2
+68935101,2020-07-24 07:16:52.339,Praefect subcommands miss user-visible documentation,"When executing `praefect -help`, we list the switches and subcommands available to Praefect. While switches have some short documentation available, none of the subcommands actually explain what they're doing and why an administrator would want to use them. As many of them will probably be of use in stressful scenarios where there's an incident happening, having some documentation handy for the admin as part of `praefect -help` would definitely be very helpful.",2
+68592316,2020-07-21 06:41:32.034,Document usage of the PgBouncer for Praefect cluster setup,The doc at https://docs.gitlab.com/ee/administration/gitaly/praefect.html should include instructions about setup and configuration of the PgBouncer that will be used in front of the PostgreSQL database.,1
+68589310,2020-07-21 06:33:56.159,PgBouncer deployment with terraform,"In order to verify usage of the PgBouncer in front of the PostgreSQL database for Praefect we should include PgBouncer into terraform setup.  
+This will allow us to verify that Praefect can use PgBouncer protected PostgreSQL without issues.  
+
+/cc @zj-gitlab @jramsay",1
+54077691,2020-07-08 04:44:49.698,Praefect distributed reads counter has mislabeled storage,"During the 2020-07-07 demo, we observed strange behavior from the distributed reads counter (see area in red rectangle):
+
+![Screen_Shot_2020-07-07_at_9.40.20_PM](/uploads/a3292e5a89dcd5d1d5b5f896736641e7/Screen_Shot_2020-07-07_at_9.40.20_PM.png)
+
+Note how all three counters are labeled with the same storage `gitaly-1`.
+
+The counters originate from three different Praefects. The objective of read distribution is to distribute reads across multiple storages of the same virtual storage. We expect to see each Praefect distribute reads to different storages. Given enough time, we expect to see counters labeled with all storages (in this case there were three: gitaly-1, gitaly-2, gitaly-3).",2
+54023862,2020-07-07 08:59:48.166,Implement support for subtransactions,"With the upcoming reference-transaction hook implemented in gitlab-org/gitlab-git!2, we need to extend transactions to support subtransactions. Right now, we know that each transaction will be invoked once only from the pre-receive hook. But with the reftx-hook, each Git operation may call out to a given transaction arbitrarily many times. As we cannot know how often that's going to happen, the transaction needs to cope and allow for multiple votes.
+
+This is where subtransactions will come in. Each vote of a given node is going to create a new subtransaction iff all previous subtransactions for that node have succeeded. If the current transaction is still ongoing or has failed, it is not allowed to take part in new subtransactions. The outcome for each given node is then either `success` if all subtransactions have reached quorum on the same thing as the node voted for, `failure` if any subtransaction arrived at a different thing or `not started` if none of the nodes has created a subtransaction.",4
+53975361,2020-07-06 14:33:06.870,Improve the performance of CountCommits by using commit-graph,"(Placeholder issue, Gitaly team know details more than I do)
+
+In https://gitlab.com/gitlab-com/gl-infra/scalability/-/issues/470, the main performance issue with the Gitaly cny node appears to be the CountCommits GRPC method.
+
+@chriscool pointed out that this could be sped up using `core.commitGraph`
+
+```
+$ git config core.commitGraph true
+$ time git rev-list --count --all
+67482
+real    0m0,100s
+user    0m0,088s
+sys     0m0,012s
+$ git config core.commitGraph false
+$ time git rev-list --count --all
+67482
+real    0m0,587s
+user    0m0,567s
+sys     0m0,020s
+```
+
+If possible, we should consider enabling this. 
+
+cc @zj-gitlab @pokstad1 @chriscool",3
+53589477,2020-07-02 07:53:28.324,Refactoring of the listening address configuration,"The following discussion from !2276 should be addressed:
+
+- [ ] @8bitlife started a [discussion](https://gitlab.com/gitlab-org/gitaly/-/merge_requests/2276#note_362382231): 
+
+    > I think we should refactor it and allow to set a list of addresses that needs to be served with mandatory schema each `listen = ['tcp://0.0.0.0:2609', 'tls://0.0.0.0:2609', 'unix:///opt/var/praefect.socket']`.   
+    > It will simplify out code and we won't need to support both: 'tcp://0.0.0.0:2609' and '0.0.0.0:2609' for same `listen_addr` and in a couple of other places: `PraefectServer` type
+
+/cc @zj-gitlab",2
+50011205,2020-06-24 06:04:07.413,Filter environment variables when executing custom hooks,"Our hooks use a set of environment variables to pass along information across processes that's required to be operational. While we cannot help using these variables, we should make sure to filter out any envvars when executing custom hooks such that these custom hooks won't accidentally start depending on internal variables that weren't meant to be public in the first place.
+
+Thus, executing custom hooks with the equivalent of `execve(3P)` would avoid us breaking customer's scripts if they unknowingly started using internal variables, allowing us to keep iterating here without fear of breakage.
+
+I'm labelling this as a bug as exposing internal variables to custom hooks is unintentional at best.",3
+48198631,2020-06-18 17:07:39.351,Push to gitlab.com fails with zeroPaddedFilemode: contains zero-padded file modes,"Customer has started to mirror some of their repos from their local gitlab (self-managed) to the new remote one (gitlab.com), but running into an issue with one of their repositories, Jquery, which returns this error: 
+
+```
+13:close stream to gitaly-ruby: rpc error: code = Unknown desc = Gitlab::Git::CommandError: remote: error: object a98f1b7a267865bb78ef2a54ed54b67fbad6c839: zeroPaddedFilemode: contains zero-padded file modes       
+remote: fatal: fsck error in packed object       
+error: remote unpack failed: index-pack abnormal exit
+To
+ ! [remote rejected]   master -&gt; master (unpacker error)
+! [remote rejected]   3.x-stable -&gt; 3.x-stable (unpacker error)
+! [remote rejected]   secure-buildFragment -&gt; secure-buildFragment (unpacker error)
+! [remote rejected]   1.12-stable -&gt; 1.12-stable (unpacker error)
+! [remote rejected]   2.2-stable -&gt; 2.2-stable (unpacker error)
+! [remote rejected]   feature/Patch.2.2 -&gt; feature/Patch.2.2 (unpacker error)
+! [remote rejected]   mgol/test-flakiness -&gt; mgol/test-flakiness (unpacker error)
+error: failed to push some refs to &#39;[FILTERED]@gitlab.com/<customername>/3rdpartytools/jquery.git&#39;
+```
+They also tried mirroring this manually as follows: 
+
+```
+C:\projects\jquery [master ≡]> git remote rename origin old-origin
+C:\projects\jquery [master ≡]> git remote add origin https://gitlab.com/<customername>/3rdpartytools/jquery.git
+C:\projects\jquery [master ≡]> git push -u origin --all
+Enumerating objects: 37001, done.
+Counting objects: 100% (37001/37001), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (9856/9856), done.
+Writing objects: 100% (37001/37001), 21.80 MiB | 1.80 MiB/s, done.
+Total 37001 (delta 26510), reused 36878 (delta 26419)
+remote: error: object a98f1b7a267865bb78ef2a54ed54b67fbad6c839: zeroPaddedFilemode: contains zero-padded file modes
+remote: fatal: fsck error in packed object
+error: remote unpack failed: index-pack abnormal exit
+To https://gitlab.com/<customername>/3rdpartytools/jquery.git
+! [remote rejected]   master -> master (unpacker error)
+error: failed to push some refs to 'https://gitlab.com/<customername>/3rdpartytools/jquery.git'
+C:\projects\jquery [master ≡]>
+```
+The following are two issues where it looks like the error was reported before, but no clear indication as to the resolution without having to necessarily repair the source repo.
+
+- [Pushing fails if local repo has problems with zero-padded file modes - 22095](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/22095)
+- [Pushing fails if local repo has problems with zero-padded file modes - 1602](https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/1602)",5
+45200352,2020-06-16 13:00:27.340,Repair nodes on failed reference transaction vote,"When voting on a reference transaction fails, we should schedule replication jobs to get all secondaries up-to-date again that have disagreeing votes compared to the primary. This is especially important as soon as we have implemented a voting strategy that can reach quorum even if any of the nodes has cast a disagreeing vote.",4
+43404810,2020-06-15 07:13:07.107,Implement voting strategies for the transaction manager,"The transaction manager currently supports a single voting strategy, only: all registered nodes need to cast the same vote, otherwise the transaction will be aborted. In order to support more scenarios and become more resilient to failures, we want to implement additional strategies:
+
+- Implement a mechanism to reach quorum such that a subset of nodes may fail.
+- Implement weighted voting such that it's possible to say e.g. that a primary node may never fail, but a subset of secondaries may.",4
+38118155,2020-06-09 15:17:49.225,Protobuf generation behaves differently on CI,"Our protobuf code generation sometimes behaves differently on CI vs locally. Our code generation process is supposed to download and install all the correct versions of software so that this is deterministic, yet it continues to not be.",3
+38110588,2020-06-09 15:13:56.176,Makefile test target should have prereq to check Git version,"Many of Gitaly's tests depend on the correct minimum version of Git being installed. To save contributors wasted time and effort, the version can be detected prior to running tests and the contributor can be alerted if the version is not supported.",1
+37849669,2020-06-09 12:47:27.563,Run tests against git-core's master branch,"With the new build-git target, we can now quickly build Git from the master branch. In order to catch issues with upcoming Git releases early on, we should start to run our tests against Git's master branch. This will be of benefit both to us to be aware of any backwards-incompatible changes as well as to git-core as we'll find newly introduced bugs fairly quick.",2
+36039988,2020-06-08 14:48:20.520,"On hosts without the 'en_US.UTF-8' locale, output from popen_with_timeout will be US-ASCII encoded rather than UTF-8","Gitaly sets [environment variable `LANG=en_US.UTF-8`](https://gitlab.com/gitlab-org/gitaly/-/blob/v13.0.5/internal/command/command.go#L27-30) for all child git processes, as well as Gitaly-Ruby. On hosts that do not have the `en_US.UTF-8` locale installed this causes Ruby to fall back to `US-ASCII` (7-bit) encoding by default, even if they are using a different UTF-8 locale.
+
+As a result, UTF-8 encoded output from [`popen_with_timeout`](https://gitlab.com/gitlab-org/gitaly/-/blob/v13.0.5/ruby/lib/gitlab/git/popen.rb#L50) will trigger `ArgumentError: invalid byte sequence in US-ASCII` errors when string parsing methods are executed on it. A customer experienced this with [`sanitize_url`](https://gitlab.com/gitlab-org/gitaly/-/blob/v13.0.5/ruby/lib/gitaly_server/utils.rb#L74-76) when `UpdateRemoteMirror` returned an error, but there are probably other places this could occur as well.
+
+On a host using `de_DE.UTF-8` as its locale:
+
+```sh
+$ LANG=de_DE.UTF-8 /opt/gitlab/embedded/ruby -e 'p Encoding.default_external'
+#<Encoding:UTF-8>
+
+$ LANG=en_US.UTF-8 /opt/gitlab/embedded/ruby -e 'p Encoding.default_external'
+#<Encoding:US-ASCII>
+
+$ locale -a
+C
+C.UTF-8
+de_DE.utf8
+POSIX
+
+$ locale -v
+LANG=de_DE.UTF-8
+LANGUAGE=
+LC_CTYPE=""de_DE.UTF-8""
+LC_NUMERIC=""de_DE.UTF-8""
+LC_TIME=""de_DE.UTF-8""
+LC_COLLATE=""de_DE.UTF-8""
+LC_MONETARY=""de_DE.UTF-8""
+LC_MESSAGES=""de_DE.UTF-8""
+LC_PAPER=""de_DE.UTF-8""
+LC_NAME=""de_DE.UTF-8""
+LC_ADDRESS=""de_DE.UTF-8""
+LC_TELEPHONE=""de_DE.UTF-8""
+LC_MEASUREMENT=""de_DE.UTF-8""
+LC_IDENTIFICATION=""de_DE.UTF-8""
+LC_ALL=
+```
+
+On a host using `en_US.UTF-8` and `de_DE.UTF-8` installed both work:
+
+```sh
+$ LANG=en_US.UTF-8 /opt/gitlab/embedded/ruby -e 'p Encoding.default_external'
+#<Encoding:UTF-8>
+
+LANG=de_DE.UTF-8 ruby -e 'p Encoding.default_external'
+#<Encoding:UTF-8>
+
+LANG=ar_EG.UTF-8 ruby -e 'p Encoding.default_external'  # Using another UTF-8 encoding as an example
+#<Encoding:US-ASCII>
+
+$ locale -a
+C
+C.UTF-8
+POSIX
+de_DE.utf8
+en_US.utf8
+
+$ locale -v
+LANG=en_US.UTF-8
+LANGUAGE=
+LC_CTYPE=""en_US.UTF-8""
+LC_NUMERIC=""en_US.UTF-8""
+LC_TIME=""en_US.UTF-8""
+LC_COLLATE=""en_US.UTF-8""
+LC_MONETARY=""en_US.UTF-8""
+LC_MESSAGES=en_US.UTF-8
+LC_PAPER=""en_US.UTF-8""
+LC_NAME=""en_US.UTF-8""
+LC_ADDRESS=""en_US.UTF-8""
+LC_TELEPHONE=""en_US.UTF-8""
+LC_MEASUREMENT=""en_US.UTF-8""
+LC_IDENTIFICATION=""en_US.UTF-8""
+LC_ALL=
+```",3
+35722317,2020-06-08 06:23:56.834,"Pass down ""primary""/""secondary"" info to Gitaly nodes to avoid executing Git hooks on secondaries","When proxying Git operations to multiple nodes at once, each node needs to know whether it's a primary node or a secondary node. This information is required such that nodes can decide whether they should execute custom hooks or not, where only the primary should do so.",4
+35479331,2020-06-05 12:54:38.166,Remove multi-byte  support in the `lines` package,"The lines package takes some input, and splits it on a delimiter, and sends the output as defined by a `Sender()`. There's currently support for multi byte delimiters, which is both unused, and broken.
+
+Broken because for example using twice the same byte as delimiter will not send any results. There's currently no call site using this feature, nor test coverage for it. Therefor we should remove it.",2
+35363262,2020-06-03 07:09:16.931,Lock worktrees while they are still in use,"The following discussion from !2202 should be addressed:
+
+- [ ] @pks-t started a [discussion](https://gitlab.com/gitlab-org/gitaly/-/merge_requests/2202#note_353463326):  (+5 comments)
+
+> I also wonder whether it would make sense to start using worktree locks. Currently, the logic will always remove worktrees older than a given threshold. If the threshold is small enough, I could see us removing worktrees that are still in use currently. Iff worktrees are strictly tied to a given operation (are they?), then we could tell the operation to first lock the worktree via git worktree lock <MSG> and consequentially unlock the worktree after the operation has finished. That'd guarantee that we do not delete any worktrees that are still in use. The message could also be chosen in such a way that we know what operation had it locked and when it was locked to give additional context. Naturally, it could happen that a worktree still doesn't get removed cause the operation failed mid-way through and didn't unlock, but we could have another, higher, threshold for that.
+
+- @johncai notes:
+
+> We could easily add something in the `def with_worktree` function that adds a worktree lock. If this change makes sense on its own, maybe we can create a follow up issue?",3
+35350580,2020-06-02 19:18:41.346,Omnibus Gitaly dashboard should support multiple nodes,"During the 2020-05-27 demo, it was observed that the Omnibus Gitaly dashboard does not show more than one Gitaly at a time. Some of the panels, such as the current version, don't even support more than one Gitaly node (should instead be a table). The dashboard only allows viewing Gitalies with job set to ""gitaly"", while Praefect Gitaly nodes have a job of ""praefect-gitaly"". This should also be an option when selecting Gitalies.",1
+35316409,2020-06-02 13:00:57.825,"Distribute reads between all shards, including primaries","#### Problem
+
+Currently, the read distribution feature skips the primary node from serving read traffic. This is an understandable choice, given writes are more expensive than reads. But soon the write load will be distributed too with the introduction on transaction. Than the load isn't balanced anymore.
+
+#### Solution
+
+Primary nodes get as much read traffic as any other node.",1
+35255594,2020-06-01 09:13:32.011,Praefect: Coordinator.StreamDirector doesn't handle STORAGE scope correctly,"Current implementation of [`StreamDirector`](https://gitlab.com/gitlab-org/gitaly/-/blob/d08b7024a0a2882dc55d8a480d891fc0ded5bb9b/internal/praefect/coordinator.go#L217) doesn't properly handles requests with `scope_level: STORAGE` option, such as [`RemoveNamespace`](https://gitlab.com/gitlab-org/gitaly/-/blob/d08b7024a0a2882dc55d8a480d891fc0ded5bb9b/proto/namespace.proto#L16) in case virtual storage name and storage name for gitaly differs, like: 
+```
+[[virtual_storage]]
+name = 'praefect'
+[[virtual_storage.node]]
+  storage = ""gitaly-1""
+```
+Coordinator doesn't re-write storage for such RPCs, so request will contain virtual storage name instead of mapped gitaly storage name.
+
+There is an open https://gitlab.com/gitlab-org/gitaly/-/merge_requests/2234 that can be used to verify this bug.  
+You can check it with `gdk` and `TestPraefectHandlesStorageScopeRequests` test locally.
+
+/cc @zj-gitlab @jramsay",3
+35144491,2020-05-28 23:03:03.973,Configure Gitaly to schedule nightly repo optimization,"We have an RPC `OptimizeRepository` that is designed to be called to improve performance of repos. Currently, it is not being utilized by Rails. It may be very complex to figure out the best way to invoke it from Rails. A more incremental approach might be invoking it internally from Gitaly on a routine schedule (e.g. nights, weekends) similar to a cron job.",2
+35039260,2020-05-26 23:10:44.755,Connection caching in ReplicateRepository breaks due to v2 tokens,"In https://gitlab.com/gitlab-org/gitaly/-/commit/54465275b27178af0268d1281a7f933585f29b0f we dropped support for v1 tokens. V2 tokens have a timestamp constraint. 
+
+It seems that this has broken replication in production. It's unclear if this is due to clock skew, but we are getting some `timestamp too old` errors",3
+34819026,2020-05-20 19:07:54.218,Praefect migration to drop gitaly_ tables,"We have old migrations in some of our environments with the outdated `gitaly_` tables. We should write a migration that removes these. eg: here is the production environment:
+
+```
+praefect_production=> \d+
+                                     List of relations
+ Schema |               Name                |   Type   |  Owner  |    Size    | Description
+--------+-----------------------------------+----------+---------+------------+-------------
+ public | gitaly_replication_queue          | table    | default | 8192 bytes |
+ public | gitaly_replication_queue_id_seq   | sequence | default | 8192 bytes |
+ public | gitaly_replication_queue_job_lock | table    | default | 8192 bytes |
+ public | gitaly_replication_queue_lock     | table    | default | 8192 bytes |
+ public | hello_world                       | table    | default | 8192 bytes |
+ public | node_status                       | table    | default | 8192 bytes |
+ public | node_status_id_seq                | sequence | default | 8192 bytes |
+ public | replication_queue                 | table    | default | 8192 bytes |
+ public | replication_queue_id_seq          | sequence | default | 8192 bytes |
+ public | replication_queue_job_lock        | table    | default | 8192 bytes |
+ public | replication_queue_lock            | table    | default | 8192 bytes |
+ public | schema_migrations                 | table    | default | 16 kB      |
+ public | shard_primaries                   | table    | default | 8192 bytes |
+ public | shard_primaries_id_seq            | sequence | default | 8192 bytes |
+(14 rows)
+```",1
+34785714,2020-05-20 06:29:36.284,Investigate sporadic Praefect metrics for replication latency and delay,"During the demo, we observed sporadic data for replication delay and latency metrics. We should verify the metrics are behaving as expected, or determine a fix to correct them.",2
+34785652,2020-05-20 06:27:11.107,Expand Praefect dashboard panel for error rate to also include total rate,The Omnibus Praefect dashboard has a panel for the error rate of certain RPC's proxied by Praefect. This panel lacks context from the total number of handled requests. This should be added.,1
+34775378,2020-05-19 20:55:48.995,Improve Gitaly connection error messages,"A customer using a stand-alone Gitaly server recently ran into an issue where Gitaly-Ruby processes could not communicate with the main Gitaly process when executing `UserCommitFiles`.  Specifically, DNS was not responding when querying for the Gitaly hostname, but the error `rpc error: code = Unavailable desc = failed to connect to all addresses` gave no indication where the problem was occurring.
+
+Including the target that could not be connected to would make problems like this significantly easier to debug.
+
+/cc @zj-gitlab",2
+34731720,2020-05-19 11:38:38.356,Enable read-only mode only when there is data loss after a failover,"## Problem to solve
+
+Currently read-only mode is enabled after any failover event. Read-only Git access is a reduction in availability and should be avoided where possible.
+
+## Proposal
+
+We should only enable read-only mode if the virtual storage has data loss, that is, any repositories for which the last replication job is not in `completed` state.
+
+cc @zj-gitlab",5
+34712319,2020-05-18 23:14:55.102,Replication queue size should have virtual storage label,"The Prometheus metric `gitaly_praefect_replication_jobs` should be broken down by virtual storages. This will allow us to compare replication queue pressure between virtual storages on the same Praefect or to aggregate virtual storage queue pressure between Praefects. This requires adding a label for the virtual storage to the metric.
+
+Relates to https://gitlab.com/gitlab-org/gitaly/-/issues/2659",2
+34595758,2020-05-15 09:08:16.313,Clean up Ruby implementation for FetchInternalRemote,"After porting an RPC to Go the following tasks remain:
+
+- [x] Remove the feature flag, default to Go
+- [x] Wait 1 release
+- [ ] Remove the Ruby implementation",1
+34538258,2020-05-14 08:00:43.833,Explore use of Git's trace2 mechanism,"When spawning Git executables, we currently cannot evaluate what Git actually does except for observing its runtime and usual stdout/stderr. In order to allow better traceing of performance and events in Git, the trace2 mechanism was introduced in v2.22. We should evaluate whether hooking into this mechanism makes sense to get more insight into Git, improve visibility and ultimately to allow for better debugging of pathological cases.",3
+34501318,2020-05-13 10:21:52.304,Documentation: How to remove the filterspec for a local repository,"During the Partial clone demo of 2020-05-12, the question was asked how to remove the filterspec from a repository and `git pull` to ensure everything is present. Currently the documentation do not provide this.
+
+### Proposal
+
+Add a section to the documentation: https://docs.gitlab.com/ee/topics/git/partial_clone.html on how to unfilter a repository.
+
+/cc @chriscool @jramsay",1
+34416474,2020-05-11 19:19:10.916,InfoRefsUploadPack disk cache: file descriptors must be closed after use,"RPC method **InfoRefsUploadPack** uses a special cache based on the use of files.  
+Each requests tries to find a cache entry in it.  
+If it exists the data would be read from it and returned as a result of the call.  
+The read is done with use of `[os.Open(respPath)](https://gitlab.com/gitlab-org/gitaly/-/blob/v13.0.0-rc1/internal/cache/cachedb.go#L92)` and `[io.Copy(w, stream)](https://gitlab.com/gitlab-org/gitaly/-/blob/v13.0.0-rc1/internal/service/smarthttp/cache.go#L63)`.  
+But the call to `stream.Close()` is missing and it results to file descriptors leak.  
+
+/cc @zj-gitlab @jramsay",1
+34383340,2020-05-11 07:54:52.032,Gitaly tmp folder cleanup must run every hour,"Gitaly uses a special directory as a temporary folder named `tmp`.  
+It has a [special background task](https://gitlab.com/search?group_id=&nav_source=navbar&project_id=2009901&repository_ref=v13.0.0-rc1&search=StartCleaning()&search_code=true&utf8=%E2%9C%93#L79) that must run each hour to clean up stale files in it.
+But now it runs only once after start/restart because the call is not wrapped into the infinite loop.  
+It could be observed by checking logs that a missed log entry for each hour.  
+There are only entries after the service restart ![image](/uploads/eab41b2518b95f005e15271459f7cea6/image.png)
+
+/cc @zj-gitlab @jramsay",1
+34305990,2020-05-08 09:38:48.591,Port FetchSourceBranch to Go,"In %""13.0"" FetchInternalRemote was ported to Go, and it seems like FetchSourceBranch does about the same things, but is still in Ruby. That makes it unreliable, while it could be ported to Go. Which would improve our SLA for the RPC, and maybe performance too.",3
+34095215,2020-05-04 08:31:41.227,Update Source install instructions to use `make build-git`,"[Source install documentation](https://docs.gitlab.com/ee/install/installation.html) includes instructions for installing Git. It has to be present to obtain the source, but needs to have the correct version too. 
+
+### Proposal
+
+Remove the Git install from the dependencies section: https://docs.gitlab.com/ee/install/installation.html#1-packages-and-dependencies, and move it to Gitaly to leverage `make download-git`.",5
+34086193,2020-05-04 04:38:57.604,Frame-wise proxying of write operations to Gitaly replicas,"## Problem to solve
+
+When a success signal is sent via the Git protocol or an RPC for a write operation from a HA Gitaly cluster, we want the success signal to communicate that the write has succeeded in multiple locations so that a single node failure does not result in data loss.
+
+Write operations are currently routed only to the primary node. This data also needs to be sent to the other nodes in the cluster.
+
+## Further details
+
+Replaying the write operation from the primary to the secondary nodes is not ideal from a performance or reliability perspective.
+
+It should be possible to proxy the write to all the Gitaly nodes. The simplest approach is frame-wise proxying, but if one node is slow, this will block all the nodes. In the future, stream-wise proxying would solve this.
+
+## Proposal
+
+Implement frame-wise proxying of write operations to all Gitaly nodes as part of strong consistency.
+
+## Testing
+
+Functional end-to-end coverage is provided by an existing [replication test](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/27972). And broad coverage by [running the entire end-to-end test suite against environments using Praefect for storage](https://gitlab.com/gitlab-org/gitlab-qa/-/blob/master/docs/what_tests_can_be_run.md#testintegrationpraefect-ceeefull-image-address) (including Staging).
+
+Performance end-to-end testing will be implemented as part of https://gitlab.com/gitlab-org/quality/performance/-/issues/231 (see https://gitlab.com/gitlab-org/quality/team-tasks/-/issues/451 for a more detailed plan of performance tests under failure conditions)
+
+## Links / references",3
+33980450,2020-04-30 00:48:38.535,"Error in go FetchInternalRemote ""git fetch failed: signal: terminated""","`FetchInternalRemote` sometimes fails with `git fetch` getting SIGTERM. And returning an error as per https://github.com/golang/go/blob/go1.14.2/src/os/exec_posix.go#L107
+
+https://log.gprd.gitlab.net/app/kibana#/doc/AW5F1OHTiGcMMNRn84Di/pubsub-gitaly-inf-gprd-001969?id=wJYRx3EB_vQvi1G70XPU",3
+33944108,2020-04-29 10:23:50.489,Praefect added latency misjudging CalculateChecksum latency,"When looking at the added latency through Praefect, it seems like only CalculateChecksum has issues, which seems odd:
+
+![Screenshot_from_2020-04-28_13-58-50](/uploads/70ba78a22284b7f473fe04a6f2e5a669/Screenshot_from_2020-04-28_13-58-50.png)
+
+Checksums are used extensively by Praefect, without proxying the RPC to a client. It seems like a bug in the metric.",2
+33840434,2020-04-27 09:03:45.478,Praefect: proper multi-virtual storage support,"Praefect has advantage of multi-virtual storages support in configuration, but in the [real life](https://gitlab.com/gitlab-org/gitaly/-/blob/ca7faa446b4db4713ad128698d4130aa4de8a26e/cmd/praefect/main.go#L250) it can't handle it properly.  
+Current routing logic doesn't support multi-virtual storage configuration and allows request routings only for single virtual storage. As well replication is also has no multi-virtual storage support, that affects a helper-subcommand: `dataloss` as well.  
+Proper multi-virtual storages support is required before https://gitlab.com/gitlab-org/gitaly/-/issues/2650
+
+/cc @jramsay @zj-gitlab",3
+33756926,2020-04-24 14:42:40.817,Revise usage of ReplicasDatastore interface,"After moving to new approach with leader election based on different strategies most of the methods of the `ReplicasDatastore` interface are not needed anymore.  
+They exist only because of the tests.  
+To simplify project we need to clean up and refactor it as it could lead to misunderstanding of proper usage.
+
+
+/cc @zj-gitlab @jramsay",2
+33594811,2020-04-21 20:04:10.725,The `ReplicateRepository` GRPC should automatically clean up after itself when it encounters an error,"The `ReplicateRepository` GRPC should automatically clean up after itself when it encounters an error.
+
+Currently, errors appear to get sort of eaten, and the invoking Rails process never notified about the failure.
+
+This results in a bad state, with a project repository only partially replicated to the destination gitaly storage shard file system.
+
+In any case, once the underlying problem is fixed, that is all well and good.
+
+However, to future-proof against other unknown and as yet unencountered errors, the `ReplicateRepository` GRPC implementation should include an unwind/rollback step which is ensured to be invoked when any error is encountered.
+
+This would also significantly unblock our current process, and would allow us to get back into the business of spinning through large numbers of project replications as part of storage shard re-balancing operations.
+
+The failed replica repo should never matter, since the original repository should remain untouched, as defined by the scope of the `ReplicateRepository` GRPC method implementation.",3
+33497489,2020-04-20 05:10:59.258,Enable SQL leader election by default,"SQL leader election https://gitlab.com/gitlab-org/gitaly/-/issues/2547 is available, but is not enabled by default. SQL based leader election should be the default behavior, even if automatic failover is not enabled.
+
+## Proposal
+
+When not configured the default leader election strategy should be `sql`:
+
+```ruby
+praefect['failover_election_strategy'] = 'sql'
+```
+
+## Links / references",1
+33397034,2020-04-16 19:22:27.594,Praefect behavior when replication jobs fail to persist,"Currently, Praefect will allow a proxied RPC to succeed even if the associated replication jobs fail to persist. We simply log any replication persisting error and it doesn't impact the success/fail message to the client. This is incorrect behavior. When Praefect proxies an RPC, it is promising the end user a number of things:
+
+- The RPC will be proxied to the primary.
+- The replication jobs from the primary to the secondaries will be scheduled.
+
+If the replication jobs fail to be scheduled, we should fail the RPC since we did not satisfy the contract to the end user.",2
