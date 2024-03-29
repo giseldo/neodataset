@@ -15,12 +15,16 @@ The dataset presented here includes projects which were not used by previous stu
 
 The expected contribution is that this data set can assist education and research on agile software development. Although our dataset was initially designed for Story Points and User Story estimation training and research, it also includes information relevant to other software engineering aspects. In addition to providing a possibility to reproduce findings from other studies.
 
-# Descrição das colunas
+## How to cite
+
+Giseldo da Silva Neo, José Antão Beltrão Moura, Hyggo Almeida, lana Viana Borges da Silva Neo e Olival de Gusmão Freitas Junior (2024). User Story Tutor (UST) to Support Agile Software Developers. CSEDU 2024.
+
+## Columns description
 
 - "weight" é a coluna que guarda o SP estimado pelo time
 - "description" é a coluna que guarda a descrição da issue
 
-## Todas as colunas do dataset
+## Dataset columns
  
    ```mermaid
    classDiagram
