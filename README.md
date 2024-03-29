@@ -1,6 +1,6 @@
 
 # NEODATASET
-### The NEODATASET is a dataset containing projects extracted from gitlab that work with SCRUM
+### The NEODATASET is a dataset containing projects with User Stories and Story Points extracted from GitLab.
 ### Autor: Giseldo da Silva Neo
 
 # Introduction
