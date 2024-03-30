@@ -21,14 +21,15 @@ Giseldo da Silva Neo, José Antão Beltrão Moura, Hyggo Almeida, lana Viana Bor
 
 ## Columns description
 
-- "weight" é a coluna que guarda o SP estimado pelo time
-- "description" é a coluna que guarda a descrição da issue
+- weight = Story Point from User Story
+- description = description of User Story
+- title = title of User Story
 
 ## Dataset columns
  
    ```mermaid
    classDiagram
-       class Colunas{
+       class Issue {
         -Title
         -Description
         -Issue ID
@@ -53,9 +54,3 @@ Giseldo da Silva Neo, José Antão Beltrão Moura, Hyggo Almeida, lana Viana Bor
         -Epic Title
         }
    ```
- 
-
-
-
-   
-
