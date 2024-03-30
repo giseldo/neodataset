@@ -19,38 +19,22 @@ The expected contribution is that this data set can assist education and researc
 
 Giseldo da Silva Neo, José Antão Beltrão Moura, Hyggo Almeida, lana Viana Borges da Silva Neo e Olival de Gusmão Freitas Junior (2024). User Story Tutor (UST) to Support Agile Software Developers. CSEDU 2024.
 
-## Columns description
-
-- weight = Story Point from User Story
-- description = description of User Story
-- title = title of User Story
-
 ## Dataset columns
- 
-   ```mermaid
+
+    ```mermaid
    classDiagram
        class Issue {
-        -Title
-        -Description
-        -Issue ID
-        -URL
-        -State
-        -Author
-        -Author Username
-        -Assignee
-        -Assignee Username
-        -Confidential
-        -Locked
-        -Due Date
-        -CrDated At
-        -Updated At
-        -Closed At
-        -Milestone
-        -Weight
-        -Labels
-        -Time Estimate
-        -Time Spent
-        -Epic ID
-        -Epic Title
+         - issuekey
+         - created
+         - title 
+         - description 
+         - storypoints
         }
    ```
+
+- issuekey User Story ID
+- created date of the created of the User Story
+- title title of User Story
+- description description of User Story
+- storypoints Count of the user story informed by the team
+
