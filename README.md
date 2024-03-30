@@ -21,6 +21,12 @@ Giseldo da Silva Neo, José Antão Beltrão Moura, Hyggo Almeida, lana Viana Bor
 
 ## Dataset columns
 
+- issuekey User Story ID
+- created date of the created of the User Story
+- title title of User Story
+- description description of User Story
+- storypoints Count of the user story informed by the team
+
     ```mermaid
    classDiagram
        class Issue {
@@ -32,9 +38,5 @@ Giseldo da Silva Neo, José Antão Beltrão Moura, Hyggo Almeida, lana Viana Bor
         }
    ```
 
-- issuekey User Story ID
-- created date of the created of the User Story
-- title title of User Story
-- description description of User Story
-- storypoints Count of the user story informed by the team
+
 
