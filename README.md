@@ -9,16 +9,7 @@ This dataset was mined during January 2023 and April 2023. The mining process ta
 
 The projects in the dataset have different characteristics and cover different programming languages, different business domains, and different geographic locations of the team. The main entity of the dataset is the User Story (or Issue), which contains the main information. The dataset has more than 70 attributes and is stored in JSON and CSV format, given the simplicity of dealing with both formats. 
 
-The dataset presented here includes projects which were not used by previous studies. There are already previous studies that extracted data from the Jira management tool to build predictive models (Tawosi et al., 2022; Choetkiertikul et al., 2019; Porru et al., 2016; Scott and Pfahl, 2018), but projects extracted from GitLab are rarer. Just as (Tawosi et al., 2022a) did, we are sharing all the data collected. Therefore, the most common thing is to share only the data from the dataset considered in the study itself, as done, for example in (Choetkiertikul et al., 2019), and not all the data collected.
-
 The expected contribution is that this data set can assist education and research on agile software development. Although our dataset was initially designed for Story Points and User Story estimation training and research, it also includes information relevant to other software engineering aspects. In addition to providing a possibility to reproduce findings from other studies.
-
-### References
-
-Tawosi et al., 2022 
-Choetkiertikul et al., 2019
-Porru et al., 2016
-Scott and Pfahl, 2018
 
 ## How to cite
 
