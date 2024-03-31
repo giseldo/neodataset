@@ -13,7 +13,7 @@ The expected contribution is that this data set can assist education and researc
 
 ## How to cite
 
-Giseldo da Silva Neo, José Antão Beltrão Moura, Hyggo Almeida, lana Viana Borges da Silva Neo e Olival de Gusmão Freitas Junior (2024). User Story Tutor (UST) to Support Agile Software Developers. CSEDU 2024.
+Neo G., J. Antão B. Moura, Almeida H., Neo A. V. B. S. e Junior O. G. F. (2024) User Story Tutor (UST) to Support Agile Software Developers. CSEDU 2024.
 
 ## Dataset columns
 
