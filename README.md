@@ -18,7 +18,7 @@ Neo G., J. Antão B. Moura, Almeida H., Neo A. V. B. S. e Junior O. G. F. (2024)
 ## Dataset columns
 
 - issuekey: User Story ID
-- created: date of the created of the User Story
-- title: title of User Story
-- description: description of User Story
+- created: Date of the created of the User Story
+- title: Title of User Story
+- description: Description of User Story
 - storypoints: Count of the user story informed by the team
