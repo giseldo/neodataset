@@ -36,5 +36,5 @@ Giseldo da Silva Neo, José Antão Beltrão Moura, Hyggo Almeida, lana Viana Bor
 - created date of the created of the User Story
 - title title of User Story
 - description description of User Story
-- storypoints Count of the user story informed by the team
+- storypoints Stpry Points of the user story, informed by the team
 
