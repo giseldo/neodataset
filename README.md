@@ -22,3 +22,4 @@ Neo, G.; Moura, J.; Almeida, H.; Neo, A. and Freitas Júnior, O. (2024). User St
 - title: Title of User Story
 - description: Description of User Story
 - storypoints: Count of the user story informed by the team
+- and many more others columns
