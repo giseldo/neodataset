@@ -13,7 +13,7 @@ The expected contribution is that this data set can assist education and researc
 
 ## How to cite
 
-Neo G., J. Antão B. Moura, Almeida H., Neo A. V. B. S. e Junior O. G. F. (2024) User Story Tutor (UST) to Support Agile Software Developers. CSEDU 2024.
+Neo, G.; Moura, J.; Almeida, H.; Neo, A. and Freitas Júnior, O. (2024). User Story Tutor (UST) to Support Agile Software Developers.  In Proceedings of the 16th International Conference on Computer Supported Education - Volume 2, ISBN 978-989-758-697-2, ISSN 2184-5026, pages 51-62. 
 
 ## Dataset columns
 
