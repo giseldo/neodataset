@@ -1,7 +1,9 @@
 
 # Neo Dataset
-### Neo Dataset is a dataset containing projects with User Stories and Story Points extracted from GitLab.
-### Autor: Giseldo da Silva Neo (giseldo@gmail.com)
+
+Neo Dataset is a dataset containing projects with User Stories and Story Points extracted from GitLab.
+
+Author: Giseldo da Silva Neo (giseldo@gmail.com)
 
 We have made a new dataset (aka Neo Dataset) available together with [User Story Tutor](https://github.com/giseldo/userstory), a software to help User Story writing. This dataset encompasses data from 34 software development projects, with 40.014 User Stories taken from GitLab repositories, totaling 163.897 Story Points. It is made available on GitHub 6 so that the entire interested community can contribute, similarly to what happens with other datasets.
 
