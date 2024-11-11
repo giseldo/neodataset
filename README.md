@@ -15,16 +15,16 @@ The expected contribution is that this data set can assist education and researc
 
 ## Dataset columns
 
-    ```mermaid
-   classDiagram
-       class Issue {
-         - issuekey
-         - created
-         - title 
-         - description 
-         - storypoints
-        }
-   ```
+```mermaid
+classDiagram
+   class Issue {
+     - issuekey
+     - created
+     - title 
+     - description 
+     - storypoints
+    }
+```
 
 - issuekey User Story ID
 - created date of the created of the User Story
