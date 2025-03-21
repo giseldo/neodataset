@@ -1,6 +1,8 @@
 # Neo Dataset
 Neo Dataset is a dataset containing projects with User Stories and Story Points extracted from GitLab.
 
+You can acess also this dataset in [https://huggingface.co/giseldo](https://huggingface.co/datasets/giseldo/neodataset)
+
 ## Autor
 Giseldo da Silva Neo (giseldo@gmail.com)
 
