@@ -5,6 +5,8 @@ You can acess also this dataset in [huggingface](https://huggingface.co/datasets
 
 - [Original article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1)
 
+- This dataset is used in (User Story Tutor)[https://github.com/giseldo/userstory]
+
 ## Autor
 Giseldo da Silva Neo (giseldo@gmail.com)
 
