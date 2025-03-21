@@ -7,7 +7,7 @@ Giseldo da Silva Neo (giseldo@gmail.com).
 More about-me in [ResearchGate](https://www.researchgate.net/profile/Giseldo-Neo) or in my [personal site](http://giseldo.github.io).
 
 ## Info
-You can also access this dataset in [huggingface](https://huggingface.co/datasets/giseldo/neodataset) and in [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1).
+You can also access this dataset in [huggingface](https://huggingface.co/datasets/giseldo/neodataset) or in [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1).
 
 This dataset is used in [User Story Tutor Software](https://github.com/giseldo/userstory) and was presented in [this article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1), a version of the [article is also available at arxiv](https://arxiv.org/abs/2406.16259).
 
