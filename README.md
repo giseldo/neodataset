@@ -13,6 +13,10 @@ The projects in the dataset have different characteristics and cover different p
 
 The expected contribution is that this data set can assist education and research on agile software development. Although our dataset was initially designed for Story Points and User Story estimation training and research, it also includes information relevant to other software engineering aspects. In addition to providing a possibility to reproduce findings from other studies.
 
+## How to cite
+
+Neo G., J. Antão B. Moura, Almeida H., Neo A. V. B. S. e Junior O. G. F. (2024) User Story Tutor (UST) to Support Agile Software Developers. CSEDU 2024.
+
 ## Dataset columns
 
 ```mermaid
