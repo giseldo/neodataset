@@ -45,9 +45,9 @@ classDiagram
     }
 ```
 
-- issuekey User Story ID
-- created date of the created of the User Story
-- title title of User Story
-- description description of User Story
-- storypoints Stpry Points of the user story, informed by the team
+- issuekey: User Story ID
+- created: Date of the created of the User Story
+- title: Title of User Story
+- description: Description of User Story
+- storypoints: Count of the user story informed by the team
 
