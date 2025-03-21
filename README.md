@@ -7,9 +7,9 @@ Giseldo da Silva Neo (giseldo@gmail.com)
 ## Info
 You can also access this dataset in [huggingface](https://huggingface.co/datasets/giseldo/neodataset) and in [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1)
 
-This dataset is used in this software [User Story Tutor](https://github.com/giseldo/userstory]) and was presented in this [article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1), a version of this article are available at [arxiv](https://arxiv.org/abs/2406.16259)
+This dataset is used in this software [User Story Tutor](https://github.com/giseldo/userstory]) and was presented in this [article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1), a version of [this article are available at arxiv](https://arxiv.org/abs/2406.16259)
 
-Another use of this NEODATASET is [this article at arxiv](https://arxiv.org/abs/2503.13279)
+Another use of this NEODATASET is [this another article at arxiv](https://arxiv.org/abs/2503.13279)
 
 ## How to cite
 
