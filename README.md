@@ -11,7 +11,7 @@ You can also access this dataset in [HuggingFace](https://huggingface.co/dataset
 
 This dataset is used in [User Story Tutor Software](https://github.com/giseldo/userstory) and was presented in [this article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1), a version of the [article is also available at arxiv](https://arxiv.org/abs/2406.16259).
 
-Another use of this NEODATASET is [this another article at arxiv](https://arxiv.org/abs/2503.13279).
+Another use of this NEODATASET is [this another article at arxiv](https://arxiv.org/abs/2503.13279) from another researchers.
 
 ## How to cite
 
