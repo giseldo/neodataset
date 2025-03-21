@@ -2,7 +2,7 @@
 NEODATASET is a dataset containing projects with title and description in natural language of User Stories and their Story Points extracted from GitLab.
 
 ## Autor
-Giseldo da Silva Neo (giseldo@gmail.com)
+Giseldo da Silva Neo (giseldo@gmail.com). More about-me in [ResearchGate](https://www.researchgate.net/profile/Giseldo-Neo) or in my [personal site](http://giseldo.github.io).
 
 ## Info
 You can also access this dataset in [huggingface](https://huggingface.co/datasets/giseldo/neodataset) and in [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1).
