@@ -1,5 +1,5 @@
 # NEODATASET
-NEODATASET is a dataset containing projects with User Stories and Story Points extracted from GitLab.
+NEODATASET is a dataset containing projects with title and description in natural language of User Stories and their Story Points extracted from GitLab.
 
 ## Autor
 Giseldo da Silva Neo (giseldo@gmail.com)
