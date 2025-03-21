@@ -3,6 +3,8 @@ Neo Dataset is a dataset containing projects with User Stories and Story Points 
 
 You can acess also this dataset in [huggingface](https://huggingface.co/datasets/giseldo/neodataset) and in [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1)
 
+- [Original article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1)
+
 ## Autor
 Giseldo da Silva Neo (giseldo@gmail.com)
 
