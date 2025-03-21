@@ -2,7 +2,7 @@
 NEODATASET is a dataset containing projects with title and description in natural language of User Stories and their Story Points extracted from GitLab.
 
 ## Autor
-Giseldo da Silva Neo (giseldo@gmail.com). 
+Giseldo da Silva Neo at giseldo@gmail.com. 
 
 More about-me in [ResearchGate](https://www.researchgate.net/profile/Giseldo-Neo) or in my [personal site](http://giseldo.github.io).
 
