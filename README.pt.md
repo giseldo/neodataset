@@ -35,6 +35,8 @@ classDiagram
   - `description`: Descrição da História de Usuário
   - `storypoints`: Contagem de pontos da história de usuário informada pela equipe
 
+![image](https://github.com/user-attachments/assets/91aef257-b7b6-4a2c-97a0-80860561789e)
+
 ## Informações
 
 Você também pode acessar este conjunto de dados em um único arquivo CSV no [HuggingFace](https://huggingface.co/datasets/giseldo/neodataset).
