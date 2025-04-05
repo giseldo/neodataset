@@ -4,7 +4,7 @@ NEODATASET is a dataset containing projects with title and description in natura
 
 This dataset is used in my research, [User Story Tutor](https://github.com/giseldo/userstory), and was presented in [this article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1). A version of the [article is also available at arxiv](https://arxiv.org/abs/2406.16259).
 
-Another use of this dataset can be seen in [this another article at arxiv](https://arxiv.org/abs/2503.13279) from another researchers by different researchers.
+Another use of this dataset can be seen in [this another article at arxiv](https://arxiv.org/abs/2503.13279) from another researchers.
 
 ## Description
 
