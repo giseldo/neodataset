@@ -39,14 +39,12 @@ classDiagram
 
 ## Informações
 
-Você também pode acessar este conjunto de dados em um único arquivo CSV no [HuggingFace](https://huggingface.co/datasets/giseldo/neodataset).
+Você também pode acessar este conjunto de dados em um único arquivo CSV no [HuggingFace](https://huggingface.co/datasets/giseldo/neodataset). Ele também está disponível no [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1).
 
 ```python
 import pandas as pd
 
 df = pd.read_csv("hf://datasets/giseldo/neodataset/issues.csv")
-
-Ele também está disponível no [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1).
 ```
 
 ## Como citar
