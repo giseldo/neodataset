@@ -2,6 +2,10 @@
 
 NEODATASET is a dataset containing projects with title and description in natural language of User Stories and their Story Points extracted from GitLab.
 
+This dataset is used in [User Story Tutor Software](https://github.com/giseldo/userstory) and was presented in [this article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1), a version of the [article is also available at arxiv](https://arxiv.org/abs/2406.16259).
+
+Another use of this NEODATASET is [this another article at arxiv](https://arxiv.org/abs/2503.13279) from another researchers.
+
 ## Description
 
 This dataset encompasses data from 34 software development projects, with 40.014 User Stories taken from GitLab repositories, totaling 163.897 Story Points. It is made available on GitHub, huggging face and mendeley data, so that the entire interested community can contribute, similarly to what happens with other datasets.
@@ -44,10 +48,6 @@ It also is available at [Mendeley Data](https://data.mendeley.com/datasets/skk2w
 
 ## How to cite
 
-This dataset is used in [User Story Tutor Software](https://github.com/giseldo/userstory) and was presented in [this article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1), a version of the [article is also available at arxiv](https://arxiv.org/abs/2406.16259).
-
-Another use of this NEODATASET is [this another article at arxiv](https://arxiv.org/abs/2503.13279) from another researchers.
-
 ```plain
 Neo, G. S., Moura, J., Almeida, H., Neo, A. and Freitas Júnior, O. (2024). User Story Tutor (UST) to Support Agile Software Developers. In Proceedings of the 16th International Conference on Computer Supported Education - Volume 2: CSEDU; ISBN 978-989-758-697-2; ISSN 2184-5026, SciTePress, pages 51-62. DOI: 10.5220/0012619200003693
 ```
@@ -71,7 +71,7 @@ issn={2184-5026},
 
 Giseldo da Silva Neo at giseldo@gmail.com. More about-me in [ResearchGate](https://www.researchgate.net/profile/Giseldo-Neo) or in my [personal site](http://giseldo.github.io).
 
-[⭐ Dê uma estrela](https://github.com/giseldo/neodataset/stargazers)
+[⭐ If you like or use it, give it a star.](https://github.com/giseldo/neodataset/stargazers)
 
 ## Star History
 
