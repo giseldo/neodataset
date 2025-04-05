@@ -36,7 +36,8 @@ classDiagram
 - storypoints: Count of the user story informed by the team
 
 ## Info
-You can also access this dataset in only one CSV file from [HuggingFace](https://huggingface.co/datasets/giseldo/neodataset). 
+
+You can also access this dataset in only one CSV file from [HuggingFace repository](https://huggingface.co/datasets/giseldo/neodataset). 
 
 ```Python
 import pandas as pd
@@ -48,7 +49,7 @@ It also is available at [Mendeley Data](https://data.mendeley.com/datasets/skk2w
 
 ## How to cite
 
-```plain
+```
 Neo, G. S., Moura, J., Almeida, H., Neo, A. and Freitas Júnior, O. (2024). User Story Tutor (UST) to Support Agile Software Developers. In Proceedings of the 16th International Conference on Computer Supported Education - Volume 2: CSEDU; ISBN 978-989-758-697-2; ISSN 2184-5026, SciTePress, pages 51-62. DOI: 10.5220/0012619200003693
 ```
 
