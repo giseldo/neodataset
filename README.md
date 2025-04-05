@@ -35,6 +35,8 @@ classDiagram
 - description: Description of User Story
 - storypoints: Count of the user story informed by the team
 
+![image](https://github.com/user-attachments/assets/45c6bd85-9e80-4ea9-9efa-862e63a7365b)
+
 ## Info
 
 You can also access this dataset in only one CSV file from [HuggingFace repository](https://huggingface.co/datasets/giseldo/neodataset). 
