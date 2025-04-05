@@ -42,8 +42,6 @@ df = pd.read_csv("hf://datasets/giseldo/neodataset/issues.csv")
 It also is available at [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1).
 ```
 
-
-
 ## How to cite
 
 This dataset is used in [User Story Tutor Software](https://github.com/giseldo/userstory) and was presented in [this article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1), a version of the [article is also available at arxiv](https://arxiv.org/abs/2406.16259).
@@ -72,6 +70,8 @@ issn={2184-5026},
 ## Contact Autor
 
 Giseldo da Silva Neo at giseldo@gmail.com. More about-me in [ResearchGate](https://www.researchgate.net/profile/Giseldo-Neo) or in my [personal site](http://giseldo.github.io).
+
+[⭐ Dê uma estrela](https://github.com/giseldo/neodataset/stargazers)
 
 ## Star History
 
