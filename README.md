@@ -40,7 +40,9 @@ Another use of this NEODATASET is [this another article at arxiv](https://arxiv.
 
 ## How to cite
 
+```
 Neo, G. S., Moura, J., Almeida, H., Neo, A. and Freitas Júnior, O. (2024). User Story Tutor (UST) to Support Agile Software Developers. In Proceedings of the 16th International Conference on Computer Supported Education - Volume 2: CSEDU; ISBN 978-989-758-697-2; ISSN 2184-5026, SciTePress, pages 51-62. DOI: 10.5220/0012619200003693
+```
 
 ```
 @conference{csedu24,
@@ -60,3 +62,7 @@ issn={2184-5026},
 ## Contact Autor
 
 Giseldo da Silva Neo at giseldo@gmail.com. More about-me in [ResearchGate](https://www.researchgate.net/profile/Giseldo-Neo) or in my [personal site](http://giseldo.github.io).
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=giseldo/neodataset&type=Date)](https://www.star-history.com/#giseldo/neodataset&Date)
