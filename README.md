@@ -2,9 +2,9 @@
 
 NEODATASET is a dataset containing projects with title and description in natural language of User Stories and their Story Points extracted from GitLab.
 
-This dataset is used in [User Story Tutor Software](https://github.com/giseldo/userstory) and was presented in [this article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1), a version of the [article is also available at arxiv](https://arxiv.org/abs/2406.16259).
+This dataset is used in my research, [User Story Tutor](https://github.com/giseldo/userstory), and was presented in [this article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1). A version of the [article is also available at arxiv](https://arxiv.org/abs/2406.16259).
 
-Another use of this NEODATASET is [this another article at arxiv](https://arxiv.org/abs/2503.13279) from another researchers.
+Another use of this dataset can be seen in [this another article at arxiv](https://arxiv.org/abs/2503.13279) from another researchers by different researchers.
 
 ## Description
 
