@@ -39,14 +39,12 @@ classDiagram
 
 ## Info
 
-You can also access this dataset in only one CSV file from [HuggingFace repository](https://huggingface.co/datasets/giseldo/neodataset). 
+You can also access this dataset in only one CSV file from [HuggingFace repository](https://huggingface.co/datasets/giseldo/neodataset). It also is available at [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1). 
 
 ```Python
 import pandas as pd
 
 df = pd.read_csv("hf://datasets/giseldo/neodataset/issues.csv")
-
-It also is available at [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1).
 ```
 
 ## How to cite
