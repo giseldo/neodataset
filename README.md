@@ -32,7 +32,15 @@ classDiagram
 - storypoints: Count of the user story informed by the team
 
 ## Info
-You can also access this dataset in [HuggingFace](https://huggingface.co/datasets/giseldo/neodataset) or in [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1).
+You can also access this dataset in only one CSV file from [HuggingFace](https://huggingface.co/datasets/giseldo/neodataset). 
+
+```Python
+import pandas as pd
+
+df = pd.read_csv("hf://datasets/giseldo/neodataset/issues.csv")
+
+It also is available at [Mendeley Data](https://data.mendeley.com/datasets/skk2wn9j86/1).
+```
 
 This dataset is used in [User Story Tutor Software](https://github.com/giseldo/userstory) and was presented in [this article](https://www.scitepress.org/PublicationsDetail.aspx?ID=PpuYOsDviJ4=&t=1), a version of the [article is also available at arxiv](https://arxiv.org/abs/2406.16259).
 
