@@ -72,6 +72,8 @@ Giseldo da Silva Neo em giseldo@gmail.com. Mais sobre mim em [ResearchGate](http
 
 [⭐ Se você gostar ou usar, dê uma estrela.](https://github.com/giseldo/neodataset/stargazers)
 
-## Histórico de Estrelas
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=giseldo/neodataset&type=Date)](https://www.star-history.com/#giseldo/neodataset&Date)
 
 [![Star History Chart](about:sanitized)](https://www.star-history.com/#giseldo/neodataset&Date)
