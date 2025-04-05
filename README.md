@@ -69,7 +69,7 @@ issn={2184-5026},
 
 ## Contact Autor
 
-Giseldo da Silva Neo at giseldo@gmail.com. More about-me in [ResearchGate](https://www.researchgate.net/profile/Giseldo-Neo) or in my [personal site](http://giseldo.github.io).
+Giseldo S. Neo at giseldo@gmail.com. More about-me in [ResearchGate](https://www.researchgate.net/profile/Giseldo-Neo) or in my [personal site](http://giseldo.github.io).
 
 [⭐ If you like or use it, give it a star.](https://github.com/giseldo/neodataset/stargazers)
 
