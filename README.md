@@ -6,6 +6,8 @@ This dataset is used in my research, [User Story Tutor](https://github.com/gisel
 
 Another use of this dataset can be seen in [this another article at arxiv](https://arxiv.org/abs/2503.13279) from another researchers.
 
+Some information (in brazilian portuguese) can be read at [this paper](https://periodicos.ufpe.br/revistas/index.php/RMP/article/view/265431/49351)
+
 ## Description
 
 This dataset encompasses data from 34 software development projects, with 40.014 User Stories taken from GitLab repositories, totaling 163.897 Story Points. It is made available on GitHub, huggging face and mendeley data, so that the entire interested community can contribute, similarly to what happens with other datasets.
