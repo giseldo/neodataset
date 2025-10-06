@@ -50,7 +50,7 @@ df = pd.read_csv("hf://datasets/giseldo/neodataset/issues.csv")
 ```
 
 # Projects in dataset
-
+```mermaid
 table
   title Estatísticas descritivas dos dados do NEODATASET
   header ID, Projeto, Total Tarefas, Total SP, Média, STD, Mín, 25%, 50%, 75%, Max
@@ -89,9 +89,9 @@ table
   5261717, Gitlab vscode extension, 106, 185, 1.7, 0.7, 1, 1, 2, 2, 4
   19921167, Glaxnimate, 420, 1802, 4.3, 4.0, 1, 2, 3, 5, 40
   , Total, 40022, 163897, , , , , , ,
+```
 
 ## How to cite
-
 
 Neo, G. S., Moura, J., Almeida, H., Neo, A. and Freitas Júnior, O. (2024). User Story Tutor (UST) to Support Agile Software Developers. In Proceedings of the 16th International Conference on Computer Supported Education - Volume 2: CSEDU; ISBN 978-989-758-697-2; ISSN 2184-5026, SciTePress, pages 51-62. DOI: 10.5220/0012619200003693
 
