@@ -18,7 +18,7 @@ The projects in the dataset have different characteristics and cover different p
 
 The expected contribution is that this data set can assist education and research on agile software development. Although our dataset was initially designed for Story Points and User Story estimation training and research, it also includes information relevant to other software engineering aspects. In addition to providing a possibility to reproduce findings from other studies.
 
-## Dataset columns
+## CSV dataset columns
 
 ```mermaid
 classDiagram
@@ -107,6 +107,10 @@ isbn={978-989-758-697-2},
 issn={2184-5026},
 }
 ```
+
+## json columns
+
+![Colunas json](util/figures/diagrama_v2.jpg)
 
 ## Contact Autor
 
